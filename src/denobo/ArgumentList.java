@@ -1,6 +1,7 @@
 package denobo;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 /**
  * Represents a list of arguments (formatted as a query string) passed as a 
@@ -25,11 +26,9 @@ public class ArgumentList {
         
         // Split into arguments.
         nameValueCollection = new HashMap<>();
-        String[] pairSplitter = message.split("&");
-        
-        // Split name-value pairs.
-        for (int i = 0; i < pairSplitter.length; i++) {
-            String[] nameValueSplitter = pairSplitter[i].split("=");
+        final String[] pairSplitter = message.split("&");
+        for (String pair : pairSplitter) {
+            final String[] nameValueSplitter = pair.split("=");
             nameValueCollection.put(nameValueSplitter[0], 
                     nameValueSplitter[1]);
         }
@@ -44,6 +43,20 @@ public class ArgumentList {
      */
     public String getValue(String key) { 
         return nameValueCollection.get(key);
+    }
+    
+    public void removeParam(String key) {
+        nameValueCollection.remove(key);
+    }
+    
+    public String toString() {
+        
+        final StringBuilder sb = new StringBuilder();
+        for (Entry<String, String> p : nameValueCollection.entrySet()) {
+            sb.append(sb.length() == 0 ? "" : "&").append(p.getKey()).append("=").append(p.getValue());
+        }
+        return sb.toString();
+                
     }
     
 }

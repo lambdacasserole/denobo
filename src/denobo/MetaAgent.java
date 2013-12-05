@@ -9,7 +9,14 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public abstract class MetaAgent implements Runnable {
    
+    /**
+     * The blocking queue that underlies this object.
+     */
     private BlockingQueue<String> messageQueue;
+    
+    /**
+     * The message processing thread that underlies this object.
+     */
     private Thread underlyingThread;
     
     /**
@@ -21,11 +28,6 @@ public abstract class MetaAgent implements Runnable {
      * Holds whether or not the agent is cloneable.
      */
     private boolean cloneable;
-    
-    /**
-     * Flag to signal that the messaging thread should be aborted.
-     */
-    private boolean abortFlag;
     
     /**
      * Abstract constructor to initialise a new instance of a meta-agent.
@@ -42,6 +44,16 @@ public abstract class MetaAgent implements Runnable {
         messageQueue = new LinkedBlockingQueue<>();
         underlyingThread = new Thread(this);
         
+    }
+    
+    
+    /**
+     * Abstract constructor to initialise a new instance of a non-cloneable meta-agent.
+     * 
+     * @param name  the name of the agent
+     */
+    public MetaAgent(String name) {
+        this(name, false);
     }
     
     /**
@@ -61,26 +73,7 @@ public abstract class MetaAgent implements Runnable {
     public boolean getCloneable() {
        return cloneable; 
     }
-    
-    /**
-     * Abstract constructor to initialise a new instance of a non-cloneable meta-agent.
-     * 
-     * @param name  the name of the agent
-     */
-    public MetaAgent(String name) {
-        this(name, false);
-    }
-    
-    /**
-     * Aborts the thread powering the message pump.
-     */
-    public void abortThread() {
-        if (underlyingThread.isAlive()) {
-            abortFlag = true;
-            underlyingThread.interrupt();
-        }
-    }
-    
+        
     /**
      * Adds the given message to this agent's message queue.
      * 
@@ -97,11 +90,11 @@ public abstract class MetaAgent implements Runnable {
     @Override
     public void run() {
         
-        // Loop while our abort flag is false.
-        while(!abortFlag) {
+        // Loop until interrupted.
+        while (true) {
             try {
                 final String message = messageQueue.take();
-                if(cloneable) {
+                if (cloneable) {
                     
                     // Handle message in new thread.
                     new Thread() {
@@ -117,13 +110,11 @@ public abstract class MetaAgent implements Runnable {
                     handleMessage(message);
                     
                 }
-            } catch(InterruptedException ex) {
+            } catch (InterruptedException ex) {
                 System.out.println("Thread was interrupted during message de-queue.");
             }
         }
-        
-        abortFlag = false;
-        
+                
     }
     
     /**
