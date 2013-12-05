@@ -20,8 +20,8 @@ public class Denobo {
     public static void main(String[] args) {
     
         Portal p = new Portal("portal1");
-        UserAgent a1 = new UserAgent("agent1", false);
-        UserAgent a2 = new UserAgent("agent2", false);
+        Agent a1 = new Agent("agent1", false);
+        Agent a2 = new Agent("agent2", false);
         p.addAgent(a1);
         p.addAgent(a2);
         

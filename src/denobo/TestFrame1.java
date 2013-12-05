@@ -14,10 +14,10 @@ import javax.swing.JTextField;
  */
 public class TestFrame1 extends JFrame implements ActionListener {
     
-    private UserAgent myAgent;
+    private Agent myAgent;
     JTextField t;
     
-    public TestFrame1(UserAgent agent) {
+    public TestFrame1(Agent agent) {
         myAgent = agent;
         t = new JTextField();
         t.setPreferredSize(new Dimension(200, 20));

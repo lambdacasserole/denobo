@@ -11,10 +11,10 @@ import javax.swing.JTextField;
  */
 public class TestFrame2 extends JFrame implements MessageHandler {
     
-    private UserAgent myAgent;
+    private Agent myAgent;
     private JTextField t;
     
-    public TestFrame2(UserAgent agent) {
+    public TestFrame2(Agent agent) {
         myAgent = agent;
         myAgent.addMessageHandler(this);
         t = new JTextField();

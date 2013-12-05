@@ -1,7 +1,6 @@
 package denobo;
 
 import java.util.HashMap;
-import java.util.Map.Entry;
 
 /**
  * Represents a portal, acting as a routing engine between one or more 
@@ -56,12 +55,13 @@ public class Portal extends MetaAgent {
     public boolean hasRouteToAgent(String name) {
         
         // Check routing to destination agent.
-        boolean result = false;
-        for(Entry<String, MetaAgent> agentEntry : childAgents.entrySet()) {
-            result = result || agentEntry.getValue().hasRouteToAgent(name);
+        for (MetaAgent agent : childAgents.values()) {
+            if (agent.hasRouteToAgent(name)) {
+                return true;
+            }
         }
         
-        return result;
+        return false;
         
     }
     
@@ -72,11 +72,11 @@ public class Portal extends MetaAgent {
         String recipientName = args.getValue("to");
         
         // Check whether or not we have a child agent with a matching name.
-        if(childAgents.containsKey(recipientName)) {
-            childAgents.get(recipientName).queueMessage(message);
-        } else {
-            System.out.println("Warning: agent '" + recipientName + "' not " 
-                    + "found in portal.");
+        for(MetaAgent agent : childAgents.values()) {
+            if(agent.hasRouteToAgent(recipientName)) {
+                agent.queueMessage(message);
+                break;
+            }
         }
         
     }
