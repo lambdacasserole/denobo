@@ -19,8 +19,19 @@ public class Denobo {
      */
     public static void main(String[] args) {
     
-        JFrame x = new JFrame();
-        JFrame y = new JFrame();
+        Portal p = new Portal("portal1");
+        UserAgent a1 = new UserAgent("agent1", false);
+        UserAgent a2 = new UserAgent("agent2", false);
+        p.addAgent(a1);
+        p.addAgent(a2);
+        
+        TestFrame1 t1 = new TestFrame1(a1);
+        TestFrame2 t2 = new TestFrame2(a2);
+        t1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        t2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        t1.setVisible(true);
+        t2.setVisible(true);
         
     }
     

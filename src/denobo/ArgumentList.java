@@ -14,7 +14,7 @@ public class ArgumentList {
     /**
      * Holds a name-value map of argument names and values.
      */
-    private HashMap<String, String> nameValueCollection;
+    private final HashMap<String, String> nameValueCollection;
     
     /**
      * Initialises a new instance of an argument list from the given message 
@@ -45,12 +45,19 @@ public class ArgumentList {
         return nameValueCollection.get(key);
     }
     
+    /**
+     * Removes a parameter key-value pair from this argument list.
+     * 
+     * @param key   the key name of the argument to remove
+     */
     public void removeParam(String key) {
         nameValueCollection.remove(key);
     }
     
+    @Override
     public String toString() {
         
+        // Rebuild list as message string.
         final StringBuilder sb = new StringBuilder();
         for (Entry<String, String> p : nameValueCollection.entrySet()) {
             sb.append(sb.length() == 0 ? "" : "&").append(p.getKey()).append("=").append(p.getValue());
