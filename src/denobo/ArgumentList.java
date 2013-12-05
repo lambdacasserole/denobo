@@ -24,6 +24,7 @@ public class ArgumentList {
      */
     public ArgumentList(String message) {
         
+        prepareMessage(message);
         // Split into arguments.
         nameValueCollection = new HashMap<>();
         final String[] pairSplitter = message.split("&");
@@ -33,6 +34,11 @@ public class ArgumentList {
                     nameValueSplitter[1]);
         }
         
+    }
+    
+    private String prepareMessage(String message) {
+        String message2 = message.replace("&", "/&");
+        return message2;
     }
     
     /**
