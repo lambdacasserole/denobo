@@ -24,6 +24,8 @@ public class Denobo {
         Agent a2 = new Agent("agent2", false);
         p.addAgent(a1);
         p.addAgent(a2);
+        NetworkPortal np = new NetworkPortal("networkportal1", 9999);
+        p.registerParentPortal(np);
         
         TestFrame1 t1 = new TestFrame1(a1);
         TestFrame2 t2 = new TestFrame2(a2);

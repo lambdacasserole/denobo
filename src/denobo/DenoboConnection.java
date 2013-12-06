@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -24,9 +26,9 @@ public class DenoboConnection implements Runnable {
     private final Thread receiveThread;
     
     /**
-     * The observer that we notify whenever something occurs.
+     * The observers that we notify whenever certain events occur.
      */
-    private final DenoboConnectionObserver observer;
+    private final List<DenoboConnectionObserver> observers;
     
     /**
      * A boolean flag that is used to signal to the receive thread to terminate
@@ -55,9 +57,9 @@ public class DenoboConnection implements Runnable {
      *
      * @param connection The connection to handle receiving data from
      */
-    public DenoboConnection(Socket connection, DenoboConnectionObserver observer) {
+    public DenoboConnection(Socket connection) {
         this.connection = connection;
-        this.observer = observer;
+        this.observers = new ArrayList<>();
         
         try {
             connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -66,7 +68,6 @@ public class DenoboConnection implements Runnable {
             System.out.println(ex.getMessage());
         }
         
-        disconnected = false;
         receiveThread = new Thread(this);
         receiveThread.start();
     }
@@ -82,9 +83,13 @@ public class DenoboConnection implements Runnable {
                 }
                 
                 // parse line
+                // DenoboProtocol.tryParse(line);
 
-                // let the observer deal with it
-                observer.onReceivedMessage(this, line);
+                // let the observers deal with it
+                for (DenoboConnectionObserver currentObserver : observers) {
+                    currentObserver.onReceivedMessage(this, line); 
+                }
+                
 
             }
         } catch (IOException ex) {
@@ -100,8 +105,32 @@ public class DenoboConnection implements Runnable {
 
     }
     
-    public void send() {
-        
+    /**
+     * Adds an observer to the list of observers to be notified of events.
+     * @param observer The observer to add
+     * @return true if it was successfully added to he list of observers,
+     * otherwise false is returned
+     */
+    public boolean addObserver(DenoboConnectionObserver observer) {
+        return observers.add(observer);
+    }
+    
+    /**
+     * Removes an observer from the list of observers for this DenoboConnection.
+     * @param observer The observer to remove
+     * @return true if the observer to remove was found and removed otherwise
+     * false is returned if the specified observer was not found in the list of
+     * observers
+     */
+    public boolean removeObserver(DenoboConnectionObserver observer) {
+        return observers.remove(observer);
+    }
+    
+    /**
+     * Removes all observers from this DenoboConnection.
+     */
+    public void removeObservers() {
+        observers.clear();
     }
 
     /**
@@ -129,5 +158,10 @@ public class DenoboConnection implements Runnable {
         } catch (IOException | InterruptedException ex) {
             System.out.println(ex.getMessage());
         }
+    }
+    
+        
+    public void send() {
+        
     }
 }

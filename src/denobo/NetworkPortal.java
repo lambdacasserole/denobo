@@ -19,7 +19,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     
     private boolean disconnecting;
     
-        
+    
     public NetworkPortal(String name, int portNumber) {
         super(name);
         connections = new ArrayList<>();
@@ -37,15 +37,6 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         }
     }
     
-    public void connect(String hostName, int portNumber) {
-        try {
-            Socket socket = new Socket(hostName, portNumber);
-            // Handshake.
-        } catch (IOException ex) {
-            System.out.println(ex.getMessage());
-        }
-    }
-    
     /**
      * Listens for connections on the server port and adds 
      */
@@ -54,12 +45,26 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         while(!disconnecting) {
             try {
                 Socket acceptedSocket = serverSocket.accept();
-                connections.add(new DenoboConnection(acceptedSocket, this));
+                DenoboConnection denoboConnection = new DenoboConnection(acceptedSocket);
+                denoboConnection.addObserver(this);
+                connections.add(denoboConnection);
             } catch (IOException ex) {
                 System.out.println(ex.getMessage());
             }
         }
         disconnecting = false;
+    }
+    
+    public void connect(String hostName, int portNumber) {
+        try {
+            Socket connectSocket = new Socket(hostName, portNumber);
+            DenoboConnection denoboConnection = new DenoboConnection(connectSocket);
+            denoboConnection.addObserver(this);
+            // denoboConnection.initialize();
+            connections.add(denoboConnection);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
     public void disconnect() {
@@ -85,7 +90,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
 
     @Override
     public void handleMessage(String message) {
-        // Outgoing.
+        // Outgoing message to dispatch.
     }
 
     @Override
