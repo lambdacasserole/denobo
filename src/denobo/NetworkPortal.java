@@ -42,10 +42,10 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
      */
     private void listenForConnections() {
         disconnecting = false;
-        while(!disconnecting) {
+        while (!disconnecting) {
             try {
-                Socket acceptedSocket = serverSocket.accept();
-                DenoboConnection denoboConnection = new DenoboConnection(acceptedSocket);
+                final Socket acceptedSocket = serverSocket.accept();
+                final DenoboConnection denoboConnection = new DenoboConnection(acceptedSocket);
                 denoboConnection.addObserver(this);
                 connections.add(denoboConnection);
             } catch (IOException ex) {
@@ -57,8 +57,8 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     
     public void connect(String hostName, int portNumber) {
         try {
-            Socket connectSocket = new Socket(hostName, portNumber);
-            DenoboConnection denoboConnection = new DenoboConnection(connectSocket);
+            final Socket connectSocket = new Socket(hostName, portNumber);
+            final DenoboConnection denoboConnection = new DenoboConnection(connectSocket);
             denoboConnection.addObserver(this);
             // denoboConnection.initialize();
             connections.add(denoboConnection);
