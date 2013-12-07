@@ -29,6 +29,10 @@ public class Denobo {
         
         TestFrame1 t1 = new TestFrame1(a1);
         TestFrame2 t2 = new TestFrame2(a2);
+        t1.setSize(250, 250);
+        t2.setSize(250, 250);
+        t1.setLocation(100, 450);
+        t2.setLocation(400, 450);
         t1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         t2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
