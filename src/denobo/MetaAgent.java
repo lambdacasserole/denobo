@@ -13,6 +13,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 public abstract class MetaAgent implements Runnable {
    
     /**
+     * A counter that holds the value of the next unique ID.
+     */
+    private static int nextFreeID = 0;
+    
+    
+    
+    /**
      * The {@link BlockingQueue} queue that underlies this object.
      */
     private BlockingQueue<Message> messageQueue;
@@ -37,6 +44,8 @@ public abstract class MetaAgent implements Runnable {
      */
     private boolean cloneable;
     
+    private final int id;
+    
     /**
      * Abstract constructor to initialise a new instance of a meta-agent.
      * 
@@ -45,6 +54,8 @@ public abstract class MetaAgent implements Runnable {
      */
     @SuppressWarnings("LeakingThisInConstructor")
     public MetaAgent(String name, boolean cloneable) {
+        
+        this.id = nextFreeID;
         
         this.name = name;
         this.cloneable = cloneable;
@@ -64,6 +75,15 @@ public abstract class MetaAgent implements Runnable {
      */
     public MetaAgent(String name) {
         this(name, false);
+    }
+    
+    /**
+     * Gets the unique local ID for this agent
+     * 
+     * @return the unique id
+     */
+    public int getID() {
+        return this.id;
     }
     
     /**
@@ -104,23 +124,28 @@ public abstract class MetaAgent implements Runnable {
         while (true) {
             try {
                 final Message message = messageQueue.take();
-                if (cloneable) {
-                    
-                    // Handle message in new thread.
-                    // TODO: Implement thread pool.
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            handleMessage(message);
-                        }
-                    }.start();
-                    
-                } else {
-                    
-                    // Handle message in this thread.
-                    handleMessage(message);
-                    
+                
+                // Make sure this message hasn't already visited this agent previously
+                if (!message.hasVisited(this.id)) {
+                    if (cloneable) {
+                        // Handle message in new thread.
+                        // TODO: Implement thread pool.
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                handleMessage(message);
+                                message.addVisited(id);
+                            }
+                        }.start();
+                        
+                    } else {
+
+                        // Handle message in this thread.
+                        handleMessage(message);
+                        message.addVisited(id);
+                    }
                 }
+
             } catch (InterruptedException ex) {
                 System.out.println("Thread was interrupted during message de-queue.");
             }
