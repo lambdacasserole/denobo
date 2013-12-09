@@ -208,7 +208,10 @@ public class DenoboConnection implements Runnable {
         // Write serialised message to output stream.
         connectionWriter.println(message.toString());
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
-            
+        
+        // WORK OUT WHY: This fixes the bug of data not getting received because for
+        // some reason the data isn't been send until we flush the stream
+        connectionWriter.flush();
     }
     
 }
