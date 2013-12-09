@@ -6,6 +6,10 @@
 
 package denobo;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 
 /**
@@ -20,13 +24,20 @@ public class Denobo {
     public static void main(String[] args) {
     
         Portal p = new Portal("portal1");
+        Portal p2 = new Portal("portal2");
         Agent a1 = new Agent("agent1", false);
         Agent a2 = new Agent("agent2", false);
         p.addAgent(a1);
-        p.addAgent(a2);
-        NetworkPortal np = new NetworkPortal("networkportal1", 9999);
-        p.registerParentPortal(np);
-        
+        p2.addAgent(a2);
+        NetworkPortal np = new NetworkPortal("networkportal1", 9998);
+        NetworkPortal np2 = new NetworkPortal("networkportal2", 9999);
+        np.addAgent(p);
+        np2.addAgent(p2);
+        try {
+            np.connect(InetAddress.getLocalHost().getHostAddress(), 9999);
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Denobo.class.getName()).log(Level.SEVERE, null, ex);
+        }
         TestFrame1 t1 = new TestFrame1(a1);
         TestFrame2 t2 = new TestFrame2(a2);
         t1.setSize(250, 250);

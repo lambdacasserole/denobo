@@ -15,7 +15,7 @@ public abstract class MetaAgent implements Runnable {
     /**
      * The blocking queue that underlies this object.
      */
-    private BlockingQueue<String> messageQueue;
+    private BlockingQueue<Message> messageQueue;
 
     /**
      * Holds a list of parent portals for this agent.
@@ -90,7 +90,7 @@ public abstract class MetaAgent implements Runnable {
      * 
      * @param message   the message to add
      */
-    public void queueMessage(String message) {
+    public void queueMessage(Message message) {
         try {
             messageQueue.put(message);
         } catch (InterruptedException ex) {
@@ -104,7 +104,7 @@ public abstract class MetaAgent implements Runnable {
         // Loop until interrupted.
         while (true) {
             try {
-                final String message = messageQueue.take();
+                final Message message = messageQueue.take();
                 if (cloneable) {
                     
                     // Handle message in new thread.
@@ -151,7 +151,7 @@ public abstract class MetaAgent implements Runnable {
      * 
      * @param message   the message to handle
      */
-    public abstract void handleMessage(String message);
+    public abstract void handleMessage(Message message);
     
     /**
      * Gets whether or not this agent is, or has a route to, the agent with

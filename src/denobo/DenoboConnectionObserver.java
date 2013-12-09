@@ -15,7 +15,7 @@ public interface DenoboConnectionObserver {
     /**
      * Invoked when a message was received from a DenoboConnection.
      * @param connection The DenoboConnection we received the message from
-     * @param message The message
+     * @param packet The message
      */
-    public void onReceivedMessage(DenoboConnection connection, String message);
+    public void onReceivedMessage(DenoboConnection connection, DenoboPacket packet);
 }

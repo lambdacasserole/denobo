@@ -38,7 +38,8 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     }
     
     /**
-     * Listens for connections on the server port and adds 
+     * Listens for connections on the server port and adds connections to a list
+     * when they are requested by connection clients.
      */
     private void listenForConnections() {
         disconnecting = false;
@@ -89,7 +90,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     }
 
     @Override
-    public void handleMessage(String message) {
+    public void handleMessage(Message message) {
         // Outgoing message to dispatch.
     }
 
@@ -111,13 +112,14 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     }
 
     @Override
-    public void onReceivedMessage(DenoboConnection connection, String message) {
+    public void onReceivedMessage(DenoboConnection connection, DenoboPacket packet) {
                 
         ////////////////////////////////////////////////////////////////////////
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
         
         // Received a message (just printing the output for now)
-        System.out.println(message);
+        System.out.println(packet.getBody());
     }
+    
 }

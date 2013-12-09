@@ -55,7 +55,7 @@ public class Agent extends MetaAgent {
         // Check for route to recipient agent and send.
         for(Portal portal : portals) {
             if(portal.hasRouteToAgent(to)) {
-                portal.queueMessage("from=" + getName() + "&to=" + to + "&" + message);
+                portal.queueMessage(new Message(getName(), to, message));
                 break;
             }
         }
@@ -68,21 +68,11 @@ public class Agent extends MetaAgent {
     }
     
     @Override
-    public void handleMessage(String message) {
-        
-        final ArgumentList args = new ArgumentList(message);
-                
-        // Extract from and to parameters.
-        final String to = args.getValue("to");
-        final String from = args.getValue("from");
-        
-        //  Remove from and to parameters.
-        args.removeParam("to");
-        args.removeParam("from");
+    public void handleMessage(Message message) {
         
         // Pass message to each handler.
         for (MessageHandler handler : handlers) {
-            handler.messageRecieved(to, from, args.toString());
+            handler.messageRecieved(message);
         }
         
     }

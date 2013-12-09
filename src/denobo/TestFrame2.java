@@ -24,8 +24,8 @@ public class TestFrame2 extends JFrame implements MessageHandler {
     }
 
     @Override
-    public void messageRecieved(String to, String from, String message) {
-        t.setText(from + "," + to + "," + message); 
+    public void messageRecieved(Message message) {
+        t.setText(message.getFrom() + "," + message.getTo() + "," + message.getMessage()); 
     }
     
 }

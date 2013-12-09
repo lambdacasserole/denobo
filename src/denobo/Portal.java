@@ -66,14 +66,11 @@ public class Portal extends MetaAgent {
     }
     
     @Override
-    public void handleMessage(String message) {
-        
-        ArgumentList args = new ArgumentList(message);
-        String recipientName = args.getValue("to");
+    public void handleMessage(Message message) {
         
         // Check whether or not we have a child agent with a matching name.
         for(MetaAgent agent : childAgents.values()) {
-            if(agent.hasRouteToAgent(recipientName)) {
+            if(agent.hasRouteToAgent(message.getTo())) {
                 agent.queueMessage(message);
                 break;
             }

@@ -4,13 +4,16 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * Represents a bidirectional communication line between two socket agents.
+ * 
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DenoboConnection implements Runnable {
@@ -40,17 +43,15 @@ public class DenoboConnection implements Runnable {
      * The BufferedReader object to use for efficiently reading any data we have
      * received from this connection.
      */
-    private BufferedReader connectionReader;
+    private ObjectInputStream connectionReader;
     
     /**
      * The BufferedWriter object to use for sending data through this
      * connection. This is a more efficient way of sending data as multiple send
      * requests are buffered then sent in one batch.
      */
-    private BufferedWriter connectionWriter;
+    private ObjectOutputStream connectionWriter;
 
-    
-    
     /**
      * Creates a ConnectionHandler that will handle receiving data from a
      * socket.
@@ -62,8 +63,8 @@ public class DenoboConnection implements Runnable {
         this.observers = new ArrayList<>();
         
         try {
-            connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+            connectionReader = new ObjectInputStream(connection.getInputStream());
+            connectionWriter = new ObjectOutputStream(connection.getOutputStream());
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
@@ -74,39 +75,33 @@ public class DenoboConnection implements Runnable {
 
     @Override
     public void run() {
+        
         try {
-            
             while (!disconnected) {
-                final String line = connectionReader.readLine();
-                if (line == null) {
-                    break;
-                }
-                
-                // parse line
-                // DenoboProtocol.tryParse(line);
+                try {
 
-                // let the observers deal with it
-                for (DenoboConnectionObserver currentObserver : observers) {
-                    currentObserver.onReceivedMessage(this, line); 
+                    // Let the observers deal with packet.
+                    DenoboPacket nextPacket = (DenoboPacket)connectionReader.readObject();
+                    for (DenoboConnectionObserver currentObserver : observers) {
+                        currentObserver.onReceivedMessage(this, nextPacket); 
+                    }
+                    
+                } catch (ClassNotFoundException ex) {
+                    System.out.println(ex.getMessage());
                 }
-                
-
             }
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
-
-        // connection has closed
-
-        // cleanup
+        
+        // Connection has closed, clean up.
         disconnect();
-
-        // remove from portal lists
 
     }
     
     /**
      * Adds an observer to the list of observers to be notified of events.
+     * 
      * @param observer The observer to add
      * @return true if it was successfully added to he list of observers,
      * otherwise false is returned
@@ -117,6 +112,7 @@ public class DenoboConnection implements Runnable {
     
     /**
      * Removes an observer from the list of observers for this DenoboConnection.
+     * 
      * @param observer The observer to remove
      * @return true if the observer to remove was found and removed otherwise
      * false is returned if the specified observer was not found in the list of
@@ -160,8 +156,12 @@ public class DenoboConnection implements Runnable {
         }
     }
     
-        
-    public void send() {
-        
+    public void send(DenoboPacket packet) {
+        try {
+            connectionWriter.writeObject(packet);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
+    
 }

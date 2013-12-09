@@ -10,10 +10,8 @@ public interface MessageHandler {
 
     /**
      * Called when the agent receives a message.
-     * @param to        the name of the agent that this message is addressed to
-     * @param from      the name of the agent that originated this message
-     * @param message   the message itself
+     * @param message   the message recieved
      */
-    public void messageRecieved(String to, String from, String message);
+    public void messageRecieved(Message message);
     
 }
