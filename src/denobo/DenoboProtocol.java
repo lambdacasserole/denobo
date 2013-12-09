@@ -13,7 +13,7 @@ public class DenoboProtocol {
     
     public String serializePacket(DenoboPacket packet) {
         
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append(PACKET_HEADER).append("\n");
         sb.append("status-code:").append(packet.getStatusCode()).append("\n");
         sb.append("body-length:").append(packet.getBody().length()).append("\n");
@@ -21,5 +21,6 @@ public class DenoboProtocol {
         return sb.toString();
         
     }
+    
     
 }

@@ -92,9 +92,10 @@ public class DenoboConnection implements Runnable {
                 System.out.println("Waiting for data on port [" + connection.getPort() + "]...");
                 
                 // TODO: Fix this code, very hacky.
-                final String buffer = connectionReader.readLine();
-                System.out.println("Got data: " + buffer);
+                final String buffer = connectionReader.readLine();                
                 if (buffer.equals(DenoboProtocol.PACKET_HEADER)) {
+                    
+                    System.out.println("Received valid packet.");
                     
                     DenoboPacket nextPacket;
                 
@@ -115,6 +116,11 @@ public class DenoboConnection implements Runnable {
                     for (DenoboConnectionObserver currentObserver : observers) {
                         currentObserver.messageReceived(this, nextPacket); 
                     }
+                    
+                } else {
+                    
+                    // TODO: Handle invalid packet.
+                    System.out.println("Received invalid packet.");
                     
                 }
                 
@@ -203,7 +209,9 @@ public class DenoboConnection implements Runnable {
 
         // Write serialised message to output stream.
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
-        connectionWriter.println(message.toString());
+        
+        final DenoboProtocol protocol = new DenoboProtocol();
+        connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, message.toString())));
         connectionWriter.flush();
             
     }

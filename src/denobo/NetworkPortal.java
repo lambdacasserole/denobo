@@ -164,6 +164,6 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         ////////////////////////////////////////////////////////////////////////
         
         // Received a message (just printing the output for now)
-        System.out.println(packet.getBody());
+        //System.out.println(packet.getBody());
     }
 }
