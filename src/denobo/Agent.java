@@ -11,7 +11,7 @@ import java.util.List;
 public class Agent extends MetaAgent {
    
     /**
-     * Holds a list of message handlers observing messages passed to the agent.
+     * Holds a list of {@link MessageHandler} objects observing messages passed to the agent.
      */
     private final List<MessageHandler> handlers;
     
@@ -26,7 +26,7 @@ public class Agent extends MetaAgent {
     }
     
     /**
-     * Adds a message handler to listen for messages passed to this agent.
+     * Adds a {@link MessageHandler} to listen for messages passed to this agent.
      * 
      * @param handler   the message handler to add as an observer
      */
@@ -35,7 +35,7 @@ public class Agent extends MetaAgent {
     }
     
     /**
-     * Removes a message handler that is currently listening for messages 
+     * Removes a {@link MessageHandler} that is currently listening for messages 
      * passed to this agent.
      * 
      * @param handler   the message handler to remove as an observer
@@ -53,8 +53,8 @@ public class Agent extends MetaAgent {
     public void sendMessage(String to, String message) {
         
         // Check for route to recipient agent and send.
-        for(Portal portal : portals) {
-            if(portal.hasRouteToAgent(to)) {
+        for (Portal portal : portals) {
+            if (portal.hasRouteToAgent(to)) {
                 portal.queueMessage(new Message(getName(), to, message));
                 break;
             }

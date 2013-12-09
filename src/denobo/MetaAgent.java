@@ -13,7 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public abstract class MetaAgent implements Runnable {
    
     /**
-     * The blocking queue that underlies this object.
+     * The {@link BlockingQueue} queue that underlies this object.
      */
     private BlockingQueue<Message> messageQueue;
 
@@ -56,8 +56,7 @@ public abstract class MetaAgent implements Runnable {
         underlyingThread.start();
         
     }
-    
-    
+        
     /**
      * Abstract constructor to initialise a new instance of a non-cloneable meta-agent.
      * 
@@ -108,6 +107,7 @@ public abstract class MetaAgent implements Runnable {
                 if (cloneable) {
                     
                     // Handle message in new thread.
+                    // TODO: Implement thread pool.
                     new Thread() {
                         @Override
                         public void run() {

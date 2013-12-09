@@ -45,6 +45,14 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         
     }
     
+    private void addRunningConnection(Socket s)  {
+        final DenoboConnection newConnection = new DenoboConnection(s);
+        newConnection.addObserver(this);
+        connections.add(newConnection);
+
+        newConnection.startRecieveThread();
+    }
+    
     /**
      * Listens for connections on the server port and adds connections to a list
      * when they are requested by connection clients.
@@ -63,11 +71,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
                         + serverSocket.getLocalPort() + "] dispensed a socket on port [" 
                         + acceptedSocket.getPort() + "]."); 
                 
-                final DenoboConnection newConnection = new DenoboConnection(acceptedSocket);
-                newConnection.addObserver(this);
-                connections.add(newConnection);
-                
-                newConnection.startRecieveThread();
+                addRunningConnection(acceptedSocket);
                 
             } catch (IOException ex) {
             
@@ -81,12 +85,17 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         
     }
     
+    /**
+     * Connects this {@link NetworkPortal} to a remote network portal.
+     * 
+     * @param hostName      the host name of the machine hosting the remote portal
+     * @param portNumber    the port number the remote portal is listening on
+     */
     public void connect(String hostName, int portNumber) {
         try {
-            final Socket connectSocket = new Socket(hostName, portNumber);
-            final DenoboConnection denoboConnection = new DenoboConnection(connectSocket);
-            denoboConnection.addObserver(this);
-            connections.add(denoboConnection);
+            
+            addRunningConnection(new Socket(hostName, portNumber));
+            
         } catch (IOException ex) {
             
             // TODO: Handle exception.

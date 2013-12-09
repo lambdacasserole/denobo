@@ -6,12 +6,7 @@ package denobo;
  * @author Saul
  */
 public class DenoboPacket {
-    
-    /**
-     * Holds the magic number for the packet header for this version.
-     */
-    public static final String PACKET_HEADER = "DENOBO v0.9 (BENSON)";
-    
+        
     /**
      * Holds a status code representing the type of packet.
      */
@@ -41,15 +36,6 @@ public class DenoboPacket {
     
     public String getBody() {
         return body;
-    }
-    
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(PACKET_HEADER).append("\n");
-        sb.append("status-code:").append(statusCode).append("\n");
-        sb.append("body-length:").append(body.length()).append("\n");
-        sb.append(body);
-        return sb.toString();
     }
     
 }

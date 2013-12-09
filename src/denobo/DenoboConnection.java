@@ -1,17 +1,15 @@
 package denobo;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a bidirectional communication line between two socket agents.
+ * Represents a bidirectional communication line between two {@link NetworkPortal} objects.
  * 
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
@@ -21,6 +19,11 @@ public class DenoboConnection implements Runnable {
      * The socket to handle receiving data from.
      */
     private final Socket connection;
+    
+    /**
+     * The observers that we notify whenever certain events occur.
+     */
+    private final List<DenoboConnectionObserver> observers;
 
     /**
      * A thread that handles waiting for data to be received from this connection.
@@ -28,34 +31,26 @@ public class DenoboConnection implements Runnable {
     private Thread receiveThread;
     
     /**
-     * The observers that we notify whenever certain events occur.
-     */
-    private final List<DenoboConnectionObserver> observers;
-    
-    /**
-     * A boolean flag that is used to signal to the receive thread to terminate
-     * and prevent any actions from occurring anymore on this object in this state.
+     * A boolean flag that is used to signal {@link DenoboConnection#receiveThread} to terminate
+     * and prevent any more actions from occurring on the object.
      */
     private boolean disconnected;
     
     /**
-     * The BufferedReader object to use for efficiently reading any data we have
+     * The {@link BufferedReader} object to use for efficiently reading any data we have
      * received from this connection.
      */
     private BufferedReader connectionReader;
     
     /**
-     * The BufferedWriter object to use for efficiently sending data through this
-     * connection. This is a more efficient way of sending data as multiple send requests 
-     * are buffered then sent in one batch.
+     * Holds a {@link PrintWriter} object for writing to the connection's underlying socket.
      */
     private PrintWriter connectionWriter;
 
     /**
-     * Creates a ConnectionHandler that will handle receiving data from a
-     * socket.
+     * Creates a {@link ConnectionHandler} that will handle receiving data from a socket.
      *
-     * @param connection The connection to handle receiving data from
+     * @param connection    the connection to handle receiving data from
      */
     public DenoboConnection(Socket connection) {
         
@@ -95,23 +90,24 @@ public class DenoboConnection implements Runnable {
             while (!disconnected) {
                 
                 System.out.println("Waiting for data on port [" + connection.getPort() + "]...");
-                DenoboPacket nextPacket;
                 
                 // TODO: Fix this code, very hacky.
-                String buffer = connectionReader.readLine();
+                final String buffer = connectionReader.readLine();
                 System.out.println("Got data: " + buffer);
-                if(buffer.equals(DenoboPacket.PACKET_HEADER)) {
+                if (buffer.equals(DenoboProtocol.PACKET_HEADER)) {
                     
+                    DenoboPacket nextPacket;
+                
                     // Parse out status code.
-                    String[] statusCodeField = connectionReader.readLine().split(":");
-                    int statusCode = Integer.parseInt(statusCodeField[1]);
+                    final String[] statusCodeField = connectionReader.readLine().split(":");
+                    final int statusCode = Integer.parseInt(statusCodeField[1]);
                     
                     // Parse out body length.
-                    String[] bodyLengthField = connectionReader.readLine().split(":");
-                    int bodyLength = Integer.parseInt(bodyLengthField[1]);
+                    final String[] bodyLengthField = connectionReader.readLine().split(":");
+                    final int bodyLength = Integer.parseInt(bodyLengthField[1]);
                     
                     // Parse out payload.
-                    char[] packetBody = new char[bodyLength];
+                    final char[] packetBody = new char[bodyLength];
                     connectionReader.read(packetBody);
                     
                     // Let the observers deal with packet.
@@ -175,6 +171,10 @@ public class DenoboConnection implements Runnable {
         disconnected = true;
 
         try {
+
+            // Close I/O streams.
+            connectionReader.close();
+            connectionWriter.close();
             
             // Close the socket to the connection which will cause an exception
             // to be thrown by receiveThread.
@@ -182,10 +182,6 @@ public class DenoboConnection implements Runnable {
             
             // Wait for the receive thread to terminate.
             receiveThread.join();
-
-            // Close I/O streams.
-            connectionReader.close();
-            connectionWriter.close();
             
         } catch (IOException | InterruptedException ex) {
             
@@ -206,12 +202,10 @@ public class DenoboConnection implements Runnable {
         // TODO: Proper serialisation logic.
 
         // Write serialised message to output stream.
-        connectionWriter.println(message.toString());
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
-        
-        // WORK OUT WHY: This fixes the bug of data not getting received because for
-        // some reason the data isn't been send until we flush the stream
+        connectionWriter.println(message.toString());
         connectionWriter.flush();
+            
     }
     
 }
