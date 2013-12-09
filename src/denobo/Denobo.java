@@ -23,18 +23,14 @@ public class Denobo {
      */
     public static void main(String[] args) {
     
-        Portal p = new Portal("portal1");
-        Portal p2 = new Portal("portal2");
         Agent a1 = new Agent("agent1", false);
         Agent a2 = new Agent("agent2", false);
-        p.addAgent(a1);
-        p2.addAgent(a2);
-        NetworkPortal np = new NetworkPortal("networkportal1", 9998);
-        NetworkPortal np2 = new NetworkPortal("networkportal2", 9999);
-        np.addAgent(p);
-        np2.addAgent(p2);
+        NetworkPortal np = new NetworkPortal("networkportal1", 9385);
+        NetworkPortal np2 = new NetworkPortal("networkportal2", 4757);
+        np.addAgent(a1);
+        np2.addAgent(a2);
         try {
-            np.connect(InetAddress.getLocalHost().getHostAddress(), 9999);
+            np.connect(InetAddress.getLocalHost().getHostAddress(), 4757);
         } catch (UnknownHostException ex) {
             Logger.getLogger(Denobo.class.getName()).log(Level.SEVERE, null, ex);
         }

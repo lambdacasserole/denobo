@@ -18,6 +18,22 @@ public class Message {
         
     }
     
+    public Message(String messageString) {
+        
+        String[] pairSplitter = messageString.split("&");
+        for(String str : pairSplitter) {
+            String[] nameValueSplitter = str.split("=");
+            if(nameValueSplitter[0].equals("to")) {
+                to = nameValueSplitter[1];
+            } else if(nameValueSplitter[1].equals("from")) {
+                from = nameValueSplitter[1];
+            } else if(nameValueSplitter[1].equals("msg")) {
+                message = nameValueSplitter[1];
+            }
+        }
+        
+    }
+    
     public String getTo() {
         return to;
     }
@@ -28,6 +44,11 @@ public class Message {
     
     public String getMessage() {
         return message;
+    }
+    
+    @Override
+    public String toString() {
+        return "to=" + getTo() + "&from=" + getFrom() + "&msg=" + getMessage();
     }
     
 }

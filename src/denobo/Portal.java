@@ -54,7 +54,7 @@ public class Portal extends MetaAgent {
     @Override
     public boolean hasRouteToAgent(String name) {
         
-        // Check routing to destination agent.
+        // Check routing to destination agent via children.
         for (MetaAgent agent : childAgents.values()) {
             if (agent.hasRouteToAgent(name)) {
                 return true;

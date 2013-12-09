@@ -64,7 +64,11 @@ public class Agent extends MetaAgent {
     
     @Override
     public boolean hasRouteToAgent(String name) {
+        
+        // If this agent is the agent requested, we consider this agent to have 
+        // a route to itself.
         return name.equals(getName());
+        
     }
     
     @Override
