@@ -72,7 +72,6 @@ public abstract class MetaAgent implements Runnable {
         
         underlyingThread = new Thread(this);
         underlyingThread.start();
-        
     }
         
     /**

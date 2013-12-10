@@ -13,7 +13,8 @@ import java.util.List;
  */
 public class NetworkPortal extends Portal implements DenoboConnectionObserver {
 
-    private List<DenoboConnection> connections; 
+    private List<DenoboConnection> connections;
+    private List<NetworkPortalObserver> observers;
     
     private ServerSocket serverSocket;
     private Thread acceptThread;
@@ -24,6 +25,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         
         super(name);
         connections = new ArrayList<>();
+        observers = new ArrayList<>();
         
         try {
             
@@ -44,6 +46,35 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         }
         
     }
+    
+    /**
+     * Adds an observer to the list of observers to be notified of events.
+     * 
+     * @param observer      The observer to add
+     * @return true if it was successfully added to he list of observers,
+     * otherwise false is returned
+     */
+    public boolean addObserver(NetworkPortalObserver observer) {
+        return observers.add(observer);
+    }
+    
+    /**
+     * Removes an observer from the list of observers for this NetworkPortal.
+     * 
+     * @param observer  the observer to remove
+     * @return          true if the observer to remove was found and removed, otherwise false
+     */
+    public boolean removeObserver(NetworkPortalObserver observer) {
+        return observers.remove(observer);
+    }
+    
+    /**
+     * Removes all observers from this NetworkPortal.
+     */
+    public void removeObservers() {
+        observers.clear();
+    }
+    
     
     private void addRunningConnection(Socket s)  {
         final DenoboConnection newConnection = new DenoboConnection(s);
@@ -66,6 +97,12 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
                         + serverSocket.getLocalPort() + "] and listening...");
                 
                 final Socket acceptedSocket = serverSocket.accept();
+                
+                // notify any observers
+                for (NetworkPortalObserver currentObserver : observers) {
+                    currentObserver.incomingConnectionAccepted(acceptedSocket.getRemoteSocketAddress().toString(), acceptedSocket.getPort());
+                }
+                
                 
                 System.out.println("Socket server open on port [" 
                         + serverSocket.getLocalPort() + "] dispensed a socket on port [" 
@@ -105,36 +142,38 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     }
 
     public void disconnect() {
+        
+        disconnecting = true;
+        
         try {
-            
             // First prevent anyone else from connecting.
-            disconnecting = true;
             serverSocket.close();
             
             // Wait for the connection accepting thread to terminate.
             acceptThread.join();
-            
-            // Close any connections we have.
-            for (DenoboConnection currentConnection : connections) {
-                currentConnection.disconnect();
-            }
-            
-            // Remove all the connections from our collection.
-            connections.clear();
-            
+
         } catch (IOException | InterruptedException ex) {
-            
             // TODO: Handle exception.
             System.out.println(ex.getMessage());
-            
         }
+             
+        // Close any connections we have.
+        for (DenoboConnection currentConnection : connections) {
+            currentConnection.disconnect();
+        }
+            
+        // Remove all the connections from our collection.
+        connections.clear();
+        
+        // Remove all observers
+        observers.clear();
     }
 
     @Override
     public void handleMessage(Message message) {
         
         super.handleMessage(message);
-        for(DenoboConnection connection : connections) {
+        for (DenoboConnection connection : connections) {
             connection.send(message);
         }
         
@@ -168,6 +207,11 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         
         // needs syncronising
         connections.remove(connection);
+        
+        // notify any observers
+        for (NetworkPortalObserver currentObserver : observers) {
+            currentObserver.connectionClosed(connection.getRemoteAddress(), connection.getRemotePort());
+        }
     }
     
     @Override

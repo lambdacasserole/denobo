@@ -50,7 +50,7 @@ public class DenoboConnection implements Runnable {
     private final DenoboProtocol protocol;
                     
     /**
-     * Creates a {@link ConnectionHandler} that will handle receiving data from a socket.
+     * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
      *
      * @param connection    the connection to handle receiving data from
      */
@@ -154,7 +154,7 @@ public class DenoboConnection implements Runnable {
             connection.close();
             
             // If the thread executing this isn't the receiveThread, block and
-            // wait for the receiveThread to finish
+            // wait for the receiveThread to finish executing
             if (Thread.currentThread() != receiveThread) {
                 // Wait for the receive thread to terminate.
                 receiveThread.join();

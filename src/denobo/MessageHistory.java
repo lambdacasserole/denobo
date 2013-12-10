@@ -25,7 +25,7 @@ public class MessageHistory {
     }
     
     public boolean hasMessage(String id) {
-        for(int c = 0; c < history.length; c++) {
+        for (int c = 0; c < history.length; c++) {
             if(history[c] != null && history[c].equals(id)) {
                 return true;
             }
