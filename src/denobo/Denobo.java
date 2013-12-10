@@ -68,7 +68,8 @@ public class Denobo {
         TestMessageFrame frame = new TestMessageFrame();
         
         frame.setSize(500, 500);
-        frame.setLocation(100, 450);
+        frame.setLocation(100, 300);
+        frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);

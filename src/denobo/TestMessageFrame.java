@@ -23,7 +23,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
 
     private JTextField ipTextField, portTextField, localAgentNameField, remoteAgentNameField;
     private JTextArea receiveTextField, sendTextField;
-    private JButton connectButton, sendButton;
+    private JButton connectButton, sendButton, disconnectButton;
 
     public TestMessageFrame() {
 
@@ -48,6 +48,9 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
 
         connectButton = new JButton("Connect");
         connectButton.addActionListener(this);
+        
+        disconnectButton = new JButton("Disconnect");
+        disconnectButton.addActionListener(this);
 
         sendButton = new JButton("Send");
         sendButton.addActionListener(this);
@@ -71,6 +74,12 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         c.gridy = 0;
         c.insets = new Insets(5, 5, 5, 5);
         this.add(connectButton, c);
+        
+        c = new GridBagConstraints();
+        c.gridx = 2;
+        c.gridy = 1;
+        c.insets = new Insets(5, 5, 5, 5);
+        this.add(disconnectButton, c);
 
         c = new GridBagConstraints();
         c.gridx = 0;
@@ -134,10 +143,20 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
             receiveTextField.setText(null);
             
         } else if (ae.getSource() == sendButton) {
+            if (networkPortal == null) {
+                receiveTextField.append("Can't send message to nobody\n");
+            } else {
+                messageAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
+                receiveTextField.append("Me: " + sendTextField.getText() + "\n");
+                sendTextField.setText(null);
+            }
             
-            messageAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
-            receiveTextField.append("Me: " + sendTextField.getText() + "\n");
-            sendTextField.setText(null);
+        } else if (ae.getSource() == disconnectButton) {
+            if (networkPortal == null) {
+                receiveTextField.append("Already disconnected from anyone\n");
+            } else {
+                networkPortal.disconnect();
+            }
         }
     }
 
