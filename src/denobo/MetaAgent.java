@@ -11,14 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public abstract class MetaAgent implements Runnable {
-   
-    /**
-     * A counter that holds the value of the next unique ID.
-     */
-    private static int nextFreeID = 0;
-    
-    
-    
+       
     /**
      * The {@link BlockingQueue} queue that underlies this object.
      */
@@ -44,7 +37,10 @@ public abstract class MetaAgent implements Runnable {
      */
     private boolean cloneable;
     
-    private final int id;
+    /**
+     * Holds the locally unique identifier for this agent.
+     */
+    private final String id;
     
     /**
      * Abstract constructor to initialise a new instance of a meta-agent.
@@ -55,14 +51,13 @@ public abstract class MetaAgent implements Runnable {
     @SuppressWarnings("LeakingThisInConstructor")
     public MetaAgent(String name, boolean cloneable) {
         
-        this.id = nextFreeID;
-        
         this.name = name;
         this.cloneable = cloneable;
+        this.id = UniqueIdFactory.getId();
         
         messageQueue = new LinkedBlockingQueue<>();
         portals = new ArrayList<>();
-        
+                
         underlyingThread = new Thread(this);
         underlyingThread.start();
         
@@ -78,21 +73,21 @@ public abstract class MetaAgent implements Runnable {
     }
     
     /**
-     * Gets the unique local ID for this agent
-     * 
-     * @return the unique id
-     */
-    public int getID() {
-        return this.id;
-    }
-    
-    /**
      * Gets the name of the agent.
      * 
      * @return  the name of the agent
      */
     public String getName() {
         return name;
+    }
+    
+    /**
+     * Gets the locally unique identifier of the agent.
+     * 
+     * @return  the locally unique identifier of the agent
+     */
+    public String getId() {
+        return id;   
     }
     
     /**
@@ -124,28 +119,22 @@ public abstract class MetaAgent implements Runnable {
         while (true) {
             try {
                 final Message message = messageQueue.take();
-                
-                // Make sure this message hasn't already visited this agent previously
-                if (!message.hasVisited(this.id)) {
-                    if (cloneable) {
-                        // Handle message in new thread.
-                        // TODO: Implement thread pool.
-                        new Thread() {
-                            @Override
-                            public void run() {
-                                handleMessage(message);
-                                message.addVisited(id);
-                            }
-                        }.start();
-                        
-                    } else {
+                if (cloneable) {
+                    
+                    // TODO: Implement thread pool.
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            handleMessage(message);
+                        }
+                    }.start();
 
-                        // Handle message in this thread.
-                        handleMessage(message);
-                        message.addVisited(id);
-                    }
+                } else {
+
+                    // Handle message in this thread.
+                    handleMessage(message);
+                    
                 }
-
             } catch (InterruptedException ex) {
                 System.out.println("Thread was interrupted during message de-queue.");
             }
@@ -178,13 +167,13 @@ public abstract class MetaAgent implements Runnable {
      */
     public abstract void handleMessage(Message message);
     
-    /**
-     * Gets whether or not this agent is, or has a route to, the agent with
-     * the specified name.
-     * 
-     * @param name  the name of the agent to seek
-     * @return      whether or not this agent has a route to the agent with the specified name
-     */
-    public abstract boolean hasRouteToAgent(String name);
+//    /**
+//     * Gets whether or not this agent is, or has a route to, the agent with
+//     * the specified name.
+//     * 
+//     * @param name  the name of the agent to seek
+//     * @return      whether or not this agent has a route to the agent with the specified name
+//     */
+//    public abstract boolean hasRouteToAgent(String name);    
     
 }

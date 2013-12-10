@@ -1,5 +1,8 @@
 package denobo;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+
 /**
  *
  * @author Saul Johnson
@@ -20,6 +23,28 @@ public class DenoboProtocol {
         sb.append(packet.getBody());
         return sb.toString();
         
+    }
+    
+    public DenoboPacket readPacket(BufferedReader reader) throws IOException {
+        
+        DenoboPacket nextPacket;
+        
+        // Parse out status code.
+        final String[] statusCodeField = reader.readLine().split(":");
+        final int statusCode = Integer.parseInt(statusCodeField[1]);
+
+        // Parse out body length.
+        final String[] bodyLengthField = reader.readLine().split(":");
+        final int bodyLength = Integer.parseInt(bodyLengthField[1]);
+
+        // Parse out payload.
+        final char[] packetBody = new char[bodyLength];
+        reader.read(packetBody);
+
+        // Let the observers deal with packet.
+        nextPacket = new DenoboPacket(statusCode, String.valueOf(packetBody));
+        return nextPacket;
+                    
     }
     
     

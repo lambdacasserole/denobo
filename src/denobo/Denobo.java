@@ -15,14 +15,14 @@ public class Denobo {
         Portal p2 = new Portal("portal2");
         Portal p3 = new Portal("portal3");
 
-        p1.registerParentPortal(p2);
-        p1.registerParentPortal(p3);
+        p1.addAgent(p2);
+        p1.addAgent(p3);
 
-        p2.registerParentPortal(p1);
-        p2.registerParentPortal(p3);
+        p2.addAgent(p1);
+        p2.addAgent(p3);
 
-        p3.registerParentPortal(p1);
-        p3.registerParentPortal(p2);
+        p3.addAgent(p1);
+        p3.addAgent(p2);
 
         
         Agent agent1 = new Agent("agent1", false);
@@ -42,7 +42,7 @@ public class Denobo {
         });
                 
         Agent agent3 = new Agent("agent3", false);
-        agent2.addMessageHandler(new MessageHandler() {
+        agent3.addMessageHandler(new MessageHandler() {
             @Override
             public void messageRecieved(Message message) {
                 System.out.println("received message from " + message.getFrom() + ": " + message.getMessage());
@@ -53,7 +53,7 @@ public class Denobo {
         p2.addAgent(agent2);
         p3.addAgent(agent3);
         
-        agent3.sendMessage("agent1", "Testing");
+        agent3.sendMessage("agent2", "Testing");
 
 //        Agent a2 = new Agent("agent2", false);
 //        NetworkPortal np2 = new NetworkPortal("networkportal2", 4757);

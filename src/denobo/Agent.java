@@ -28,7 +28,7 @@ public class Agent extends MetaAgent {
     /**
      * Adds a {@link MessageHandler} to listen for messages passed to this agent.
      * 
-     * @param handler   the message handler to add as an observer
+     * @param handler   the {@link MessageHandler} to add as an observer
      */
     public void addMessageHandler(MessageHandler handler) {
         handlers.add(handler);
@@ -38,36 +38,24 @@ public class Agent extends MetaAgent {
      * Removes a {@link MessageHandler} that is currently listening for messages 
      * passed to this agent.
      * 
-     * @param handler   the message handler to remove as an observer
+     * @param handler   the {@link MessageHandler} to remove as an observer
      */
     public void removeMessageHandler(MessageHandler handler) {
         handlers.remove(handler);
     }
     
     /**
-     * Sends a message from this agent to another.
+     * Sends a {@link Message} from this {@link Agent} to another.
      * 
-     * @param to        the name of the recipient agent
+     * @param to        the name of the recipient {@link Agent}
      * @param message   the message to send
      */
     public void sendMessage(String to, String message) {
         
         // Check for route to recipient agent and send.
         for (Portal portal : portals) {
-            if (portal.hasRouteToAgent(to)) {
-                portal.queueMessage(new Message(getName(), to, message));
-                break;
-            }
+            portal.queueMessage(new Message(getName(), to, message));
         }
-        
-    }
-    
-    @Override
-    public boolean hasRouteToAgent(String name) {
-        
-        // If this agent is the agent requested, we consider this agent to have 
-        // a route to itself.
-        return name.equals(getName());
         
     }
     

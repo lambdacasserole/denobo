@@ -140,10 +140,10 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         
     }
 
-    @Override
-    public boolean hasRouteToAgent(String name) {
-        return true;
-    }
+//    @Override
+//    public boolean hasRouteToAgent(String name) {
+//        return true;
+//    }
 
     @Override
     public void connectionAuthenticated(DenoboConnection connection) {

@@ -16,12 +16,12 @@ import java.util.List;
 public class DenoboConnection implements Runnable {
 
     /**
-     * The socket to handle receiving data from.
+     * Holds the socket used to send and receive data.
      */
     private final Socket connection;
     
     /**
-     * The observers that we notify whenever certain events occur.
+     * The observers that we notify in response to connection events.
      */
     private final List<DenoboConnectionObserver> observers;
 
@@ -47,6 +47,8 @@ public class DenoboConnection implements Runnable {
      */
     private PrintWriter connectionWriter;
 
+    private final DenoboProtocol protocol;
+                    
     /**
      * Creates a {@link ConnectionHandler} that will handle receiving data from a socket.
      *
@@ -57,6 +59,8 @@ public class DenoboConnection implements Runnable {
         // Store reference to socket and initialise observer list.
         this.connection = connection;
         this.observers = new ArrayList<>();
+     
+        protocol = new DenoboProtocol();
         
         try {
             
@@ -91,28 +95,14 @@ public class DenoboConnection implements Runnable {
                 
                 System.out.println("Waiting for data on port [" + connection.getPort() + "]...");
                 
-                // TODO: Fix this code, very hacky.
+                // Wait on a valid packet magic number.
                 final String buffer = connectionReader.readLine();                
                 if (buffer.equals(DenoboProtocol.PACKET_HEADER)) {
                     
                     System.out.println("Received valid packet.");
-                    
-                    DenoboPacket nextPacket;
-                
-                    // Parse out status code.
-                    final String[] statusCodeField = connectionReader.readLine().split(":");
-                    final int statusCode = Integer.parseInt(statusCodeField[1]);
-                    
-                    // Parse out body length.
-                    final String[] bodyLengthField = connectionReader.readLine().split(":");
-                    final int bodyLength = Integer.parseInt(bodyLengthField[1]);
-                    
-                    // Parse out payload.
-                    final char[] packetBody = new char[bodyLength];
-                    connectionReader.read(packetBody);
+                    final DenoboPacket nextPacket = protocol.readPacket(connectionReader);
                     
                     // Let the observers deal with packet.
-                    nextPacket = new DenoboPacket(statusCode, String.valueOf(packetBody));
                     for (DenoboConnectionObserver currentObserver : observers) {
                         currentObserver.messageReceived(this, nextPacket); 
                     }
@@ -210,7 +200,6 @@ public class DenoboConnection implements Runnable {
         // Write serialised message to output stream.
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
         
-        final DenoboProtocol protocol = new DenoboProtocol();
         connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, message.toString())));
         connectionWriter.flush();
             

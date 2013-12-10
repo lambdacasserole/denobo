@@ -16,6 +16,11 @@ public class Portal extends MetaAgent {
     final private HashMap<String, MetaAgent> childAgents;
 
     /**
+     * Holds a message history logger used to prevent backwards message propagation.
+     */
+    final private MessageHistory messageHistory;
+    
+    /**
      * Initialises a new instance of a portal.
      * 
      * @param name  the name of the portal
@@ -24,6 +29,7 @@ public class Portal extends MetaAgent {
         
         super(name);
         childAgents = new HashMap<>();
+        messageHistory = new MessageHistory();
         
     }
    
@@ -52,30 +58,30 @@ public class Portal extends MetaAgent {
     }
     
     @Override
-    public boolean hasRouteToAgent(String name) {
-        
-        // Check routing to destination agent via children.
-        for (MetaAgent agent : childAgents.values()) {
-            if (agent.hasRouteToAgent(name)) {
-                return true;
-            }
-        }
-        
-        return false;
-        
-    }
-    
-    @Override
     public void handleMessage(Message message) {
         
-        // Check whether or not we have a child agent with a matching name.
-        for(MetaAgent agent : childAgents.values()) {
-            if(agent.hasRouteToAgent(message.getTo())) {
-                agent.queueMessage(message);
-                break;
+        // Reject messages that have previously passed through this node.
+        if (messageHistory.hasMessage(message.getId())) {
+            return;
+        }
+        
+        // Record the ID of this message in the history.
+        messageHistory.update(message.getId());
+        
+        if (childAgents.containsKey(message.getTo())) {
+        
+            // Pass to child for processing if we have the recipent as a subnode.
+            childAgents.get(message.getTo()).queueMessage(message);
+            
+        } else {
+
+            // Broadcast to child portals.
+            for (MetaAgent agent : childAgents.values()) {
+                if (agent instanceof Portal) { agent.queueMessage(message); }
             }
+            
         }
         
     }
-    
+
 }
