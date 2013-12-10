@@ -3,6 +3,8 @@ package denobo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -43,6 +45,11 @@ public abstract class MetaAgent implements Runnable {
     private final String id;
     
     /**
+     * The thread pool service for handling cloneable agents.
+     */
+    private ExecutorService executorService = null;
+    
+    /**
      * Abstract constructor to initialise a new instance of a meta-agent.
      * 
      * @param name      the name of the agent
@@ -58,6 +65,11 @@ public abstract class MetaAgent implements Runnable {
         messageQueue = new LinkedBlockingQueue<>();
         portals = new ArrayList<>();
                 
+        // Only construct the thread pool if we are cloneable
+        if (cloneable) {
+            executorService = Executors.newCachedThreadPool();
+        }
+        
         underlyingThread = new Thread(this);
         underlyingThread.start();
         
@@ -121,13 +133,15 @@ public abstract class MetaAgent implements Runnable {
                 final Message message = messageQueue.take();
                 if (cloneable) {
                     
-                    // TODO: Implement thread pool.
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            handleMessage(message);
+                    // Execute the handleMessage on a seperate thread
+                    executorService.submit(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                handleMessage(message);
+                            }
                         }
-                    }.start();
+                    );
 
                 } else {
 
@@ -138,8 +152,7 @@ public abstract class MetaAgent implements Runnable {
             } catch (InterruptedException ex) {
                 System.out.println("Thread was interrupted during message de-queue.");
             }
-        }
-                
+        }   
     }
     
     /**

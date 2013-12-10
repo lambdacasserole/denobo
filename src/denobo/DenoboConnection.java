@@ -96,7 +96,13 @@ public class DenoboConnection implements Runnable {
                 System.out.println("Waiting for data on port [" + connection.getPort() + "]...");
                 
                 // Wait on a valid packet magic number.
-                final String buffer = connectionReader.readLine();                
+                final String buffer = connectionReader.readLine();
+                
+                // Check if the connection was closed
+                if (buffer == null) {
+                    break;
+                }
+                
                 if (buffer.equals(DenoboProtocol.PACKET_HEADER)) {
                     
                     System.out.println("Received valid packet.");
@@ -119,12 +125,68 @@ public class DenoboConnection implements Runnable {
             
             // TODO: Handle exception.
             System.out.println(ex.getMessage());
-            
         }
         
         // Connection has closed, clean up.
         disconnect();
 
+    }
+    
+    /**
+     * Disconnects and frees up any resources used by this DenoboConnection.
+     */
+    public void disconnect() {
+        
+        // If we're already disconnected, don't try again.
+        if (disconnected) { return; }
+        
+        // Specify that we're now disconnected.
+        disconnected = true;
+
+        try {
+
+            // Close I/O streams.
+            connectionReader.close();
+            connectionWriter.close();
+            
+            // Close the socket to the connection which will cause an exception
+            // to be thrown by receiveThread.
+            connection.close();
+            
+            // If the thread executing this isn't the receiveThread, block and
+            // wait for the receiveThread to finish
+            if (Thread.currentThread() != receiveThread) {
+                // Wait for the receive thread to terminate.
+                receiveThread.join();
+            }
+
+        } catch (IOException | InterruptedException ex) {
+            // TODO: Handle exception.
+            System.out.println(ex.getMessage());
+            
+        }
+        
+        // notify any observers that this connection has been shutdown
+        for (DenoboConnectionObserver currentObserver : observers) {
+            currentObserver.connectionShutdown(this);
+        }  
+    }
+    
+    /**
+     * Sends a message over this connection.
+     * 
+     * @param message   the message to send 
+     */
+    public void send(Message message) {
+        
+        // TODO: Proper serialisation logic.
+
+        // Write serialised message to output stream.
+        System.out.println("Writing data to port [" + connection.getPort() + "]...");
+        
+        connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, message.getMessage())));
+        connectionWriter.flush();
+            
     }
     
     /**
@@ -155,54 +217,12 @@ public class DenoboConnection implements Runnable {
         observers.clear();
     }
 
-    /**
-     * Disconnects and frees up any resources used by this DenoboConnection.
-     */
-    public void disconnect() {
-        
-        // If we're already disconnected, don't try again.
-        if (disconnected) { return; }
-        
-        // Specify that we're now disconnected.
-        disconnected = true;
-
-        try {
-
-            // Close I/O streams.
-            connectionReader.close();
-            connectionWriter.close();
-            
-            // Close the socket to the connection which will cause an exception
-            // to be thrown by receiveThread.
-            connection.close();
-            
-            // Wait for the receive thread to terminate.
-            receiveThread.join();
-            
-        } catch (IOException | InterruptedException ex) {
-            
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
-            
-        }
-        
+    public int getRemotePort() {
+        return connection.getPort();
     }
     
-    /**
-     * Sends a message over this connection.
-     * 
-     * @param message   the message to send 
-     */
-    public void send(Message message) {
-        
-        // TODO: Proper serialisation logic.
-
-        // Write serialised message to output stream.
-        System.out.println("Writing data to port [" + connection.getPort() + "]...");
-        
-        connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, message.toString())));
-        connectionWriter.flush();
-            
+    public String getRemoteAddress() {
+        return connection.getRemoteSocketAddress().toString();
     }
     
 }

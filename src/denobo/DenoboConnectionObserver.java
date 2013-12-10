@@ -15,11 +15,19 @@ public interface DenoboConnectionObserver {
     public void connectionAuthenticated(DenoboConnection connection);
     
     /**
+     * Invoked when a {@link DenoboConnection} has been disconnected or connection
+     * was lost.
+     * 
+     * @param connection    the {@link DenoboConnection} that connection was lost to
+     */
+    public void connectionShutdown(DenoboConnection connection);
+    
+    
+    /**
      * Invoked when a message was received from a {@link DenoboConnection}.
      * 
      * @param connection    the {@link DenoboConnection} we received the message from
      * @param packet        the message received
      */
     public void messageReceived(DenoboConnection connection, DenoboPacket packet);
-    
 }

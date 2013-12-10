@@ -157,6 +157,20 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     }
 
     @Override
+    public void connectionShutdown(DenoboConnection connection) {
+        
+        ////////////////////////////////////////////////////////////////////////
+        // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
+        ////////////////////////////////////////////////////////////////////////
+        
+        System.out.println(connection.getRemoteAddress() + ":" + connection.getRemotePort() 
+                + " has disconnected");
+        
+        // needs syncronising
+        connections.remove(connection);
+    }
+    
+    @Override
     public void messageReceived(DenoboConnection connection, DenoboPacket packet) {
                 
         ////////////////////////////////////////////////////////////////////////
@@ -164,6 +178,6 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         ////////////////////////////////////////////////////////////////////////
         
         // Received a message (just printing the output for now)
-        //System.out.println(packet.getBody());
+        System.out.println(packet.getBody());
     }
 }
