@@ -34,10 +34,10 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         portTextField.setText("4757");
 
         localAgentNameField = new JTextField(10);
-        localAgentNameField.setText("Lee");
+        localAgentNameField.setText("Alex");
 
         remoteAgentNameField = new JTextField(10);
-        remoteAgentNameField.setText("Alex");
+        remoteAgentNameField.setText("Lee");
 
         receiveTextField = new JTextArea(30, 40);
         receiveTextField.setEditable(false);

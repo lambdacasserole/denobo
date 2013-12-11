@@ -100,7 +100,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
                 
                 // notify any observers
                 for (NetworkPortalObserver currentObserver : observers) {
-                    currentObserver.incomingConnectionAccepted(acceptedSocket.getRemoteSocketAddress().toString(), acceptedSocket.getPort());
+                    currentObserver.incomingConnectionAccepted(acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
                 }
                 
                 
@@ -158,8 +158,13 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         }
              
         // Close any connections we have.
-        for (DenoboConnection currentConnection : connections) {
-            currentConnection.disconnect();
+        // we make a copy because the original list will get modified when an
+        // event is thrown everytime we close a connection which will remove that
+        // connection from the list we are iterating which will result in a 
+        // ConcurrentModificationException
+        final ArrayList<DenoboConnection> connectionsListCopy = new ArrayList<>(connections);
+        for (DenoboConnection currentConnection : connectionsListCopy) {
+            currentConnection.disconnect();     
         }
             
         // Remove all the connections from our collection.
@@ -168,7 +173,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         // Remove all observers
         observers.clear();
         
-        // Remove all portals attached???
+        // TODO: Determine whether we need this?
         //this.portals.clear();
     }
 

@@ -136,23 +136,25 @@ public class DenoboConnection implements Runnable {
      * Disconnects and frees up any resources used by this DenoboConnection.
      */
     public void disconnect() {
-        
+
         // If we're already disconnected, don't try again.
         if (disconnected) { return; }
-        
+
         // Specify that we're now disconnected.
         disconnected = true;
 
         try {
 
             // Close I/O streams.
-            connectionReader.close();
+
+            // commented out this because for some reason it causes the program to hang.
+            //connectionReader.close();
             connectionWriter.close();
-            
+
             // Close the socket to the connection which will cause an exception
             // to be thrown by receiveThread.
             connection.close();
-            
+
             // If the thread executing this isn't the receiveThread, block and
             // wait for the receiveThread to finish executing
             if (Thread.currentThread() != receiveThread) {
@@ -163,13 +165,13 @@ public class DenoboConnection implements Runnable {
         } catch (IOException | InterruptedException ex) {
             // TODO: Handle exception.
             System.out.println(ex.getMessage());
-            
         }
-        
+
         // notify any observers that this connection has been shutdown
         for (DenoboConnectionObserver currentObserver : observers) {
             currentObserver.connectionShutdown(this);
         }  
+
     }
     
     /**
@@ -223,7 +225,7 @@ public class DenoboConnection implements Runnable {
     }
     
     public String getRemoteAddress() {
-        return connection.getRemoteSocketAddress().toString();
+        return connection.getInetAddress().getHostAddress();
     }
     
 }

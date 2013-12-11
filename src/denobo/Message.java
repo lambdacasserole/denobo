@@ -54,7 +54,7 @@ public class Message {
             } else if (nameValueSplitter[0].equals("msg")) {
                 message = nameValueSplitter[1];
             } else {
-                // invalid name string
+                // TODO: Handle invalid string parameter
             }
         }
 
