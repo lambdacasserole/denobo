@@ -184,7 +184,8 @@ public class DenoboConnection implements Runnable {
         // Write serialised message to output stream.
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
         
-        connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, message.getMessage())));
+        //connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, message.getMessage())));
+        connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, Message.serialize(message))));
         connectionWriter.flush();
             
     }

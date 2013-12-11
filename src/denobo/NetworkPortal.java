@@ -19,7 +19,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     private ServerSocket serverSocket;
     private Thread acceptThread;
     
-    private boolean disconnecting;
+    private boolean shuttingDown;
     
     public NetworkPortal(String name, int portNumber) {
         
@@ -90,7 +90,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
      */
     private void listenForConnections() {
         
-        while (!disconnecting) {
+        while (!shuttingDown) {
             try {
                 
                 System.out.println("Socket server open on port [" 
@@ -118,7 +118,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
             }
         }
         
-        disconnecting = false;
+        shuttingDown = false;
         
     }
     
@@ -128,7 +128,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
      * @param hostName      the host name of the machine hosting the remote portal
      * @param portNumber    the port number the remote portal is listening on
      */
-    public void connect(String hostName, int portNumber) {
+    public void addConnection(String hostName, int portNumber) {
         try {
             
             addRunningConnection(new Socket(hostName, portNumber));
@@ -141,9 +141,9 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         }
     }
 
-    public void disconnect() {
+    public void shutdown() {
         
-        disconnecting = true;
+        shuttingDown = true;
         
         try {
             // First prevent anyone else from connecting.
@@ -167,6 +167,9 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         
         // Remove all observers
         observers.clear();
+        
+        // Remove all portals attached???
+        //this.portals.clear();
     }
 
     @Override
@@ -223,5 +226,10 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         
         // Received a message (just printing the output for now)
         System.out.println(packet.getBody());
+        
+        
+        Message msg = Message.deserialize(packet.getBody());
+        
+        super.handleMessage(msg);
     }
 }

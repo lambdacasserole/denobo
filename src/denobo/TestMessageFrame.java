@@ -26,18 +26,18 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
     private JButton connectButton, sendButton, disconnectButton;
 
     public TestMessageFrame() {
-
+        
         ipTextField = new JTextField(10);
-        ipTextField.setText("HOSTNAME");
+        ipTextField.setText("localhost");
 
         portTextField = new JTextField(5);
         portTextField.setText("4757");
 
         localAgentNameField = new JTextField(10);
-        localAgentNameField.setText("LOCAL_AGENT_NAME");
+        localAgentNameField.setText("Lee");
 
         remoteAgentNameField = new JTextField(10);
-        remoteAgentNameField.setText("REMOTE_AGENT_NAME");
+        remoteAgentNameField.setText("Alex");
 
         receiveTextField = new JTextArea(30, 40);
         receiveTextField.setEditable(false);
@@ -48,7 +48,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
 
         connectButton = new JButton("Connect");
         connectButton.addActionListener(this);
-        
+
         disconnectButton = new JButton("Disconnect");
         disconnectButton.addActionListener(this);
 
@@ -74,7 +74,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         c.gridy = 0;
         c.insets = new Insets(5, 5, 5, 5);
         this.add(connectButton, c);
-        
+
         c = new GridBagConstraints();
         c.gridx = 2;
         c.gridy = 1;
@@ -117,46 +117,28 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         c.gridy = 3;
         c.insets = new Insets(5, 5, 5, 5);
         this.add(sendButton, c);
+        
+        
+        networkPortal = new NetworkPortal("local-network-portal", 4757);
+        networkPortal.addObserver(this);
+        
+        messageAgent = new Agent(localAgentNameField.getText(), false);
+        messageAgent.addMessageHandler(this);
+        networkPortal.addAgent(messageAgent);
     }
 
     @Override
     public void actionPerformed(ActionEvent ae) {
-        
+
         if (ae.getSource() == connectButton) {
-            
-            if (messageAgent != null) {
-                messageAgent.removeMessageHandler(this);
-            }
-            if (networkPortal != null) {
-                networkPortal.removeAgent(messageAgent);
-                networkPortal.disconnect();
-            }
-            
-            messageAgent = new Agent(localAgentNameField.getText(), false);
-            networkPortal = new NetworkPortal("local-network-portal", 4757);
-            
-            messageAgent.addMessageHandler(this);
-            networkPortal.addAgent(messageAgent);
-            
-            networkPortal.connect(ipTextField.getText(), Integer.valueOf(portTextField.getText()));
-            
+            networkPortal.addConnection(ipTextField.getText(), Integer.valueOf(portTextField.getText()));
             receiveTextField.setText(null);
-            
         } else if (ae.getSource() == sendButton) {
-            if (networkPortal == null) {
-                receiveTextField.append("Can't send message to nobody\n");
-            } else {
-                messageAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
-                receiveTextField.append("Me: " + sendTextField.getText() + "\n");
-                sendTextField.setText(null);
-            }
-            
+            messageAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
+            receiveTextField.append("Me: " + sendTextField.getText() + "\n");
+            sendTextField.setText(null);
         } else if (ae.getSource() == disconnectButton) {
-            if (networkPortal == null) {
-                receiveTextField.append("Already disconnected from anyone\n");
-            } else {
-                networkPortal.disconnect();
-            }
+            networkPortal.shutdown();
         }
     }
 
@@ -164,7 +146,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
     public void messageRecieved(Message message) {
         receiveTextField.append(message.getFrom() + ": " + message.getMessage() + "\n");
     }
-    
+
     @Override
     public void incomingConnectionAccepted(String ip, int port) {
         receiveTextField.append("[" + ip + ":" + port + "] has connected\n");
