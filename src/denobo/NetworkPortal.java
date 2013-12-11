@@ -233,7 +233,18 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         System.out.println(packet.getBody());
         
         
+        
+        
         Message msg = Message.deserialize(packet.getBody());
+        
+        // TODO: This might result in unecessary broadcasting.
+        
+        for (DenoboConnection currentConnection : connections) {
+            // Pointless sending it back to the NetworkPortal who sent it to us
+            if (currentConnection != connection) {
+                currentConnection.send(msg);
+            }
+        }
         
         super.handleMessage(msg);
     }
