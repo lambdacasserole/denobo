@@ -12,7 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public abstract class MetaAgent implements Runnable {
+public abstract class MetaAgent {
        
     /**
      * The {@link BlockingQueue} queue that underlies this object.
@@ -70,7 +70,12 @@ public abstract class MetaAgent implements Runnable {
             executorService = Executors.newCachedThreadPool();
         }
         
-        underlyingThread = new Thread(this);
+        underlyingThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                queueProcessLoop();
+            }
+        });
         underlyingThread.start();
     }
         
@@ -123,8 +128,7 @@ public abstract class MetaAgent implements Runnable {
         }
     }
     
-    @Override
-    public void run() {
+    private void queueProcessLoop() {
         
         // Loop until interrupted.
         while (true) {
@@ -177,7 +181,7 @@ public abstract class MetaAgent implements Runnable {
      * 
      * @param message   the message to handle
      */
-    public abstract void handleMessage(Message message);
+    protected abstract void handleMessage(Message message);
     
 //    /**
 //     * Gets whether or not this agent is, or has a route to, the agent with

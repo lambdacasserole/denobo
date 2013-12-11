@@ -60,7 +60,7 @@ public class Agent extends MetaAgent {
     }
     
     @Override
-    public void handleMessage(Message message) {
+    protected void handleMessage(Message message) {
         
         // Pass message to each handler.
         for (MessageHandler handler : handlers) {

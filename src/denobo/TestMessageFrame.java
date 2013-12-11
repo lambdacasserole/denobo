@@ -9,8 +9,10 @@ import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -24,6 +26,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
     private JTextField ipTextField, portTextField, localAgentNameField, remoteAgentNameField;
     private JTextArea receiveTextField, sendTextField;
     private JButton connectButton, sendButton, disconnectButton;
+    private JScrollPane scrollPane;
 
     public TestMessageFrame() {
         
@@ -101,7 +104,8 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         c.weightx = 1;
         c.weighty = 1;
         c.fill = GridBagConstraints.BOTH;
-        this.add(receiveTextField, c);
+        scrollPane = new JScrollPane(receiveTextField);
+        this.add(scrollPane, c);
 
         c = new GridBagConstraints();
         c.gridx = 0;
@@ -119,12 +123,14 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         this.add(sendButton, c);
         
         
-        networkPortal = new NetworkPortal("local-network-portal", 4757);
+        networkPortal = new NetworkPortal("local-network-portal");
         networkPortal.addObserver(this);
-        
+
         messageAgent = new Agent(localAgentNameField.getText(), false);
         messageAgent.addMessageHandler(this);
         networkPortal.addAgent(messageAgent);
+        
+        networkPortal.advertiseConnection(4757);
     }
 
     @Override
@@ -132,7 +138,6 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
 
         if (ae.getSource() == connectButton) {
             networkPortal.addConnection(ipTextField.getText(), Integer.valueOf(portTextField.getText()));
-            receiveTextField.setText(null);
         } else if (ae.getSource() == sendButton) {
             messageAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
             receiveTextField.append("Me: " + sendTextField.getText() + "\n");
@@ -155,5 +160,25 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
     @Override
     public void connectionClosed(String ip, int port) {
         receiveTextField.append("[" + ip + ":" + port + "] has diconnected\n");
+    }
+    
+    @Override
+    public void connectionAddFailed(final String ip, final int port) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                receiveTextField.append("Failed to connect to " + ip + ":" + port + "\n");    
+            }
+        });
+    }
+    
+    @Override
+    public void connectionAddSucceeded(final String ip, final int port) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                receiveTextField.append("Connected successfully to " + ip + ":" + port + "\n");
+            }
+        });
     }
 }

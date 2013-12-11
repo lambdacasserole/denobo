@@ -1,6 +1,7 @@
 package denobo;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -13,40 +14,186 @@ import java.util.List;
  */
 public class NetworkPortal extends Portal implements DenoboConnectionObserver {
 
-    private List<DenoboConnection> connections;
-    private List<NetworkPortalObserver> observers;
+    /**
+     * The list of connections that we have connected to us.
+     */
+    private final List<DenoboConnection> connections;
     
+    /**
+     * The list of observers we need to notify on certain events.
+     */
+    private final List<NetworkPortalObserver> observers;
+    
+    /**
+     * The socket we listen and accept connection requests on.
+     */
     private ServerSocket serverSocket;
+    
+    /**
+     * The thread that simply sits and waits for connection requests for it to 
+     * accept and add to our connection list.
+     */
     private Thread acceptThread;
     
-    private boolean shuttingDown;
+    /**
+     * A status variable we use to indicate that the acceptThread should abort.
+     */
+    private boolean shutdown;
     
-    public NetworkPortal(String name, int portNumber) {
-        
+    
+    
+    
+    /**
+     * Creates a {@link NetworkPortal} with the specified name.
+     * 
+     * @param name The name assigned to the NetworkPortal
+     */
+    public NetworkPortal(String name) {
         super(name);
         connections = new ArrayList<>();
         observers = new ArrayList<>();
+    }
+    
+    /**
+     * Sets up allowing incoming connection requests to be accepted.
+     * 
+     * @param portNumber    The port number to listen for connection requests on
+     */
+    public void advertiseConnection(int portNumber) {
         
+        // shutdown in case we are already advertising
+        shutdown();
+                
         try {
-            
             serverSocket = new ServerSocket(portNumber);
             acceptThread = new Thread() {
                 @Override
                 public void run() {
-                    listenForConnections();
+                    acceptConnectionsLoop();
                 }
             };
             acceptThread.start();
-            
         } catch(IOException ex) {
-            
             // TODO: Handle exception.
             System.out.println(ex.getMessage());
-            
+        }
+    }
+
+    /**
+     * Listens for connections on the server port and adds connections to a list
+     * when they are requested by connection clients.
+     */
+    private void acceptConnectionsLoop() {
+        
+        while (!shutdown) {
+            try {
+                System.out.println("Socket server open on port [" 
+                        + serverSocket.getLocalPort() + "] and listening...");
+                
+                final Socket acceptedSocket = serverSocket.accept();
+                
+                // notify any observers
+                for (NetworkPortalObserver currentObserver : observers) {
+                    currentObserver.incomingConnectionAccepted(acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
+                }
+                
+                System.out.println("Socket server open on port [" 
+                        + serverSocket.getLocalPort() + "] dispensed a socket on port [" 
+                        + acceptedSocket.getPort() + "]."); 
+                
+                addRunningConnection(acceptedSocket);
+                
+            } catch (IOException ex) {
+                // TODO: Handle exception.
+                System.out.println(ex.getMessage());
+            }
         }
         
+        shutdown = false;
     }
     
+    /**
+     * Connects this {@link NetworkPortal} to a remote network portal.
+     * 
+     * @param hostName      the host name of the machine hosting the remote portal
+     * @param portNumber    the port number the remote portal is listening on
+     */
+    public void addConnection(String hostName, int portNumber) {
+        try {
+            
+            final Socket newSocket = new Socket();
+            final InetSocketAddress address = new InetSocketAddress(hostName, portNumber);
+            
+            // attempt to connect
+            newSocket.connect(address);
+            
+            // notify any observers that we have connected
+            for (NetworkPortalObserver currentObserver : observers) {
+                currentObserver.connectionAddSucceeded(hostName, portNumber);
+            }
+            
+            addRunningConnection(new Socket(hostName, portNumber));
+            
+        } catch (IOException ex) {
+            // notify any observers that we failed to connect
+            for (NetworkPortalObserver currentObserver : observers) {
+                currentObserver.connectionAddFailed(hostName, portNumber);
+            }
+        }
+    }
+    
+    private void addRunningConnection(Socket s)  {
+        final DenoboConnection newConnection = new DenoboConnection(s);
+        newConnection.addObserver(this);
+        connections.add(newConnection);
+        newConnection.startRecieveThread();
+    }
+    
+    /**
+     * Shuts down this NetworkPortal. No more incoming connection requests will be
+     * accepted and any current connections are terminated and removed.
+     */
+    public void shutdown() {
+
+        shutdown = true;
+        
+        try {
+            // First prevent anyone else from connecting.
+            if (serverSocket != null) { serverSocket.close(); }
+            
+            // Wait for the connection accepting thread to terminate.
+            if (acceptThread != null) { acceptThread.join(); }
+
+        } catch (IOException | InterruptedException ex) {
+            // TODO: Handle exception.
+            System.out.println(ex.getMessage());
+        }
+             
+        // Close any connections we have.
+        // we make a copy because the original list will get modified when an
+        // event is thrown everytime we close a connection which will remove that
+        // connection from the list we are iterating which will result in a 
+        // ConcurrentModificationException
+        final ArrayList<DenoboConnection> connectionsListCopy = new ArrayList<>(connections);
+        for (DenoboConnection currentConnection : connectionsListCopy) {
+            currentConnection.disconnect();     
+        }
+            
+        // Remove all the connections from our collection. (Even though they
+        // should all be removed from the connectionShutdown event anyway) 
+        connections.clear();
+    }
+    
+    @Override
+    protected void handleMessage(Message message) {
+        
+        super.handleMessage(message);
+        for (DenoboConnection connection : connections) {
+            connection.send(message);
+        }
+    }
+    
+
     /**
      * Adds an observer to the list of observers to be notified of events.
      * 
@@ -75,117 +222,6 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         observers.clear();
     }
     
-    
-    private void addRunningConnection(Socket s)  {
-        final DenoboConnection newConnection = new DenoboConnection(s);
-        newConnection.addObserver(this);
-        connections.add(newConnection);
-
-        newConnection.startRecieveThread();
-    }
-    
-    /**
-     * Listens for connections on the server port and adds connections to a list
-     * when they are requested by connection clients.
-     */
-    private void listenForConnections() {
-        
-        while (!shuttingDown) {
-            try {
-                
-                System.out.println("Socket server open on port [" 
-                        + serverSocket.getLocalPort() + "] and listening...");
-                
-                final Socket acceptedSocket = serverSocket.accept();
-                
-                // notify any observers
-                for (NetworkPortalObserver currentObserver : observers) {
-                    currentObserver.incomingConnectionAccepted(acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
-                }
-                
-                
-                System.out.println("Socket server open on port [" 
-                        + serverSocket.getLocalPort() + "] dispensed a socket on port [" 
-                        + acceptedSocket.getPort() + "]."); 
-                
-                addRunningConnection(acceptedSocket);
-                
-            } catch (IOException ex) {
-            
-                // TODO: Handle exception.
-                System.out.println(ex.getMessage());
-                
-            }
-        }
-        
-        shuttingDown = false;
-        
-    }
-    
-    /**
-     * Connects this {@link NetworkPortal} to a remote network portal.
-     * 
-     * @param hostName      the host name of the machine hosting the remote portal
-     * @param portNumber    the port number the remote portal is listening on
-     */
-    public void addConnection(String hostName, int portNumber) {
-        try {
-            
-            addRunningConnection(new Socket(hostName, portNumber));
-            
-        } catch (IOException ex) {
-            
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
-            
-        }
-    }
-
-    public void shutdown() {
-        
-        shuttingDown = true;
-        
-        try {
-            // First prevent anyone else from connecting.
-            serverSocket.close();
-            
-            // Wait for the connection accepting thread to terminate.
-            acceptThread.join();
-
-        } catch (IOException | InterruptedException ex) {
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
-        }
-             
-        // Close any connections we have.
-        // we make a copy because the original list will get modified when an
-        // event is thrown everytime we close a connection which will remove that
-        // connection from the list we are iterating which will result in a 
-        // ConcurrentModificationException
-        final ArrayList<DenoboConnection> connectionsListCopy = new ArrayList<>(connections);
-        for (DenoboConnection currentConnection : connectionsListCopy) {
-            currentConnection.disconnect();     
-        }
-            
-        // Remove all the connections from our collection.
-        connections.clear();
-        
-        // Remove all observers
-        observers.clear();
-        
-        // TODO: Determine whether we need this?
-        //this.portals.clear();
-    }
-
-    @Override
-    public void handleMessage(Message message) {
-        
-        super.handleMessage(message);
-        for (DenoboConnection connection : connections) {
-            connection.send(message);
-        }
-        
-    }
 
 //    @Override
 //    public boolean hasRouteToAgent(String name) {
@@ -229,15 +265,13 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
         
-        // Received a message (just printing the output for now)
+
         System.out.println(packet.getBody());
-        
-        
-        
+
         
         Message msg = Message.deserialize(packet.getBody());
         
-        // TODO: This might result in unecessary broadcasting.
+        // TODO: This might result in unecessary broadcasting and loop backs.
         
         for (DenoboConnection currentConnection : connections) {
             // Pointless sending it back to the NetworkPortal who sent it to us

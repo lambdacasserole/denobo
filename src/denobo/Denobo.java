@@ -69,7 +69,7 @@ public class Denobo {
         
         frame.setSize(500, 500);
         frame.setLocation(100, 300);
-        frame.setResizable(false);
+        //frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);

@@ -13,7 +13,7 @@ import java.util.List;
  * 
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public class DenoboConnection implements Runnable {
+public class DenoboConnection {
 
     /**
      * Holds the socket used to send and receive data.
@@ -82,13 +82,17 @@ public class DenoboConnection implements Runnable {
      */
     public void startRecieveThread() {
         
-        receiveThread = new Thread(this);
+        receiveThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                receiveLoop();
+            }
+        });
         receiveThread.start();
         
     }
 
-    @Override
-    public void run() {
+    private void receiveLoop() {
         
         try {
             while (!disconnected) {
@@ -137,7 +141,9 @@ public class DenoboConnection implements Runnable {
      */
     public void disconnect() {
 
-        // If we're already disconnected, don't try again.
+        // TODO: Make this method block until it is completely finished.
+        
+        // If we're already disconnected, don't try again. (Not purely thread safe)
         if (disconnected) { return; }
 
         // Specify that we're now disconnected.
@@ -147,6 +153,7 @@ public class DenoboConnection implements Runnable {
 
             // Close I/O streams.
 
+            // TODO: work out why this hangs
             // commented out this because for some reason it causes the program to hang.
             //connectionReader.close();
             connectionWriter.close();
@@ -186,7 +193,6 @@ public class DenoboConnection implements Runnable {
         // Write serialised message to output stream.
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
         
-        //connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, message.getMessage())));
         connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, Message.serialize(message))));
         connectionWriter.flush();
             
@@ -220,12 +226,21 @@ public class DenoboConnection implements Runnable {
         observers.clear();
     }
 
+    /**
+     * Returns the port number the remote peer is using to connect to us on.
+     * 
+     * @return      The port number
+     */
     public int getRemotePort() {
         return connection.getPort();
     }
     
+    /**
+     * Returns the remote IP address of the remote peer for this connection.
+     * 
+     * @return 
+     */
     public String getRemoteAddress() {
         return connection.getInetAddress().getHostAddress();
     }
-    
 }

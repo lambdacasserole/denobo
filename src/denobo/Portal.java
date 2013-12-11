@@ -58,7 +58,7 @@ public class Portal extends MetaAgent {
     }
     
     @Override
-    public void handleMessage(Message message) {
+    protected void handleMessage(Message message) {
         
         // Reject messages that have previously passed through this node.
         if (messageHistory.hasMessage(message.getId())) {
