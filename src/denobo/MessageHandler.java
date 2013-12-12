@@ -10,8 +10,10 @@ public interface MessageHandler {
 
     /**
      * Called when the agent receives a message.
-     * @param message   the message received
+     * 
+     * @param agent     The agent who received the message.
+     * @param message   The message received.
      */
-    public void messageRecieved(Message message);
+    public void messageRecieved(Agent agent, Message message);
     
 }

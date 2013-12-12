@@ -71,7 +71,16 @@ public abstract class Actor {
         underlyingThread.start();
         
     }
-        
+    
+    /**
+     * Abstract constructor to initialise a new instance of a non-cloneable actor.
+     * 
+     * @param name  the name of the actor
+     */
+    public Actor(String name) {
+        this(name, false);
+    }
+    
     /**
      * Adds a message to the actor's message queue.
      * 
@@ -123,16 +132,7 @@ public abstract class Actor {
             }
         }   
     }
-        
-    /**
-     * Abstract constructor to initialise a new instance of a non-cloneable actor.
-     * 
-     * @param name  the name of the actor
-     */
-    public Actor(String name) {
-        this(name, false);
-    }
-    
+
     /**
      * Gets the name of the actor.
      * 
@@ -176,7 +176,7 @@ public abstract class Actor {
      * 
      * @param actor the actor to register
      */
-    public void registerConnectedActor(Actor actor) {
+    protected void registerConnectedActor(Actor actor) {
         connectedActors.add(actor);
     }
     
@@ -185,7 +185,7 @@ public abstract class Actor {
      * 
      * @param actor the actor to unregister
      */
-    public void unregisterConnectedActor(Actor actor) {
+    protected void unregisterConnectedActor(Actor actor) {
         connectedActors.remove(actor);
     }
     

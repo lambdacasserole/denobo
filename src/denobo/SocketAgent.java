@@ -93,7 +93,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 
                 // notify any observers
                 for (SocketAgentObserver currentObserver : observers) {
-                    currentObserver.incomingConnectionAccepted(acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
+                    currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
                 }
                 
                 System.out.println("Socket server open on port [" 
@@ -128,7 +128,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
             
             // notify any observers that we have connected
             for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionAddSucceeded(hostName, portNumber);
+                currentObserver.connectionAddSucceeded(this, hostName, portNumber);
             }
             
             addRunningConnection(newSocket);
@@ -137,7 +137,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
             
             // notify any observers that we failed to connect
             for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionAddFailed(hostName, portNumber);
+                currentObserver.connectionAddFailed(this, hostName, portNumber);
             }
             
         }
@@ -189,7 +189,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     protected boolean handleMessage(Message message) {
         
         // Reject messages that have previously passed through this node.
-        if(!super.handleMessage(message)) { return false; }
+        if (!super.handleMessage(message)) { return false; }
         
         // Broadcast to peers.
         for (DenoboConnection connection : connections) {
@@ -258,7 +258,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         
         // notify any observers
         for (SocketAgentObserver currentObserver : observers) {
-            currentObserver.connectionClosed(connection.getRemoteAddress(), connection.getRemotePort());
+            currentObserver.connectionClosed(this, connection.getRemoteAddress(), connection.getRemotePort());
         }
     }
     
@@ -271,7 +271,11 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         
         System.out.println(message.getMessage());
         
-        handleMessage(message);
+        // I commented out this line because handleMessage is called by the 
+        // Actor's queueProcessLoop in a seperate thread. By us explicity
+        // calling it, dark magic that causes programs to sometimes fail can occur.
+        //handleMessage(message);
+        this.queueMessage(message);
         
     }
 }

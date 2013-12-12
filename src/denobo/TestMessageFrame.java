@@ -29,7 +29,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
     private JScrollPane scrollPane;
 
     public TestMessageFrame() {
-        
+
         ipTextField = new JTextField(10);
         ipTextField.setText("localhost");
 
@@ -121,15 +121,14 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         c.gridy = 3;
         c.insets = new Insets(5, 5, 5, 5);
         this.add(sendButton, c);
-        
-        
+
         networkPortal = new SocketAgent("local-network-portal");
         networkPortal.addObserver(this);
 
         messageAgent = new Agent(localAgentNameField.getText(), false);
         messageAgent.addMessageHandler(this);
         networkPortal.connectActor(messageAgent);
-        
+
         networkPortal.advertiseConnection(4757);
     }
 
@@ -139,41 +138,59 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         if (ae.getSource() == connectButton) {
             networkPortal.addConnection(ipTextField.getText(), Integer.valueOf(portTextField.getText()));
         } else if (ae.getSource() == sendButton) {
-            messageAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
+            // for stress testing
+            //for (int i = 0; i < 100000; i++) {
+                messageAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
+            //}
             receiveTextField.append("Me: " + sendTextField.getText() + "\n");
-            sendTextField.setText(null);
+            //sendTextField.setText(null);
         } else if (ae.getSource() == disconnectButton) {
             networkPortal.shutdown();
         }
     }
 
     @Override
-    public void messageRecieved(Message message) {
-        receiveTextField.append(message.getFrom() + ": " + message.getMessage() + "\n");
-    }
-
-    @Override
-    public void incomingConnectionAccepted(String ip, int port) {
-        receiveTextField.append("[" + ip + ":" + port + "] has connected\n");
-    }
-
-    @Override
-    public void connectionClosed(String ip, int port) {
-        receiveTextField.append("[" + ip + ":" + port + "] has diconnected\n");
-    }
-    
-    @Override
-    public void connectionAddFailed(final String ip, final int port) {
+    public void messageRecieved(Agent agent, final Message message) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                receiveTextField.append("Failed to connect to " + ip + ":" + port + "\n");    
+                receiveTextField.append(message.getFrom() + ": " + message.getMessage() + "\n");
             }
         });
     }
-    
+
     @Override
-    public void connectionAddSucceeded(final String ip, final int port) {
+    public void incomingConnectionAccepted(SocketAgent agent, final String ip, final int port) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                receiveTextField.append("[" + ip + ":" + port + "] has connected\n");
+            }
+        });
+    }
+
+    @Override
+    public void connectionClosed(SocketAgent agent, final String ip, final int port) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                receiveTextField.append("[" + ip + ":" + port + "] has diconnected\n");
+            }
+        });
+    }
+
+    @Override
+    public void connectionAddFailed(SocketAgent agent, final String ip, final int port) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                receiveTextField.append("Failed to connect to " + ip + ":" + port + "\n");
+            }
+        });
+    }
+
+    @Override
+    public void connectionAddSucceeded(SocketAgent agent, final String ip, final int port) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

@@ -60,13 +60,18 @@ public class Agent extends Actor {
      */
     public void sendMessage(String to, String message) {
         
-        Message propagatingMessage = new Message(getName(), to, message);
+        final Message propagatingMessage = new Message(getName(), to, message);
+        
+        // I feel like we need this line so that this agent knows that it does
+        // not need to deal with this message again. Messages don't get received
+        // when this is uncommented so I'll leave it commented for now.
+        // Record the ID of this message in the history.
+        //messageHistory.update(propagatingMessage.getId());
         
         // Broadcast to all parents.
         for (Actor actor : connectedActors) {
             actor.queueMessage(propagatingMessage);
         }
-        
     }
     
     @Override
@@ -79,9 +84,9 @@ public class Agent extends Actor {
         messageHistory.update(message.getId());
         
         // Pass message to each handler if this node is the recipient.
-        if(message.hasRecipient(this)) {
+        if (message.hasRecipient(this)) {
             for (MessageHandler handler : handlers) {
-                handler.messageRecieved(message);
+                handler.messageRecieved(this, message);
             }
         }
         
