@@ -85,6 +85,8 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
      */
     private void acceptConnectionsLoop() {
         
+        shutdown = false;
+        
         while (!shutdown) {
             try {
                 System.out.println("Socket server open on port [" 
@@ -132,7 +134,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
                 currentObserver.connectionAddSucceeded(hostName, portNumber);
             }
             
-            addRunningConnection(new Socket(hostName, portNumber));
+            addRunningConnection(newSocket);
             
         } catch (IOException ex) {
             // notify any observers that we failed to connect
