@@ -269,7 +269,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
         
-        System.out.println(message.getMessage());
+        System.out.println(message.getData());
         
         // I commented out this line because handleMessage is called by the 
         // Actor's queueProcessLoop in a seperate thread. By us explicity

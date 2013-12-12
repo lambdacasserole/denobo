@@ -1,59 +1,129 @@
 package denobo;
 
 /**
- *
+ * Represents an object passed between actors in a multi-agent system in order
+ * to communicate with one another.
+ * 
  * @author Saul Johnson, Lee Oliver, Alex Mullen
  */
 public class Message {
 
-    private final String[] recipients;
-    private final String from;
-    private final String message;
+    /**
+     * The unique identifier for the message.
+     */
     private final String id;
 
-    public Message(String id, String from, String[] recipients, String message) {
-
+    /**
+     * The names of the recipient actors.
+     */
+    private final String[] recipients;
+    
+    /**
+     * The name of the originating actor.
+     */
+    private final String from;
+    
+    /**
+     * The message data.
+     */
+    private final String data;
+    
+    /**
+     * Initialises a new instance of a message.
+     * 
+     * @param id            the unique identifier for the new message
+     * @param from          the name of the originating actor
+     * @param recipients    the names of the recipient actors
+     * @param data          the message data
+     */
+    public Message(String id, String from, String[] recipients, String data) {
         this.id = id;
         this.recipients = recipients;
         this.from = from;
-        this.message = message;
-
+        this.data = data;
     }
      
-    public Message(String from, String[] recipients, String message) {
-
-        this(UniqueIdFactory.getId(), from, recipients, message);
-        
+    /**
+     * Initialises a new instance of a message.
+     * 
+     * @param from          the name of the originating actor
+     * @param recipients    the names of the recipient actors
+     * @param data          the message data
+     */
+    public Message(String from, String[] recipients, String data) {
+        this(UniqueIdFactory.getId(), from, recipients, data);
     }
     
-    public Message(String id, String from, String to, String message) {
-        this(id, from, new String[] {to}, message);
+    /**
+     * Initialises a new instance of a message.
+     * 
+     * @param id            the unique identifier for the new message
+     * @param from          the name of the originating actor
+     * @param recipient     the name of the recipient actor
+     * @param data          the message data
+     */
+    public Message(String id, String from, String recipient, String data) {
+        this(id, from, new String[] {recipient}, data);
     }
     
-    public Message(String from, String to, String message) {
-        this(from, new String[] {to}, message);
+    /**
+     * Initialises a new instance of a message.
+     * 
+     * @param from          the name of the originating actor
+     * @param recipient     the name of the recipient actor
+     * @param data          the message data
+     */
+    public Message(String from, String recipient, String data) {
+        this(from, new String[] {recipient}, data);
     }
 
+    /**
+     * Gets the unique identifier for this message.
+     * 
+     * @return  the unique identifier for this message
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * Gets the names of the recipient actors.
+     * 
+     * @return  the names of the recipient actors
+     */
     public String[] getRecipients() {
         return recipients;
     }
     
+    /**
+     * Gets whether or not the given actor is listed as a recipient for this message.
+     * 
+     * @param actor the actor to check
+     * @return      true if the specified actor is a recipient, otherwise false
+     */
     public boolean hasRecipient(Actor actor) {
-        for(int i = 0; i < recipients.length; i++) {
-            if(actor.getName().equals(recipients[i])) { return true; }
+        for (String string : recipients) {
+            if (actor.getName().equals(string)) { return true; }
         }
         return false;
     }
     
+    /**
+     * Gets the name of the originating actor.
+     * 
+     * @return  the name of the originating actor
+     */
     public String getFrom() {
         return from;
     }
 
-    public String getMessage() {
-        return message;
+    /**
+     * Gets the message data or payload.
+     * 
+     * @return  the message data or payload
+     */
+    public String getData() {
+        return data;
     }
+    
 }

@@ -154,7 +154,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                receiveTextField.append(message.getFrom() + ": " + message.getMessage() + "\n");
+                receiveTextField.append(message.getFrom() + ": " + message.getData() + "\n");
             }
         });
     }

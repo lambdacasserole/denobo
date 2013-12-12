@@ -64,7 +64,7 @@ public class DenoboProtocol implements Protocol {
         for(int i = 0; i < message.getRecipients().length; i++) {
             sb.append(i > 0 ? ";" : "").append(message.getRecipients()[i]);
         }
-        return "id=" + message.getId() + "&from=" + message.getFrom() + "&to=" + sb.toString() + "&msg=" + message.getMessage();
+        return "id=" + message.getId() + "&from=" + message.getFrom() + "&to=" + sb.toString() + "&msg=" + message.getData();
     }
 
     @Override
