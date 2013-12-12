@@ -261,27 +261,24 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     }
     
     @Override
-    public void messageReceived(DenoboConnection connection, DenoboPacket packet) {
+    public void messageReceived(DenoboConnection connection, Message message) {
                 
         ////////////////////////////////////////////////////////////////////////
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
         
 
-        System.out.println(packet.getBody());
+        System.out.println(message.getMessage());
 
-        
-        Message msg = Message.deserialize(packet.getBody());
-        
         // TODO: This might result in unecessary broadcasting and loop backs.
         
         for (DenoboConnection currentConnection : connections) {
             // Pointless sending it back to the NetworkPortal who sent it to us
             if (currentConnection != connection) {
-                currentConnection.send(msg);
+                currentConnection.send(message);
             }
         }
         
-        super.handleMessage(msg);
+        super.handleMessage(message);
     }
 }

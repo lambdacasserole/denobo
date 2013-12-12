@@ -51,6 +51,32 @@ public class DenoboProtocol implements Protocol {
         return nextPacket;
                     
     }
+
+    @Override
+    public String serializeMessage(Message message) {
+        return "from=" + message.getFrom() + "&to=" + message.getTo() + "&msg=" + message.getMessage();
+    }
+
+    @Override
+    public Message deserializeMessage(String string) {
+        String to = null, from = null, message = null;
+                
+        final String[] pairSplitter = string.split("&");
+        for (String str : pairSplitter) {
+            final String[] nameValueSplitter = str.split("=");
+            if (nameValueSplitter[0].equals("to")) {
+                to = nameValueSplitter[1];
+            } else if (nameValueSplitter[0].equals("from")) {
+                from = nameValueSplitter[1];
+            } else if (nameValueSplitter[0].equals("msg")) {
+                message = nameValueSplitter[1];
+            } else {
+                // TODO: Handle invalid string parameter
+            }
+        }
+
+        return new Message(from, to, message);
+    }
     
     
 }

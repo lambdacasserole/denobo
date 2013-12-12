@@ -20,4 +20,8 @@ public interface Protocol {
     
     public DenoboPacket readPacket(BufferedReader reader) throws IOException;
         
+    public String serializeMessage(Message message);
+    
+    public Message deserializeMessage(String string);
+    
 }

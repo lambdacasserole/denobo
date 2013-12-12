@@ -18,7 +18,9 @@ public class MessageHistory {
      * @param id 
      */
     public void update(String id) {
-        history[i++] = id;
+        i++;
+        i %= 256;
+        history[i] = id;
         if (i == history.length) {
             i = 0;
         }

@@ -35,29 +35,4 @@ public class Message {
     public String getMessage() {
         return message;
     }
-
-    public static String serialize(Message msg) {
-        return "from=" + msg.from + "&to=" + msg.to + "&msg=" + msg.message;
-    }
-
-    public static Message deserialize(String rawMessage) {
-
-        String to = null, from = null, message = null;
-                
-        final String[] pairSplitter = rawMessage.split("&");
-        for (String str : pairSplitter) {
-            final String[] nameValueSplitter = str.split("=");
-            if (nameValueSplitter[0].equals("to")) {
-                to = nameValueSplitter[1];
-            } else if (nameValueSplitter[0].equals("from")) {
-                from = nameValueSplitter[1];
-            } else if (nameValueSplitter[0].equals("msg")) {
-                message = nameValueSplitter[1];
-            } else {
-                // TODO: Handle invalid string parameter
-            }
-        }
-
-        return new Message(from, to, message);
-    }
 }

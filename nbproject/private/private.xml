@@ -3,17 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/DenoboConnection.java</file>
-            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/DenoboPacket.java</file>
-            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/MetaAgent.java</file>
             <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/Agent.java</file>
-            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/TestFrame2.java</file>
-            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/TestFrame1.java</file>
-            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/Message.java</file>
             <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/Portal.java</file>
+            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/MessageHistory.java</file>
             <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/Denobo.java</file>
-            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/NetworkPortal.java</file>
-            <file>file:/C:/Users/Saul/Documents/NetBeansProjects/Denobo/src/denobo/DenoboConnectionObserver.java</file>
         </group>
     </open-files>
 </project-private>

@@ -117,7 +117,7 @@ public class DenoboConnection {
                     
                     // Let the observers deal with packet.
                     for (DenoboConnectionObserver currentObserver : observers) {
-                        currentObserver.messageReceived(this, nextPacket); 
+                        currentObserver.messageReceived(this, protocol.deserializeMessage(nextPacket.getBody())); 
                     }
                     
                 } else {
@@ -196,7 +196,7 @@ public class DenoboConnection {
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
         
         // Write serialised message to output stream.
-        protocol.writePacket(connectionWriter, new DenoboPacket(300, Message.serialize(message)));
+        protocol.writePacket(connectionWriter, new DenoboPacket(300, protocol.serializeMessage(message)));
         
     }
     
