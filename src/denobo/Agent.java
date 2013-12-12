@@ -3,26 +3,34 @@ package denobo;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents a user agent, which can send messages and may not have children.
- * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
- */
-public class Agent extends MetaAgent {
-   
+public class Agent extends Actor {
+
     /**
      * Holds a list of {@link MessageHandler} objects observing messages passed to the agent.
      */
     private final List<MessageHandler> handlers;
     
     /**
-     * Initialises a new instance of a user agent.
-     * @param name      the name of the new user agent
-     * @param cloneable whether or not the new user agent is cloneable
+     * Holds a message history logger used to prevent backwards message propagation.
+     */
+    final protected MessageHistory messageHistory;
+    
+    /**
+     * Initialises a new instance of a portal.
+     * 
+     * @param name      the name of the portal
+     * @param cloneable 
      */
     public Agent(String name, boolean cloneable) {
+        
         super(name, cloneable);
+        messageHistory = new MessageHistory();
         handlers = new ArrayList<>();
+        
+    }
+    
+    public Agent(String name) {
+        this(name, false);
     }
     
     /**
@@ -52,21 +60,38 @@ public class Agent extends MetaAgent {
      */
     public void sendMessage(String to, String message) {
         
-        // Check for route to recipient agent and send.
-        for (Portal portal : portals) {
-            portal.queueMessage(new Message(getName(), to, message));
+        Message propagatingMessage = new Message(getName(), to, message);
+        
+        // Broadcast to all parents.
+        for (Actor actor : connectedActors) {
+            actor.queueMessage(propagatingMessage);
         }
         
     }
     
     @Override
-    protected void handleMessage(Message message) {
+    protected boolean handleMessage(Message message) {
         
-        // Pass message to each handler.
-        for (MessageHandler handler : handlers) {
-            handler.messageRecieved(message);
+        // Reject messages that have previously passed through this node.
+        if (messageHistory.hasMessage(message)) { return false; }
+        
+        // Record the ID of this message in the history.
+        messageHistory.update(message.getId());
+        
+        // Pass message to each handler if this node is the recipient.
+        if(message.hasRecipient(this)) {
+            for (MessageHandler handler : handlers) {
+                handler.messageRecieved(message);
+            }
         }
         
+        // Broadcast to peers.
+        for (Actor actor : connectedActors) {
+            actor.queueMessage(message);
+        }
+                    
+        return true;
+        
     }
-    
+
 }

@@ -11,9 +11,9 @@ import java.io.PrintWriter;
 public class DenoboProtocol implements Protocol {
         
     /**
-     * Holds the packet header magic number for this version of the software.
+     * Holds the packet header magic number for this protocol.
      */
-    public static final String PACKET_HEADER = "DENOBO v0.9 (BENSON)";
+    private static final String PACKET_HEADER = "DENOBO v0.9 (BENSON)";
     
     @Override
     public void writePacket(PrintWriter writer, DenoboPacket packet) {
@@ -53,21 +53,34 @@ public class DenoboProtocol implements Protocol {
     }
 
     @Override
+    public void writeMessage(PrintWriter writer, Message message) {
+        DenoboPacket packet = new DenoboPacket(300, serializeMessage(message));
+        writePacket(writer, packet);
+    }
+    
+    @Override
     public String serializeMessage(Message message) {
-        return "from=" + message.getFrom() + "&to=" + message.getTo() + "&msg=" + message.getMessage();
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < message.getRecipients().length; i++) {
+            sb.append(i > 0 ? ";" : "").append(message.getRecipients()[i]);
+        }
+        return "id=" + message.getId() + "&from=" + message.getFrom() + "&to=" + sb.toString() + "&msg=" + message.getMessage();
     }
 
     @Override
     public Message deserializeMessage(String string) {
-        String to = null, from = null, message = null;
+        String id = null, from = null, message = null;
+        String[] to = null;
                 
         final String[] pairSplitter = string.split("&");
         for (String str : pairSplitter) {
             final String[] nameValueSplitter = str.split("=");
             if (nameValueSplitter[0].equals("to")) {
-                to = nameValueSplitter[1];
+                to = nameValueSplitter[1].split(";");
             } else if (nameValueSplitter[0].equals("from")) {
                 from = nameValueSplitter[1];
+            } else if (nameValueSplitter[0].equals("id")) {
+                id = nameValueSplitter[1];
             } else if (nameValueSplitter[0].equals("msg")) {
                 message = nameValueSplitter[1];
             } else {
@@ -75,7 +88,12 @@ public class DenoboProtocol implements Protocol {
             }
         }
 
-        return new Message(from, to, message);
+        return new Message(id, from, to, message);
+    }
+
+    @Override
+    public String getPacketHeader() {
+        return PACKET_HEADER;
     }
     
     

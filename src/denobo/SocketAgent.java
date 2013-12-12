@@ -12,7 +12,7 @@ import java.util.List;
  * 
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public class NetworkPortal extends Portal implements DenoboConnectionObserver {
+public class SocketAgent extends Agent implements DenoboConnectionObserver {
 
     /**
      * The list of connections that we have connected to us.
@@ -22,7 +22,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     /**
      * The list of observers we need to notify on certain events.
      */
-    private final List<NetworkPortalObserver> observers;
+    private final List<SocketAgentObserver> observers;
     
     /**
      * The socket we listen and accept connection requests on.
@@ -36,19 +36,16 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     private Thread acceptThread;
     
     /**
-     * A status variable we use to indicate that the acceptThread should abort.
+     * A status variable we use to indicate that {@link NetworkPortal#acceptThread} should abort.
      */
     private boolean shutdown;
-    
-    
-    
     
     /**
      * Creates a {@link NetworkPortal} with the specified name.
      * 
      * @param name The name assigned to the NetworkPortal
      */
-    public NetworkPortal(String name) {
+    public SocketAgent(String name) {
         super(name);
         connections = new ArrayList<>();
         observers = new ArrayList<>();
@@ -95,7 +92,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
                 final Socket acceptedSocket = serverSocket.accept();
                 
                 // notify any observers
-                for (NetworkPortalObserver currentObserver : observers) {
+                for (SocketAgentObserver currentObserver : observers) {
                     currentObserver.incomingConnectionAccepted(acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
                 }
                 
@@ -115,7 +112,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     }
     
     /**
-     * Connects this {@link NetworkPortal} to a remote network portal.
+     * Connects this {@link SocketAgent} to a remote network portal.
      * 
      * @param hostName      the host name of the machine hosting the remote portal
      * @param portNumber    the port number the remote portal is listening on
@@ -130,17 +127,19 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
             newSocket.connect(address);
             
             // notify any observers that we have connected
-            for (NetworkPortalObserver currentObserver : observers) {
+            for (SocketAgentObserver currentObserver : observers) {
                 currentObserver.connectionAddSucceeded(hostName, portNumber);
             }
             
             addRunningConnection(newSocket);
             
         } catch (IOException ex) {
+            
             // notify any observers that we failed to connect
-            for (NetworkPortalObserver currentObserver : observers) {
+            for (SocketAgentObserver currentObserver : observers) {
                 currentObserver.connectionAddFailed(hostName, portNumber);
             }
+            
         }
     }
     
@@ -187,12 +186,21 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     }
     
     @Override
-    protected void handleMessage(Message message) {
+    protected boolean handleMessage(Message message) {
         
-        super.handleMessage(message);
+        // Reject messages that have previously passed through this node.
+        if(!super.handleMessage(message)) { return false; }
+        
+        // Broadcast to peers.
         for (DenoboConnection connection : connections) {
-            connection.send(message);
+            // TODO: Why the fuck is this null!?
+            if (connection != null) {
+                connection.send(message);
+            }
         }
+        
+        return true;
+        
     }
     
 
@@ -203,7 +211,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
      * @return true if it was successfully added to he list of observers,
      * otherwise false is returned
      */
-    public boolean addObserver(NetworkPortalObserver observer) {
+    public boolean addObserver(SocketAgentObserver observer) {
         return observers.add(observer);
     }
     
@@ -213,7 +221,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
      * @param observer  the observer to remove
      * @return          true if the observer to remove was found and removed, otherwise false
      */
-    public boolean removeObserver(NetworkPortalObserver observer) {
+    public boolean removeObserver(SocketAgentObserver observer) {
         return observers.remove(observer);
     }
     
@@ -223,12 +231,6 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
     public void removeObservers() {
         observers.clear();
     }
-    
-
-//    @Override
-//    public boolean hasRouteToAgent(String name) {
-//        return true;
-//    }
 
     @Override
     public void connectionAuthenticated(DenoboConnection connection) {
@@ -255,7 +257,7 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         connections.remove(connection);
         
         // notify any observers
-        for (NetworkPortalObserver currentObserver : observers) {
+        for (SocketAgentObserver currentObserver : observers) {
             currentObserver.connectionClosed(connection.getRemoteAddress(), connection.getRemotePort());
         }
     }
@@ -267,18 +269,9 @@ public class NetworkPortal extends Portal implements DenoboConnectionObserver {
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
         
-
         System.out.println(message.getMessage());
-
-        // TODO: This might result in unecessary broadcasting and loop backs.
         
-        for (DenoboConnection currentConnection : connections) {
-            // Pointless sending it back to the NetworkPortal who sent it to us
-            if (currentConnection != connection) {
-                currentConnection.send(message);
-            }
-        }
+        handleMessage(message);
         
-        super.handleMessage(message);
     }
 }

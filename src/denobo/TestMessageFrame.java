@@ -18,10 +18,10 @@ import javax.swing.SwingUtilities;
  *
  * @author Alex
  */
-public class TestMessageFrame extends JFrame implements ActionListener, MessageHandler, NetworkPortalObserver {
+public class TestMessageFrame extends JFrame implements ActionListener, MessageHandler, SocketAgentObserver {
 
     private Agent messageAgent;
-    private NetworkPortal networkPortal;
+    private SocketAgent networkPortal;
 
     private JTextField ipTextField, portTextField, localAgentNameField, remoteAgentNameField;
     private JTextArea receiveTextField, sendTextField;
@@ -37,10 +37,10 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         portTextField.setText("4757");
 
         localAgentNameField = new JTextField(10);
-        localAgentNameField.setText("Alex");
+        localAgentNameField.setText("Lee");
 
         remoteAgentNameField = new JTextField(10);
-        remoteAgentNameField.setText("Lee");
+        remoteAgentNameField.setText("Alex");
 
         receiveTextField = new JTextArea(30, 40);
         receiveTextField.setEditable(false);
@@ -123,12 +123,12 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         this.add(sendButton, c);
         
         
-        networkPortal = new NetworkPortal("local-network-portal");
+        networkPortal = new SocketAgent("local-network-portal");
         networkPortal.addObserver(this);
 
         messageAgent = new Agent(localAgentNameField.getText(), false);
         messageAgent.addMessageHandler(this);
-        networkPortal.addAgent(messageAgent);
+        networkPortal.connectActor(messageAgent);
         
         networkPortal.advertiseConnection(4757);
     }

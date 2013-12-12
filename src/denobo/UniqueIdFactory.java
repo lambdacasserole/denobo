@@ -21,7 +21,7 @@ public class UniqueIdFactory {
     /**
      * Holds a hash set of used ID strings to ensure no duplicates are dispensed.
      */
-    private static HashSet<String> usedStrings = new HashSet<>();
+    private static final HashSet<String> usedStrings = new HashSet<>();
     
     /**
      * Gets a SHA256 hash of the given string.

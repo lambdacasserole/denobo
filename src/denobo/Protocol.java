@@ -24,4 +24,8 @@ public interface Protocol {
     
     public Message deserializeMessage(String string);
     
+    public String getPacketHeader();
+    
+    public void writeMessage(PrintWriter writer, Message message);
+     
 }

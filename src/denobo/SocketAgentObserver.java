@@ -5,7 +5,7 @@ package denobo;
  *
  * @author Alex Mullen
  */
-public interface NetworkPortalObserver {
+public interface SocketAgentObserver {
     
     /**
      * Invoked whenever an incoming connection request is accepted.

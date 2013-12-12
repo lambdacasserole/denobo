@@ -1,7 +1,8 @@
 package denobo;
 
 /**
- *
+ * Represents a history of message identifiers that have passed through a node.
+ * 
  * @author Saul Johnson
  */
 public class MessageHistory {
@@ -26,9 +27,9 @@ public class MessageHistory {
         }
     }
     
-    public boolean hasMessage(String id) {
+    public boolean hasMessage(Message message) {
         for (int c = 0; c < history.length; c++) {
-            if(history[c] != null && history[c].equals(id)) {
+            if(message.getId().equals(history[c])) {
                 return true;
             }
         }

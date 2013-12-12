@@ -63,6 +63,7 @@ public class DenoboConnection {
         this.connection = connection;
         this.observers = new ArrayList<>();
      
+        // Protocol to be used for message serialization and packet I/O.
         protocol = new DenoboProtocol();
         
         try {
@@ -96,7 +97,6 @@ public class DenoboConnection {
     }
 
     private void receiveLoop() {
-        
         try {
             while (!disconnected) {
                 
@@ -105,19 +105,33 @@ public class DenoboConnection {
                 // Wait on a valid packet magic number.
                 final String buffer = connectionReader.readLine();
                 
-                // Check if the connection was closed
-                if (buffer == null) {
-                    break;
-                }
+                // Check if the connection was closed.
+                if (buffer == null) { break; }
                 
-                if (buffer.equals(DenoboProtocol.PACKET_HEADER)) {
+                // Wait for protocol 'magic number' indicating the start of a packet.
+                if (buffer.equals(protocol.getPacketHeader())) {
                     
-                    System.out.println("Received valid packet.");
+                    System.out.println("Recieved packet appears valid, magic number: " 
+                            + protocol.getPacketHeader());
+                    
+                    // Let protocol read rest of packet.
                     final DenoboPacket nextPacket = protocol.readPacket(connectionReader);
                     
-                    // Let the observers deal with packet.
-                    for (DenoboConnectionObserver currentObserver : observers) {
-                        currentObserver.messageReceived(this, protocol.deserializeMessage(nextPacket.getBody())); 
+                    // Process packet according to status code.
+                    switch(nextPacket.getStatusCode()) {
+                        case 300:
+                            
+                            // Status code 300 (PROPAGATE). Send message to observers.
+                            for (DenoboConnectionObserver currentObserver : observers) {
+                                currentObserver.messageReceived(this, protocol.deserializeMessage(nextPacket.getBody())); 
+                            }
+                            
+                            break;
+                        default:
+                            
+                            // TODO: Bad status code.
+                            
+                            break;
                     }
                     
                 } else {
@@ -132,6 +146,7 @@ public class DenoboConnection {
             
             // TODO: Handle exception.
             System.out.println(ex.getMessage());
+            
         }
         
         // Connection has closed, clean up.
@@ -173,11 +188,13 @@ public class DenoboConnection {
             }
 
         } catch (IOException | InterruptedException ex) {
+            
             // TODO: Handle exception.
             System.out.println(ex.getMessage());
+            
         }
 
-        // notify any observers that this connection has been shutdown
+        // Notify any observers that this connection has been shut down.
         for (DenoboConnectionObserver currentObserver : observers) {
             currentObserver.connectionShutdown(this);
         }  
@@ -191,21 +208,21 @@ public class DenoboConnection {
      */
     public void send(Message message) {
         
-        // TODO: Proper serialisation logic.
-        
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
         
-        // Write serialised message to output stream.
-        protocol.writePacket(connectionWriter, new DenoboPacket(300, protocol.serializeMessage(message)));
+        /* 
+         * Write serialized message to output stream, letting protocol handle 
+         * packet construction.
+         */
+        protocol.writeMessage(connectionWriter, message);
         
     }
     
     /**
      * Adds an observer to the list of observers to be notified of events.
      * 
-     * @param observer The observer to add
-     * @return true if it was successfully added to he list of observers,
-     * otherwise false is returned
+     * @param observer  the observer to add
+     * @return          true if it was successfully added to he list of observers, otherwise false
      */
     public boolean addObserver(DenoboConnectionObserver observer) {
         return observers.add(observer);
@@ -240,9 +257,10 @@ public class DenoboConnection {
     /**
      * Returns the remote IP address of the remote peer for this connection.
      * 
-     * @return 
+     * @return  the remote IP address of the remote peer for this connection
      */
     public String getRemoteAddress() {
         return connection.getInetAddress().getHostAddress();
     }
+    
 }
