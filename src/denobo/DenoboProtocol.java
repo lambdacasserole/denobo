@@ -2,29 +2,34 @@ package denobo;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  *
  * @author Saul Johnson
  */
-public class DenoboProtocol {
+public class DenoboProtocol implements Protocol {
         
     /**
      * Holds the packet header magic number for this version of the software.
      */
     public static final String PACKET_HEADER = "DENOBO v0.9 (BENSON)";
     
-    public String serializePacket(DenoboPacket packet) {
+    @Override
+    public void writePacket(PrintWriter writer, DenoboPacket packet) {
         
         final StringBuilder sb = new StringBuilder();
         sb.append(PACKET_HEADER).append("\n");
         sb.append("status-code:").append(packet.getStatusCode()).append("\n");
         sb.append("body-length:").append(packet.getBody().length()).append("\n");
         sb.append(packet.getBody());
-        return sb.toString();
+        
+        writer.write(sb.toString());
+        writer.flush();
         
     }
     
+    @Override
     public DenoboPacket readPacket(BufferedReader reader) throws IOException {
         
         DenoboPacket nextPacket;

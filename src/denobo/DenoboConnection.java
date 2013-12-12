@@ -47,7 +47,10 @@ public class DenoboConnection {
      */
     private PrintWriter connectionWriter;
 
-    private final DenoboProtocol protocol;
+    /**
+     * Holds the protocol used to read and write to and from this connection.
+     */
+    private final Protocol protocol;
                     
     /**
      * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
@@ -189,13 +192,12 @@ public class DenoboConnection {
     public void send(Message message) {
         
         // TODO: Proper serialisation logic.
-
-        // Write serialised message to output stream.
+        
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
         
-        connectionWriter.print(protocol.serializePacket(new DenoboPacket(300, Message.serialize(message))));
-        connectionWriter.flush();
-            
+        // Write serialised message to output stream.
+        protocol.writePacket(connectionWriter, new DenoboPacket(300, Message.serialize(message)));
+        
     }
     
     /**
