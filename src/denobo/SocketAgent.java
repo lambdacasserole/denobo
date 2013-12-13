@@ -52,7 +52,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         // I'm confident this fixes the NPE but I feel like we need a better way
         // as I hate this sort of synchronization.
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
-        observers = new ArrayList<>();
+        observers = Collections.synchronizedList(new ArrayList<SocketAgentObserver>());
     }
     
     /**
@@ -96,8 +96,10 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 final Socket acceptedSocket = serverSocket.accept();
                 
                 // notify any observers
-                for (SocketAgentObserver currentObserver : observers) {
-                    currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
+                synchronized (observers) {
+                    for (SocketAgentObserver currentObserver : observers) {
+                        currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
+                    }
                 }
                 
                 System.out.println("Socket server open on port [" 
@@ -131,8 +133,10 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
             newSocket.connect(address);
             
             // notify any observers that we have connected
-            for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionAddSucceeded(this, hostName, portNumber);
+            synchronized (observers) {
+                for (SocketAgentObserver currentObserver : observers) {
+                    currentObserver.connectionAddSucceeded(this, hostName, portNumber);
+                }
             }
             
             addRunningConnection(newSocket);
@@ -140,13 +144,15 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         } catch (IOException ex) {
             
             // notify any observers that we failed to connect
-            for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionAddFailed(this, hostName, portNumber);
+            synchronized (observers) {
+                for (SocketAgentObserver currentObserver : observers) {
+                    currentObserver.connectionAddFailed(this, hostName, portNumber);
+                }
             }
             
         }
     }
-    
+ 
     private void addRunningConnection(Socket s)  {
         
         ////////////////////////////////////////////////////////////////////////
@@ -156,7 +162,9 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         
         final DenoboConnection newConnection = new DenoboConnection(s);
         newConnection.addObserver(this);
+        
         connections.add(newConnection);
+        
         newConnection.startRecieveThread();
     }
     
@@ -185,15 +193,18 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         // event is thrown everytime we close a connection which will remove that
         // connection from the list we are iterating which will result in a 
         // ConcurrentModificationException
-        final ArrayList<DenoboConnection> connectionsListCopy = new ArrayList<>(connections);
-        for (DenoboConnection currentConnection : connectionsListCopy) {
-            currentConnection.disconnect();     
+        synchronized (connections) {
+            final ArrayList<DenoboConnection> connectionsListCopy = new ArrayList<>(connections);
+            for (DenoboConnection currentConnection : connectionsListCopy) {
+                currentConnection.disconnect();     
+            }
         }
             
         // Remove all the connections from our collection. (Even though they
-        // should all be removed from the connectionShutdown event anyway) 
+        // should all be removed from the connectionShutdown event anyway)
         connections.clear();
     }
+    
     
     @Override
     protected boolean handleMessage(Message message) {
@@ -202,8 +213,10 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         if (!super.handleMessage(message)) { return false; }
         
         // Broadcast to peers.
-        for (DenoboConnection connection : connections) {
-            connection.send(message);
+        synchronized (connections) {
+            for (DenoboConnection connection : connections) {
+                connection.send(message);
+            }
         }
         
         return true;
@@ -239,6 +252,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         observers.clear();
     }
 
+    
     @Override
     public void connectionAuthenticated(DenoboConnection connection) {
         
@@ -260,12 +274,13 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         System.out.println(connection.getRemoteAddress() + ":" + connection.getRemotePort() 
                 + " has disconnected");
         
-        // needs syncronising
         connections.remove(connection);
         
         // notify any observers
-        for (SocketAgentObserver currentObserver : observers) {
-            currentObserver.connectionClosed(this, connection.getRemoteAddress(), connection.getRemotePort());
+        synchronized (observers) {
+            for (SocketAgentObserver currentObserver : observers) {
+                currentObserver.connectionClosed(this, connection.getRemoteAddress(), connection.getRemotePort());
+            }
         }
     }
     
