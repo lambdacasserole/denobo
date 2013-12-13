@@ -29,6 +29,11 @@ public class Agent extends Actor {
         
     }
     
+    /**
+     * Initialises a new instance of a portal that isn't cloneable.
+     * 
+     * @param name      the name of the portal
+     */
     public Agent(String name) {
         this(name, false);
     }
@@ -98,5 +103,4 @@ public class Agent extends Actor {
         return true;
         
     }
-
 }

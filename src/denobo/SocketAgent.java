@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,7 +48,10 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      */
     public SocketAgent(String name) {
         super(name);
-        connections = new ArrayList<>();
+        
+        // I'm confident this fixes the NPE but I feel like we need a better way
+        // as I hate this sort of synchronization.
+        connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
         observers = new ArrayList<>();
     }
     
@@ -70,7 +74,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 }
             };
             acceptThread.start();
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             // TODO: Handle exception.
             System.out.println(ex.getMessage());
         }
@@ -144,6 +148,12 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     }
     
     private void addRunningConnection(Socket s)  {
+        
+        ////////////////////////////////////////////////////////////////////////
+        // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
+        ////////////////////////////////////////////////////////////////////////
+        
+        
         final DenoboConnection newConnection = new DenoboConnection(s);
         newConnection.addObserver(this);
         connections.add(newConnection);
@@ -193,10 +203,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         
         // Broadcast to peers.
         for (DenoboConnection connection : connections) {
-            // TODO: Why the fuck is this null!?
-            if (connection != null) {
-                connection.send(message);
-            }
+            connection.send(message);
         }
         
         return true;
