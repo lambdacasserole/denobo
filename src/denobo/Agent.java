@@ -1,6 +1,7 @@
 package denobo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Agent extends Actor {
@@ -20,14 +21,14 @@ public class Agent extends Actor {
     /**
      * Initialises a new instance of a portal.
      *
-     * @param name the name of the portal
-     * @param cloneable
+     * @param name      the name of the portal
+     * @param cloneable whether or not the agent is cloneable
      */
     public Agent(String name, boolean cloneable) {
 
         super(name, cloneable);
-        messageHistory = new MessageHistory();
-        handlers = new ArrayList<>();
+        messageHistory = new SynchronizedMessageHistory(new MessageHistory());
+        handlers = Collections.synchronizedList(new ArrayList<MessageHandler>());
 
     }
 
@@ -82,6 +83,8 @@ public class Agent extends Actor {
     @Override
     protected boolean shouldHandleMessage(Message message) {
 
+        // Remember, this method will always be executed in a single thread.
+        
         // Reject messages that have previously passed through this node previously.
         if (messageHistory.hasMessage(message)) {
             // We have already handled this message previously so let the caller 
@@ -97,10 +100,15 @@ public class Agent extends Actor {
     @Override
     protected void handleMessage(Message message) {
 
+        // If we are cloneable, this method will possibly be executing in
+        // multiple threads.
+        
         // Pass message to each handler
         if (message.hasRecipient(this)) {
-            for (MessageHandler handler : handlers) {
-                handler.messageRecieved(this, message);
+            synchronized (handlers) {
+                for (MessageHandler handler : handlers) {
+                    handler.messageRecieved(this, message);
+                }
             }
         }
 

@@ -39,7 +39,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     /**
      * A status variable we use to indicate that {@link NetworkPortal#acceptThread} should abort.
      */
-    private boolean shutdown;
+    private volatile boolean shutdown;
     
     /**
      * Creates a {@link NetworkPortal} with the specified name.
@@ -150,12 +150,18 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         }
     }
  
+    /**
+     * Wraps a Socket object into a DenoboConnection, sets this Agent as an
+     * observer and adds the created DenoboConnection instance to our list of
+     * connections. We then initialize the DenoboConnection to start receiving
+     * data.
+     * @param s     The socket to wrap up into a DenoboConnection.
+     */
     private void addRunningConnection(Socket s)  {
         
         ////////////////////////////////////////////////////////////////////////
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
-        
         
         final DenoboConnection newConnection = new DenoboConnection(s);
         newConnection.addObserver(this);
@@ -163,6 +169,28 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         connections.add(newConnection);
         
         newConnection.startRecieveThread();
+    }
+    
+    /**
+     * Closes and removes any DenoboConnection objects we have attached.
+     */
+    public void removeConnections() {
+        
+        // Close any connections we have.
+        // we make a copy because the original list will get modified when an
+        // event is thrown everytime we close a connection which will remove that
+        // connection from the list we are iterating which will result in a 
+        // ConcurrentModificationException
+        synchronized (connections) {
+            final ArrayList<DenoboConnection> connectionsListCopy = new ArrayList<>(connections);
+            for (DenoboConnection currentConnection : connectionsListCopy) {
+                currentConnection.disconnect();     
+            }
+            
+            // Remove all the connections from our collection. (Even though they
+            // should all be removed from the connectionShutdown event anyway)
+            connections.clear();
+        }
     }
     
     /**
@@ -185,21 +213,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
             System.out.println(ex.getMessage());
         }
              
-        // Close any connections we have.
-        // we make a copy because the original list will get modified when an
-        // event is thrown everytime we close a connection which will remove that
-        // connection from the list we are iterating which will result in a 
-        // ConcurrentModificationException
-        synchronized (connections) {
-            final ArrayList<DenoboConnection> connectionsListCopy = new ArrayList<>(connections);
-            for (DenoboConnection currentConnection : connectionsListCopy) {
-                currentConnection.disconnect();     
-            }
-        }
-            
-        // Remove all the connections from our collection. (Even though they
-        // should all be removed from the connectionShutdown event anyway)
-        connections.clear();
+        removeConnections();
     }
     
     
