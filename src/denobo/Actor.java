@@ -1,6 +1,7 @@
 package denobo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -15,34 +16,36 @@ import java.util.concurrent.LinkedBlockingQueue;
 public abstract class Actor {
        
     /**
-     * The {@link BlockingQueue} that underlies the actor.
-     */
-    private BlockingQueue<Message> messageQueue;
-
-    /**
      * Holds a list of connected actors.
      */
-    protected List<Actor> connectedActors;
+    private final List<Actor> connectedActors;
     
+    /**
+     * The {@link BlockingQueue} that underlies the actor.
+     */
+    private final BlockingQueue<Message> messageQueue;
+
     /**
      * The message processing thread that underlies the actor.
      */
-    private Thread underlyingThread;
+    private final Thread underlyingThread;
     
     /**
      * The name of the actor.
      */
-    private String name;
+    private final String name;
     
     /**
      * Whether or not the actor is cloneable.
      */
-    private boolean cloneable;
+    private final boolean cloneable;
     
     /**
      * The thread pool service for handling cloneable actors.
      */
     private ExecutorService executorService = null;
+    
+    
     
     /**
      * Abstract constructor to initialise a new instance of an actor.
@@ -56,8 +59,8 @@ public abstract class Actor {
         this.cloneable = cloneable;
         
         messageQueue = new LinkedBlockingQueue<>();
-        connectedActors = new ArrayList<>();
-                
+        connectedActors = Collections.synchronizedList(new ArrayList<Actor>());
+        
         // Only construct the thread pool if cloneable.
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
         
@@ -100,15 +103,27 @@ public abstract class Actor {
         }
     }
     
+    /**
+     * The loop that processes this Actor's message queue.
+     */
     private void queueProcessLoop() {
         
         // Loop until interrupted.
         while (true) {
             try {
                 final Message message = messageQueue.take();
-                if (cloneable) {
+                
+                // Check if we should bother handling this message
+                if (!shouldHandleMessage(message)) { continue; }
+                
+                if (!cloneable) {
                     
-                    // Execute handleMessage on a seperate thread
+                    // Handle message in this thread.
+                    handleMessage(message);
+                    
+                } else {
+                    
+                   // Execute handleMessage on a seperate thread
                     executorService.submit(
                         new Runnable() {
                             @Override
@@ -117,11 +132,6 @@ public abstract class Actor {
                             }
                         }
                     );
-
-                } else {
-
-                    // Handle message in this thread.
-                    handleMessage(message);
                     
                 }
             } catch (InterruptedException ex) {
@@ -138,7 +148,7 @@ public abstract class Actor {
      * 
      * @return  the name of the actor
      */
-    public String getName() {
+    public final String getName() {
         return name;
     }
     
@@ -147,10 +157,11 @@ public abstract class Actor {
      * 
      * @return  true if the actor is cloneable, otherwise false
      */
-    public boolean getCloneable() {
+    public final boolean getCloneable() {
        return cloneable; 
     }
    
+    
     /**
      * Connects the actor to another.
      * 
@@ -188,13 +199,39 @@ public abstract class Actor {
     protected void unregisterConnectedActor(Actor actor) {
         connectedActors.remove(actor);
     }
+   
+    /**
+     * Sends a message to every Actor connected to this Actor.
+     * 
+     * @param message 
+     */
+    protected void broadcastMessage(Message message) {
+        synchronized (connectedActors) {
+            for (Actor actor : connectedActors) {
+                actor.queueMessage(message);
+            }
+        }
+    }
+    
     
     /**
-     * Handles messages passed to this actor through its message queue.
+     * Determines whether handleMessage should be invoked. This method will
+     * always be executed in a single thread.
      * 
      * @param message   the message to handle
-     * @return          true if the actor propagated or processed the message, otherwise false
+     * @return          true if handleMessage should be invoked, otherwise false
+     *                  if the message does not need handling - thus preventing
+     *                  handleMessage being invoked.
      */
-    protected abstract boolean handleMessage(Message message);
+    protected abstract boolean shouldHandleMessage(Message message);
+    
+    /**
+     * Handles messages passed to this actor through its message queue. Any
+     * implementation of this should be thread-safe as multiple threads could
+     * be running this method if this Actor is cloneable.
+     * 
+     * @param message   the message to handle
+     */
+    protected abstract void handleMessage(Message message);
     
 }

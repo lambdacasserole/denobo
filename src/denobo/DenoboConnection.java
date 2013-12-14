@@ -51,7 +51,7 @@ public class DenoboConnection {
      * Holds the protocol used to read and write to and from this connection.
      */
     private final Protocol protocol;
-                    
+
     /**
      * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
      *
@@ -96,6 +96,10 @@ public class DenoboConnection {
         
     }
 
+    /**
+     * The loop that will wait for any data to be received and delegating the
+     * received data to be processed.
+     */
     private void receiveLoop() {
         try {
             while (!disconnected) {

@@ -48,9 +48,6 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      */
     public SocketAgent(String name) {
         super(name);
-        
-        // I'm confident this fixes the NPE but I feel like we need a better way
-        // as I hate this sort of synchronization.
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
         observers = Collections.synchronizedList(new ArrayList<SocketAgentObserver>());
     }
@@ -207,10 +204,10 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     
     
     @Override
-    protected boolean handleMessage(Message message) {
-        
-        // Reject messages that have previously passed through this node.
-        if (!super.handleMessage(message)) { return false; }
+    protected void handleMessage(Message message) {
+
+        // Super class behaviour is still required
+        super.handleMessage(message);
         
         // Broadcast to peers.
         synchronized (connections) {
@@ -218,9 +215,6 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 connection.send(message);
             }
         }
-        
-        return true;
-        
     }
     
 

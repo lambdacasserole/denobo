@@ -6,101 +6,105 @@ import java.util.List;
 public class Agent extends Actor {
 
     /**
-     * Holds a list of {@link MessageHandler} objects observing messages passed to the agent.
+     * Holds a list of {@link MessageHandler} objects observing messages passed
+     * to the agent.
      */
     private final List<MessageHandler> handlers;
-    
+
     /**
-     * Holds a message history logger used to prevent backwards message propagation.
+     * Holds a message history logger used to prevent backwards message
+     * propagation.
      */
-    final protected MessageHistory messageHistory;
-    
+    private final MessageHistory messageHistory;
+
     /**
      * Initialises a new instance of a portal.
-     * 
-     * @param name      the name of the portal
-     * @param cloneable 
+     *
+     * @param name the name of the portal
+     * @param cloneable
      */
     public Agent(String name, boolean cloneable) {
-        
+
         super(name, cloneable);
         messageHistory = new MessageHistory();
         handlers = new ArrayList<>();
-        
+
     }
-    
+
     /**
      * Initialises a new instance of a portal that isn't cloneable.
-     * 
-     * @param name      the name of the portal
+     *
+     * @param name the name of the portal
      */
     public Agent(String name) {
         this(name, false);
     }
-    
+
     /**
-     * Adds a {@link MessageHandler} to listen for messages passed to this agent.
-     * 
-     * @param handler   the {@link MessageHandler} to add as an observer
+     * Adds a {@link MessageHandler} to listen for messages passed to this
+     * agent.
+     *
+     * @param handler the {@link MessageHandler} to add as an observer
      */
     public void addMessageHandler(MessageHandler handler) {
         handlers.add(handler);
     }
-    
+
     /**
-     * Removes a {@link MessageHandler} that is currently listening for messages 
+     * Removes a {@link MessageHandler} that is currently listening for messages
      * passed to this agent.
-     * 
-     * @param handler   the {@link MessageHandler} to remove as an observer
+     *
+     * @param handler the {@link MessageHandler} to remove as an observer
      */
     public void removeMessageHandler(MessageHandler handler) {
         handlers.remove(handler);
     }
-    
+
     /**
      * Sends a {@link Message} from this {@link Agent} to another.
-     * 
-     * @param to        the name of the recipient {@link Agent}
-     * @param message   the message to send
+     *
+     * @param to the name of the recipient {@link Agent}
+     * @param message the message to send
      */
     public void sendMessage(String to, String message) {
-        
+
         final Message propagatingMessage = new Message(getName(), to, message);
-        
-        // I feel like we need this line so that this agent knows that it does
-        // not need to deal with this message again. Messages don't get received
-        // when this is uncommented so I'll leave it commented for now.
-        // Record the ID of this message in the history.
-        //messageHistory.update(propagatingMessage.getId());
-        
-        // Broadcast to all parents.
-        for (Actor actor : connectedActors) {
-            actor.queueMessage(propagatingMessage);
-        }
+
+        // This is needed but when connecting to ourselves, we won't receive
+        // any messages because we've already 'handled' the message. This is
+        // intended behaviour.
+        messageHistory.update(propagatingMessage.getId());
+
+        // Broadcast to all connected actors.
+        broadcastMessage(propagatingMessage);
     }
-    
+
     @Override
-    protected boolean handleMessage(Message message) {
-        
-        // Reject messages that have previously passed through this node.
-        if (messageHistory.hasMessage(message)) { return false; }
-        
+    protected boolean shouldHandleMessage(Message message) {
+
+        // Reject messages that have previously passed through this node previously.
+        if (messageHistory.hasMessage(message)) {
+            // We have already handled this message previously so let the caller 
+            // know we don't need to handle the message.
+            return false;
+        }
+
         // Record the ID of this message in the history.
         messageHistory.update(message.getId());
-        
-        // Pass message to each handler if this node is the recipient.
+        return true;
+    }
+
+    @Override
+    protected void handleMessage(Message message) {
+
+        // Pass message to each handler
         if (message.hasRecipient(this)) {
             for (MessageHandler handler : handlers) {
                 handler.messageRecieved(this, message);
             }
         }
-        
+
         // Broadcast to peers.
-        for (Actor actor : connectedActors) {
-            actor.queueMessage(message);
-        }
-                    
-        return true;
-        
+        broadcastMessage(message);
     }
 }
