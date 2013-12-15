@@ -77,7 +77,7 @@ public class Agent extends Actor {
         messageHistory.update(propagatingMessage.getId());
 
         // Broadcast to all connected actors.
-        broadcastMessage(propagatingMessage);
+        broadcastMessage(new ActorMessage(this, propagatingMessage));
     }
 
     @Override

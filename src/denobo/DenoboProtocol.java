@@ -32,8 +32,6 @@ public class DenoboProtocol implements Protocol {
     @Override
     public DenoboPacket readPacket(BufferedReader reader) throws IOException {
         
-        DenoboPacket nextPacket;
-        
         // Parse out status code.
         final String[] statusCodeField = reader.readLine().split(":");
         final int statusCode = Integer.parseInt(statusCodeField[1]);
@@ -47,21 +45,19 @@ public class DenoboProtocol implements Protocol {
         reader.read(packetBody);
 
         // Let the observers deal with packet.
-        nextPacket = new DenoboPacket(statusCode, String.valueOf(packetBody));
-        return nextPacket;
+        return new DenoboPacket(statusCode, String.valueOf(packetBody));
                     
     }
 
     @Override
     public void writeMessage(PrintWriter writer, Message message) {
-        DenoboPacket packet = new DenoboPacket(300, serializeMessage(message));
-        writePacket(writer, packet);
+        writePacket(writer, new DenoboPacket(300, serializeMessage(message)));
     }
     
     @Override
     public String serializeMessage(Message message) {
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < message.getRecipients().length; i++) {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < message.getRecipients().length; i++) {
             sb.append(i > 0 ? ";" : "").append(message.getRecipients()[i]);
         }
         return "id=" + message.getId() + "&from=" + message.getFrom() + "&to=" + sb.toString() + "&msg=" + message.getData();
@@ -75,16 +71,22 @@ public class DenoboProtocol implements Protocol {
         final String[] pairSplitter = string.split("&");
         for (String str : pairSplitter) {
             final String[] nameValueSplitter = str.split("=");
-            if (nameValueSplitter[0].equals("to")) {
-                to = nameValueSplitter[1].split(";");
-            } else if (nameValueSplitter[0].equals("from")) {
-                from = nameValueSplitter[1];
-            } else if (nameValueSplitter[0].equals("id")) {
-                id = nameValueSplitter[1];
-            } else if (nameValueSplitter[0].equals("msg")) {
-                message = nameValueSplitter[1];
-            } else {
-                // TODO: Handle invalid string parameter
+            switch (nameValueSplitter[0]) {
+                case "id":
+                    id = nameValueSplitter[1];
+                    break;
+                case "from":
+                    from = nameValueSplitter[1];
+                    break;
+                case "to":
+                    to = nameValueSplitter[1].split(";");
+                    break;
+                case "msg":
+                    message = nameValueSplitter[1];
+                    break;
+                default:
+                    // TODO: Handle invalid string parameter
+                    break;
             }
         }
 
@@ -95,6 +97,5 @@ public class DenoboProtocol implements Protocol {
     public String getPacketHeader() {
         return PACKET_HEADER;
     }
-    
-    
+
 }
