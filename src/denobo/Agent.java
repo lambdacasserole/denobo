@@ -4,6 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * An Agent that provides a basic concrete implementation of an Actor as part of
+ * a multi-agent system.
+ * 
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
+ */
 public class Agent extends Actor {
 
     /**
@@ -75,9 +81,8 @@ public class Agent extends Actor {
         // any messages because we've already 'handled' the message. This is
         // intended behaviour.
         messageHistory.update(propagatingMessage.getId());
-
-        // Broadcast to all connected actors.
-        broadcastMessage(new ActorMessage(this, propagatingMessage));
+ 
+        handleMessage(propagatingMessage);
     }
 
     @Override

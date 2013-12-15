@@ -231,14 +231,14 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         // to them.
         if (message instanceof SocketAgentMessage) {
             
-            final SocketAgentMessage socketAgentMessage = (SocketAgentMessage) message;
+            final DenoboConnection connectionRecievedFrom = ((SocketAgentMessage) message).getReceivedFrom();
             // Broadcast to connected peers.
             synchronized (connections) {
                 for (DenoboConnection connection : connections) {
                     // Check if we received the message from one of our connections,
                     // and if it was then we don't need to bother broadcasting it
                     // back to that connection.
-                    if (connection != socketAgentMessage.getReceivedFrom()) {
+                    if (connection != connectionRecievedFrom) {
                         connection.send(message);
                     }
                 }

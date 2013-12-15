@@ -111,7 +111,7 @@ public abstract class Actor {
         while (true) {
             try {
                 final Message message = messageQueue.take();
-
+                //System.out.println(this.getName() + " takes a message from its queue");
                 // Check if we should bother handling this message
                 if (!shouldHandleMessage(message)) {
                     continue;
@@ -125,14 +125,12 @@ public abstract class Actor {
                 } else {
 
                     // Execute handleMessage on a seperate thread
-                    executorService.submit(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    handleMessage(message);
-                                }
-                            }
-                    );
+                    executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            handleMessage(message);
+                        }
+                    });
 
                 }
             } catch (InterruptedException ex) {
@@ -213,26 +211,30 @@ public abstract class Actor {
         if (message instanceof ActorMessage) {
             
             final ActorMessage actorMessage = (ActorMessage) message;
+            
+            // Unwrap the wrapper to get to the raw Message instance then create
+            // a wrapper with us set as the sender. This is more efficent than
+            // wrapping another wrapper around a wrapper haha.
+            message = new ActorMessage(this, actorMessage.getRawMessage());
+            
             synchronized (connectedActors) {
                 for (Actor actor : connectedActors) {
                     // Don't send it back to who we received it from
                     if (actor != actorMessage.getReceivedFrom()) {
-                        // Send it to this Actor but we will unwrap the raw
-                        // Message object from the ActorMessage wrapper and
-                        // wrap it in a new one that has this Actor instance
-                        // set as the Actor who last handled it so that none
-                        // of the Actor's who we are sending it to, won't
-                        // broadcast it back to us.
-                        actor.queueMessage(new ActorMessage(this, actorMessage.getRawMessage()));
+                        actor.queueMessage(message);
                     }
                 }
             }
             
         } else {
             
+            // The message probably originated from this Actor so we'll wrap it
+            // in a ActorMessage with us set as the sender
+            message = new ActorMessage(this, message);
+            
             synchronized (connectedActors) {
                 for (Actor actor : connectedActors) {
-                    actor.queueMessage(new ActorMessage(this, message));
+                    actor.queueMessage(message);
                 }
             }
         }
