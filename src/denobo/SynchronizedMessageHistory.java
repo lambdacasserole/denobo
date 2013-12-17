@@ -3,7 +3,7 @@ package denobo;
 /**
  * A synchronized decorator class for a MessageHistory instance.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen
  */
 public class SynchronizedMessageHistory extends MessageHistory {
     

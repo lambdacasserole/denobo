@@ -34,7 +34,7 @@ public class DenoboConnection {
      * A boolean flag that is used to signal {@link DenoboConnection#receiveThread} to terminate
      * and prevent any more actions from occurring on the object.
      */
-    private boolean disconnected;
+    private volatile boolean disconnected;
     
     /**
      * The {@link BufferedReader} object to use for efficiently reading any data we have
@@ -175,7 +175,6 @@ public class DenoboConnection {
 
             // Close I/O streams.
 
-            // TODO: work out why this hangs
             // commented out this because for some reason it causes the program to hang.
             //connectionReader.close();
             connectionWriter.close();

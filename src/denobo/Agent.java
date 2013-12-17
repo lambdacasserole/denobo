@@ -1,8 +1,7 @@
 package denobo;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * An Agent that provides a basic concrete implementation of an Actor as part of
@@ -34,8 +33,8 @@ public class Agent extends Actor {
 
         super(name, cloneable);
         messageHistory = new SynchronizedMessageHistory(new MessageHistory());
-        handlers = Collections.synchronizedList(new ArrayList<MessageHandler>());
-
+        handlers = new CopyOnWriteArrayList<>();
+        
     }
 
     /**
@@ -77,12 +76,13 @@ public class Agent extends Actor {
 
         final Message propagatingMessage = new Message(getName(), to, message);
 
-        // This is needed but when connecting to ourselves, we won't receive
-        // any messages because we've already 'handled' the message. This is
-        // intended behaviour.
         messageHistory.update(propagatingMessage.getId());
  
+        // We could put the message in the message queue but if the queue is
+        // busy, it could be a while before the message gets propogated so we
+        // just deal with it now.
         handleMessage(propagatingMessage);
+        //queueMessage(propagatingMessage);
     }
 
     @Override
@@ -108,12 +108,12 @@ public class Agent extends Actor {
         // If we are cloneable, this method will possibly be executing in
         // multiple threads.
         
-        // Pass message to each handler
+        // Pass message to each handler if the message has this Agent in the
+        // receipients.
         if (message.hasRecipient(this)) {
-            synchronized (handlers) {
-                for (MessageHandler handler : handlers) {
-                    handler.messageRecieved(this, message);
-                }
+//System.out.println(this.getName() + " has received a message from: " + message.getFrom() + ": " + message.getData());
+            for (MessageHandler handler : handlers) {
+                handler.messageRecieved(this, message);
             }
         }
 

@@ -20,13 +20,16 @@ import javax.swing.SwingUtilities;
  */
 public class TestMessageFrame extends JFrame implements ActionListener, MessageHandler, SocketAgentObserver {
 
-    private Agent messageAgent;
-    private SocketAgent networkPortal;
+    private static final String LOCAL_AGENT_NAME = "Alex";
+    private static final String REMOTE_AGENT_NAME = "Lee";
+    private static final int LOCAL_PORT = 4756;
+    
+    private final SocketAgent localAgent;
 
-    private JTextField ipTextField, portTextField, localAgentNameField, remoteAgentNameField;
-    private JTextArea receiveTextField, sendTextField;
-    private JButton connectButton, sendButton, disconnectButton;
-    private JScrollPane scrollPane;
+    private final JTextField ipTextField, portTextField, localAgentNameField, remoteAgentNameField;
+    private final JTextArea receiveTextField, sendTextField;
+    private final JButton connectButton, sendButton, disconnectButton;
+    private final JScrollPane scrollPane;
 
     public TestMessageFrame() {
 
@@ -37,10 +40,11 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         portTextField.setText("4757");
 
         localAgentNameField = new JTextField(10);
-        localAgentNameField.setText("Alex");
+        localAgentNameField.setText(LOCAL_AGENT_NAME);
+        localAgentNameField.setEditable(false);
 
         remoteAgentNameField = new JTextField(10);
-        remoteAgentNameField.setText("Lee");
+        remoteAgentNameField.setText(REMOTE_AGENT_NAME);
 
         receiveTextField = new JTextArea(30, 40);
         receiveTextField.setEditable(false);
@@ -49,10 +53,10 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         sendTextField = new JTextArea(3, 30);
         sendTextField.setBorder(BorderFactory.createLineBorder(Color.black));
 
-        connectButton = new JButton("Connect");
+        connectButton = new JButton("Add Connection");
         connectButton.addActionListener(this);
 
-        disconnectButton = new JButton("Disconnect");
+        disconnectButton = new JButton("Remove Connections");
         disconnectButton.addActionListener(this);
 
         sendButton = new JButton("Send");
@@ -122,29 +126,26 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         c.insets = new Insets(5, 5, 5, 5);
         this.add(sendButton, c);
 
-        networkPortal = new SocketAgent("local-network-portal");
-        networkPortal.addObserver(this);
-
-        messageAgent = new Agent(localAgentNameField.getText(), false);
-        messageAgent.addMessageHandler(this);
-        networkPortal.connectActor(messageAgent);
-
-        networkPortal.advertiseConnection(4757);
+        
+        localAgent = new SocketAgent(LOCAL_AGENT_NAME);
+        localAgent.addObserver(this);
+        localAgent.addMessageHandler(this);
+        localAgent.advertiseConnection(LOCAL_PORT);
     }
 
     @Override
     public void actionPerformed(ActionEvent ae) {
 
         if (ae.getSource() == connectButton) {
-            networkPortal.addConnection(ipTextField.getText(), Integer.valueOf(portTextField.getText()));
+            localAgent.addConnection(ipTextField.getText(), Integer.valueOf(portTextField.getText()));
         } else if (ae.getSource() == sendButton) {
             // for stress testing
             //for (int i = 0; i < 100000; i++) {
-                messageAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
+                localAgent.sendMessage(remoteAgentNameField.getText(), sendTextField.getText());
             //}
             receiveTextField.append("Me: " + sendTextField.getText() + "\n");
         } else if (ae.getSource() == disconnectButton) {
-            networkPortal.removeConnections();
+            localAgent.removeConnections();
         }
     }
 

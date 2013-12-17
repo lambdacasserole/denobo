@@ -1,9 +1,8 @@
 package denobo;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,7 +42,7 @@ public abstract class Actor {
     /**
      * The thread pool service for handling cloneable actors.
      */
-    private ExecutorService executorService = null;
+    private final ExecutorService executorService;
 
     /**
      * Abstract constructor to initialise a new instance of an actor.
@@ -57,7 +56,7 @@ public abstract class Actor {
         this.cloneable = cloneable;
 
         messageQueue = new LinkedBlockingQueue<>();
-        connectedActors = Collections.synchronizedList(new ArrayList<Actor>());
+        connectedActors = new CopyOnWriteArrayList<>();
 
         // Only construct the thread pool if cloneable.
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
@@ -111,7 +110,7 @@ public abstract class Actor {
         while (true) {
             try {
                 final Message message = messageQueue.take();
-                //System.out.println(this.getName() + " takes a message from its queue");
+                System.out.println("[" + this.getName() + " takes a message from its queue]");
                 // Check if we should bother handling this message
                 if (!shouldHandleMessage(message)) {
                     continue;
@@ -125,7 +124,7 @@ public abstract class Actor {
                 } else {
 
                     // Execute handleMessage on a seperate thread
-                    executorService.submit(new Runnable() {
+                    executorService.execute(new Runnable() {
                         @Override
                         public void run() {
                             handleMessage(message);
@@ -166,6 +165,7 @@ public abstract class Actor {
      * @param actor the actor to connect to
      */
     public void connectActor(Actor actor) {
+        //if (actor == this) { return; }
         connectedActors.add(actor);
         actor.registerConnectedActor(this);
     }
@@ -217,12 +217,10 @@ public abstract class Actor {
             // wrapping another wrapper around a wrapper haha.
             message = new ActorMessage(this, actorMessage.getRawMessage());
             
-            synchronized (connectedActors) {
-                for (Actor actor : connectedActors) {
-                    // Don't send it back to who we received it from
-                    if (actor != actorMessage.getReceivedFrom()) {
-                        actor.queueMessage(message);
-                    }
+            for (Actor actor : connectedActors) {
+                // Don't send it back to who we received it from
+                if (actor != actorMessage.getReceivedFrom()) {
+                    actor.queueMessage(message);
                 }
             }
             
@@ -232,10 +230,8 @@ public abstract class Actor {
             // in a ActorMessage with us set as the sender
             message = new ActorMessage(this, message);
             
-            synchronized (connectedActors) {
-                for (Actor actor : connectedActors) {
-                    actor.queueMessage(message);
-                }
+            for (Actor actor : connectedActors) {
+                actor.queueMessage(message);
             }
         }
         

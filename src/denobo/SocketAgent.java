@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents a networking-enabled agent portal.
@@ -50,7 +51,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     public SocketAgent(String name) {
         super(name);
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
-        observers = Collections.synchronizedList(new ArrayList<SocketAgentObserver>());
+        observers = new CopyOnWriteArrayList<>();
     }
 
     /**
@@ -94,10 +95,8 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 final Socket acceptedSocket = serverSocket.accept();
 
                 // notify any observers
-                synchronized (observers) {
-                    for (SocketAgentObserver currentObserver : observers) {
-                        currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
-                    }
+                for (SocketAgentObserver currentObserver : observers) {
+                    currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
                 }
 
                 System.out.println("Socket server open on port ["
@@ -111,8 +110,6 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 System.out.println(ex.getMessage());
             }
         }
-
-        shutdown = false;
     }
 
     /**
@@ -131,10 +128,8 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
             newSocket.connect(address);
 
             // notify any observers that we have connected
-            synchronized (observers) {
-                for (SocketAgentObserver currentObserver : observers) {
-                    currentObserver.connectionAddSucceeded(this, hostName, portNumber);
-                }
+            for (SocketAgentObserver currentObserver : observers) {
+                currentObserver.connectionAddSucceeded(this, hostName, portNumber);
             }
 
             addRunningConnection(newSocket);
@@ -142,10 +137,8 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         } catch (IOException ex) {
 
             // notify any observers that we failed to connect
-            synchronized (observers) {
-                for (SocketAgentObserver currentObserver : observers) {
-                    currentObserver.connectionAddFailed(this, hostName, portNumber);
-                }
+            for (SocketAgentObserver currentObserver : observers) {
+                currentObserver.connectionAddFailed(this, hostName, portNumber);
             }
 
         }
@@ -164,11 +157,10 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         ////////////////////////////////////////////////////////////////////////
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
+        
         final DenoboConnection newConnection = new DenoboConnection(s);
         newConnection.addObserver(this);
-
         connections.add(newConnection);
-
         newConnection.startRecieveThread();
     }
 
@@ -200,23 +192,26 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     public void shutdown() {
 
         shutdown = true;
-
-        try {
-            // First prevent anyone else from connecting.
-            if (serverSocket != null) {
+        
+        // First prevent anyone else from connecting.
+        if (serverSocket != null) {
+            try {
                 serverSocket.close();
+            } catch (IOException ex) {
+                // TODO: Handle exception.
+                System.out.println(ex.getMessage());
             }
-
-            // Wait for the connection accepting thread to terminate.
-            if (acceptThread != null) {
-                acceptThread.join();
-            }
-
-        } catch (IOException | InterruptedException ex) {
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
         }
-
+        
+        // Wait for the connection accepting thread to terminate.
+        if (acceptThread != null) {
+            try {
+                acceptThread.join();
+            } catch (InterruptedException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+            
         removeConnections();
     }
 
@@ -307,10 +302,8 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         connections.remove(connection);
 
         // notify any observers
-        synchronized (observers) {
-            for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionClosed(this, connection.getRemoteAddress(), connection.getRemotePort());
-            }
+        for (SocketAgentObserver currentObserver : observers) {
+            currentObserver.connectionClosed(this, connection.getRemoteAddress(), connection.getRemotePort());
         }
     }
 

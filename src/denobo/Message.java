@@ -82,7 +82,7 @@ public class Message {
      * 
      * @return  the unique identifier for this message
      */
-    public String getId() {
+    public final String getId() {
         return id;
     }
 
@@ -91,7 +91,7 @@ public class Message {
      * 
      * @return  the names of the recipient actors
      */
-    public String[] getRecipients() {
+    public final String[] getRecipients() {
         return recipients;
     }
     
@@ -101,7 +101,7 @@ public class Message {
      * @param actor the actor to check
      * @return      true if the specified actor is a recipient, otherwise false
      */
-    public boolean hasRecipient(Actor actor) {
+    public final boolean hasRecipient(Actor actor) {
         for (String string : recipients) {
             if (actor.getName().equals(string)) { return true; }
         }
@@ -113,7 +113,7 @@ public class Message {
      * 
      * @return  the name of the originating actor
      */
-    public String getFrom() {
+    public final String getFrom() {
         return from;
     }
 
@@ -122,7 +122,7 @@ public class Message {
      * 
      * @return  the message data or payload
      */
-    public String getData() {
+    public final String getData() {
         return data;
     }
     
