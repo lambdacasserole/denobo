@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Represents a networking-enabled agent portal.
+ * Represents an Agent with the ability to use sockets to connect Agents.
  *
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
@@ -39,19 +39,61 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
 
     /**
      * A status variable we use to indicate that
-     * {@link NetworkPortal#acceptThread} should abort.
+     * {@link SocketAgent#acceptThread} should abort.
      */
     private volatile boolean shutdown;
 
+    
     /**
-     * Creates a {@link NetworkPortal} with the specified name.
+     * Creates a {@link SocketAgent} with the specified name and cloneable
+     * option.
      *
-     * @param name The name assigned to the NetworkPortal
+     * @param name      The name assigned to the SocketAgent
+     * @param cloneable Whether or not the agent is cloneable
      */
-    public SocketAgent(String name) {
-        super(name);
+    public SocketAgent(String name, boolean cloneable) {
+        super(name, cloneable);
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
         observers = new CopyOnWriteArrayList<>();
+    }
+    
+    /**
+     * Creates a non-cloneable {@link SocketAgent} with the specified name.
+     *
+     * @param name The name assigned to the SocketAgent
+     */
+    public SocketAgent(String name) {
+        this(name, false);
+    }
+
+
+    /**
+     * Adds an observer to the list of observers to be notified of events.
+     *
+     * @param observer The observer to add
+     * @return true if it was successfully added to he list of observers,
+     * otherwise false is returned
+     */
+    public boolean addObserver(SocketAgentObserver observer) {
+        return observers.add(observer);
+    }
+
+    /**
+     * Removes an observer from the list of observers for this SocketAgent.
+     *
+     * @param observer the observer to remove
+     * @return true if the observer to remove was found and removed, otherwise
+     * false
+     */
+    public boolean removeObserver(SocketAgentObserver observer) {
+        return observers.remove(observer);
+    }
+
+    /**
+     * Removes all observers from this SocketAgent.
+     */
+    public void removeObservers() {
+        observers.clear();
     }
 
     /**
@@ -113,10 +155,11 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     }
 
     /**
-     * Connects this {@link SocketAgent} to a remote network portal.
+     * Connects this {@link SocketAgent} to a another SocketAgent through a
+     * socket.
      *
-     * @param hostName the host name of the machine hosting the remote portal
-     * @param portNumber the port number the remote portal is listening on
+     * @param hostName the host name of the machine hosting the remote agent
+     * @param portNumber the port number the remote agent is listening on
      */
     public void addConnection(String hostName, int portNumber) {
         try {
@@ -186,7 +229,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     }
 
     /**
-     * Shuts down this NetworkPortal. No more incoming connection requests will
+     * Shuts down this SocketAgent. No more incoming connection requests will
      * be accepted and any current connections are terminated and removed.
      */
     public void shutdown() {
@@ -214,13 +257,18 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
             
         removeConnections();
     }
+    
 
     @Override
-    protected void handleMessage(Message message) {
-
-        // Super class behaviour is still required
-        super.handleMessage(message);
-
+    protected void broadcastMessage(Message message) {
+        
+        // Super class behaviour is still required (broadcasting to any locally
+        // connected Actor's)
+        super.broadcastMessage(message);
+        
+        
+        // Now broadcast to any Actor's who are connected to us via a socket.
+        
         // If the Message instance is of type SocketAgentMessage, we can find out
         // who originally send us the Message so that we know not to pass it back
         // to them.
@@ -248,36 +296,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 }
             }
         }
-
-    }
-
-    /**
-     * Adds an observer to the list of observers to be notified of events.
-     *
-     * @param observer The observer to add
-     * @return true if it was successfully added to he list of observers,
-     * otherwise false is returned
-     */
-    public boolean addObserver(SocketAgentObserver observer) {
-        return observers.add(observer);
-    }
-
-    /**
-     * Removes an observer from the list of observers for this NetworkPortal.
-     *
-     * @param observer the observer to remove
-     * @return true if the observer to remove was found and removed, otherwise
-     * false
-     */
-    public boolean removeObserver(SocketAgentObserver observer) {
-        return observers.remove(observer);
-    }
-
-    /**
-     * Removes all observers from this NetworkPortal.
-     */
-    public void removeObservers() {
-        observers.clear();
+        
     }
 
     @Override
@@ -318,6 +337,6 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         // Let our message queue deal with the message. We wrap the messsage in
         // a SocketAgentMessage so that we know not to broadcast this message
         // back to the Agent who sent us the message originally.
-        this.queueMessage(new SocketAgentMessage(connection, message));
+        queueMessage(new SocketAgentMessage(connection, message));
     }
 }
