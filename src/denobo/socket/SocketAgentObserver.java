@@ -1,4 +1,4 @@
-package denobo;
+package denobo.socket;
 
 /**
  * Implemented by any class that wants to receive events from a {@link NetworkPortal}.

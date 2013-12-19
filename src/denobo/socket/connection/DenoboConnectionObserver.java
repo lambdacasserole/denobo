@@ -1,4 +1,6 @@
-package denobo;
+package denobo.socket.connection;
+
+import denobo.Message;
 
 /**
  * Implemented by entities that wish to observe a {@link DenoboConnection} for incoming data.

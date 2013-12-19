@@ -1,4 +1,7 @@
-package denobo;
+package denobo.socket;
+
+import denobo.socket.connection.DenoboConnection;
+import denobo.Message;
 
 /**
  * A wrapper class for a Message that we received from a DenoboConnection instance.

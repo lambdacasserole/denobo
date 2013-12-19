@@ -4,8 +4,9 @@
  * and open the template in the editor.
  */
 
-package denobo;
+package denobo.socket.connection;
 
+import denobo.Message;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -16,16 +17,12 @@ import java.io.PrintWriter;
  */
 public interface Protocol {
     
+    public String getPacketHeader();
+      
     public void writePacket(PrintWriter writer, DenoboPacket packet);
     
     public DenoboPacket readPacket(BufferedReader reader) throws IOException;
-        
-    public String serializeMessage(Message message);
-    
-    public Message deserializeMessage(String string);
-    
-    public String getPacketHeader();
-    
+
     public void writeMessage(PrintWriter writer, Message message);
      
 }

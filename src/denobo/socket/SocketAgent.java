@@ -1,5 +1,11 @@
-package denobo;
+package denobo.socket;
 
+import denobo.socket.connection.DenoboConnectionObserver;
+import denobo.socket.connection.DenoboConnection;
+import denobo.Agent;
+import denobo.Message;
+import denobo.socket.connection.state.GreetingState;
+import denobo.socket.connection.state.WaitForGreetingState;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -146,7 +152,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                         + serverSocket.getLocalPort() + "] dispensed a socket on port ["
                         + acceptedSocket.getPort() + "].");
 
-                addRunningConnection(acceptedSocket);
+                addRunningConnection(new DenoboConnection(acceptedSocket, new WaitForGreetingState()));
 
             } catch (IOException ex) {
                 // TODO: Handle exception.
@@ -176,7 +182,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 currentObserver.connectionAddSucceeded(this, hostName, portNumber);
             }
 
-            addRunningConnection(newSocket);
+            addRunningConnection(new DenoboConnection(newSocket, new GreetingState()));
 
         } catch (IOException ex) {
 
@@ -196,13 +202,13 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      *
      * @param s The socket to wrap up into a DenoboConnection.
      */
-    private void addRunningConnection(Socket s) {
+    private void addRunningConnection(DenoboConnection newConnection) {
 
         ////////////////////////////////////////////////////////////////////////
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
         
-        final DenoboConnection newConnection = new DenoboConnection(s);
+        //final DenoboConnection newConnection = new DenoboConnection(s);
         newConnection.addObserver(this);
         connections.add(newConnection);
         newConnection.startRecieveThread();

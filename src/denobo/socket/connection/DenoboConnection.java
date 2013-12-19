@@ -1,12 +1,15 @@
-package denobo;
+package denobo.socket.connection;
 
+import denobo.socket.connection.state.DenoboConnectionState;
+import denobo.Message;
+import denobo.MessageSerializer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents a bidirectional communication line between two {@link NetworkPortal} objects.
@@ -51,17 +54,23 @@ public class DenoboConnection {
      * Holds the protocol used to read and write to and from this connection.
      */
     private final Protocol protocol;
+    
+    /**
+     * The current state of this DenoboConnection.
+     */
+    private DenoboConnectionState state;
 
     /**
      * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
      *
      * @param connection    the connection to handle receiving data from
      */
-    public DenoboConnection(Socket connection) {
+    public DenoboConnection(Socket connection, DenoboConnectionState initialState) {
         
         // Store reference to socket and initialise observer list.
         this.connection = connection;
-        this.observers = new ArrayList<>();
+        this.state = initialState;
+        this.observers = new CopyOnWriteArrayList<>();
      
         // Protocol to be used for message serialization and packet I/O.
         protocol = new DenoboProtocol();
@@ -79,6 +88,88 @@ public class DenoboConnection {
             
         }
         
+    }
+    
+        
+    /**
+     * Adds an observer to the list of observers to be notified of events.
+     * 
+     * @param observer  the observer to add
+     * @return          true if it was successfully added to he list of observers, otherwise false
+     */
+    public boolean addObserver(DenoboConnectionObserver observer) {
+        return observers.add(observer);
+    }
+    
+    /**
+     * Removes an observer from the list of observers for this DenoboConnection.
+     * 
+     * @param observer  the observer to remove
+     * @return          true if the observer to remove was found and removed, otherwise false
+     */
+    public boolean removeObserver(DenoboConnectionObserver observer) {
+        return observers.remove(observer);
+    }
+    
+    /**
+     * Removes all observers from this DenoboConnection.
+     */
+    public void removeObservers() {
+        observers.clear();
+    }
+    
+    /**
+     * Returns all the observers watching this DenoboConnection.
+     * 
+     * @return      The list of observers
+     */
+    public List<DenoboConnectionObserver> getObservers() {
+        return observers;
+    }
+
+    /**
+     * Returns the port number the remote peer is using to connect to us on.
+     * 
+     * @return      The port number
+     */
+    public int getRemotePort() {
+        return connection.getPort();
+    }
+    
+    /**
+     * Returns the remote IP address of the remote peer for this connection.
+     * 
+     * @return  the remote IP address of the remote peer for this connection
+     */
+    public String getRemoteAddress() {
+        return connection.getInetAddress().getHostAddress();
+    }
+    
+    /**
+     * Returns the current state handler for this connection.
+     * 
+     * @return      The current state of this connection
+     */
+    public DenoboConnectionState getState() {
+        return state;
+    }
+    
+    /**
+     * Returns the current protocol being used.
+     * 
+     * @return      The protocol being used
+     */
+    public Protocol getProtocol() {
+        return protocol;
+    }
+    
+    /**
+     * Sets the current state handler for this connection.
+     * 
+     * @param newState      The new state for this connection
+     */
+    public void setState(DenoboConnectionState newState) {
+        this.state = newState;
     }
     
     /**
@@ -100,51 +191,42 @@ public class DenoboConnection {
      * The loop that will wait for any data to be received and delegating the
      * received data to be processed.
      */
-    private void receiveLoop() {
+    private void receiveLoop() {                
+        
+        System.out.println("Waiting for data on port [" + connection.getPort() + "]...");
+
+        state.handleConnectionEstablished(this);
+        
         try {
             while (!disconnected) {
-                
-                System.out.println("Waiting for data on port [" + connection.getPort() + "]...");
-                
-                // Wait on a valid packet magic number.
-                final String buffer = connectionReader.readLine();
-                
-                // Check if the connection was closed.
-                if (buffer == null) { break; }
-                
-                // Wait for protocol 'magic number' indicating the start of a packet.
-                if (buffer.equals(protocol.getPacketHeader())) {
-                    
-                    System.out.println("Recieved packet appears valid, magic number: " 
-                            + protocol.getPacketHeader());
-                    
-                    // Let protocol read rest of packet.
-                    final DenoboPacket nextPacket = protocol.readPacket(connectionReader);
-                    
-                    // Process packet according to status code.
-                    switch(nextPacket.getStatusCode()) {
-                        case 300:
-                            
-                            // Status code 300 (PROPAGATE). Send message to observers.
-                            for (DenoboConnectionObserver currentObserver : observers) {
-                                currentObserver.messageReceived(this, protocol.deserializeMessage(nextPacket.getBody())); 
-                            }
-                            
-                            break;
-                        default:
-                            
-                            // TODO: Bad status code.
-                            
-                            break;
-                    }
-                    
-                } else {
-                    
-                    // TODO: Handle invalid packet.
-                    System.out.println("Received invalid packet.");
-                    
+
+                // Read a packet
+                final DenoboPacket nextPacket = protocol.readPacket(connectionReader);
+                if (nextPacket == null) { 
+                    break;
                 }
                 
+                state.handleReceivedPacket(this, nextPacket);
+
+//                // Process packet according to status code.
+//                switch(nextPacket.getStatusCode()) {
+//                    
+//                    case 300:
+//
+//                        // Status code 300 (PROPAGATE). Send message to observers.
+//                        final Message deserializedMessage = MessageSerializer.deserialize(nextPacket.getBody());
+//                        for (DenoboConnectionObserver currentObserver : observers) {
+//                            currentObserver.messageReceived(this, deserializedMessage); 
+//                        }
+//
+//                        break;
+//                        
+//                    default:
+//
+//                        // TODO: Bad status code.
+//                        break;
+//                        
+//                }
             }
         } catch (IOException ex) {
             
@@ -222,48 +304,11 @@ public class DenoboConnection {
     }
     
     /**
-     * Adds an observer to the list of observers to be notified of events.
-     * 
-     * @param observer  the observer to add
-     * @return          true if it was successfully added to he list of observers, otherwise false
+     * Sends a packet over this connection
+     * @param packet    the packet to send
      */
-    public boolean addObserver(DenoboConnectionObserver observer) {
-        return observers.add(observer);
+    public void send(DenoboPacket packet) {
+        
+        protocol.writePacket(connectionWriter, packet);
     }
-    
-    /**
-     * Removes an observer from the list of observers for this DenoboConnection.
-     * 
-     * @param observer  the observer to remove
-     * @return          true if the observer to remove was found and removed, otherwise false
-     */
-    public boolean removeObserver(DenoboConnectionObserver observer) {
-        return observers.remove(observer);
-    }
-    
-    /**
-     * Removes all observers from this DenoboConnection.
-     */
-    public void removeObservers() {
-        observers.clear();
-    }
-
-    /**
-     * Returns the port number the remote peer is using to connect to us on.
-     * 
-     * @return      The port number
-     */
-    public int getRemotePort() {
-        return connection.getPort();
-    }
-    
-    /**
-     * Returns the remote IP address of the remote peer for this connection.
-     * 
-     * @return  the remote IP address of the remote peer for this connection
-     */
-    public String getRemoteAddress() {
-        return connection.getInetAddress().getHostAddress();
-    }
-    
 }
