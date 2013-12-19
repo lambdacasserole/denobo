@@ -6,6 +6,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Represents an abstract actor acting as part of a multi-agent system.
@@ -45,6 +46,19 @@ public abstract class Actor {
     private final ExecutorService executorService;
 
     /**
+     * Holds the status on whether this Actor has been shutdown and also signals
+     * to the underlyingThread to stop processing.
+     */
+    private volatile boolean shutdown;
+    
+    /**
+     * Holding this lock will hold off a potential shutdown until released. 
+     */
+    private final Object shutdownLock;
+    
+
+    
+    /**
      * Abstract constructor to initialise a new instance of an actor.
      *
      * @param name the name of the actor
@@ -57,6 +71,7 @@ public abstract class Actor {
 
         messageQueue = new LinkedBlockingQueue<>();
         connectedActors = new CopyOnWriteArrayList<>();
+        shutdownLock = new Object();
 
         // Only construct the thread pool if cloneable.
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
@@ -83,65 +98,6 @@ public abstract class Actor {
     }
 
     /**
-     * Adds a message to the actor's message queue.
-     *
-     * @param message the message to add
-     */
-    public void queueMessage(Message message) {
-        try {
-
-            // Queue message for processing.
-            messageQueue.put(message);
-
-        } catch (InterruptedException ex) {
-
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
-
-        }
-    }
-
-    /**
-     * The loop that processes this Actor's message queue.
-     */
-    private void queueProcessLoop() {
-
-        // Loop until interrupted.
-        while (true) {
-            try {
-                final Message message = messageQueue.take();
-                System.out.println("[" + this.getName() + " takes a message from its queue]");
-                // Check if we should bother handling this message
-                if (!shouldHandleMessage(message)) {
-                    continue;
-                }
-
-                if (!cloneable) {
-
-                    // Handle message in this thread.
-                    handleMessage(message);
-
-                } else {
-
-                    // Execute handleMessage on a seperate thread
-                    executorService.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            handleMessage(message);
-                        }
-                    });
-
-                }
-            } catch (InterruptedException ex) {
-
-                // TODO: Handle exception.
-                System.out.println(ex.getMessage());
-
-            }
-        }
-    }
-
-    /**
      * Gets the name of the actor.
      *
      * @return the name of the actor
@@ -158,6 +114,16 @@ public abstract class Actor {
     public final boolean getCloneable() {
         return cloneable;
     }
+    
+    /**
+     * Gets whether or not the actor has shutdown or is currently in the process
+     * of shutting down.
+     * 
+     * @return true if the actor has shutdown, otherwise false
+     */
+    public final boolean hasShutdown() {
+        return shutdown;
+    }
 
     /**
      * Connects the actor to another.
@@ -165,7 +131,7 @@ public abstract class Actor {
      * @param actor the actor to connect to
      */
     public void connectActor(Actor actor) {
-        //if (actor == this) { return; }
+        //if (shutdown || actor == this) { return; }
         connectedActors.add(actor);
         actor.registerConnectedActor(this);
     }
@@ -198,6 +164,123 @@ public abstract class Actor {
         connectedActors.remove(actor);
     }
 
+    
+    /**
+     * Adds a message to the actor's message queue.
+     *
+     * @param message the message to add
+     */
+    public void queueMessage(Message message) {
+        
+        // We need to make sure the thread won't be shutdown between checking
+        // if it has shutdown and adding the message to the queue - we want to
+        // guarantee that if our message is added, that it will be processed.
+        synchronized (shutdownLock) {
+            // Don't queue the message if we have shutdown or we are in the process
+            // of shutting down.
+            if (shutdown) {
+                // TODO: I'd rather notify the caller that their message won't be
+                // delivered in some way.
+                return;
+            }
+
+            // Make sure our message gets added to the queue as something interrupting
+            // our thread could cause our message to be lost.
+            boolean added = false;
+            while (!added) {
+                try {
+                    // Queue message for processing.
+                    messageQueue.put(message);
+                    added = true; 
+                } catch (InterruptedException ex) {
+                    // Reset the interrupt flag for this thread for any higher
+                    // up the chain caller.
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    }
+
+    /**
+     * The loop that processes this Actor's message queue.
+     */
+    private void queueProcessLoop() {
+
+        // Keep processing till we are given the signal to stop then process
+        // everything until the queue is empty.
+        while (!shutdown || !messageQueue.isEmpty()) {
+            try {
+                final Message message = messageQueue.take();
+                System.out.println("[" + this.getName() + " takes a message from its queue]");
+                // Check if we should bother handling this message
+                if (!shouldHandleMessage(message)) {
+                    continue;
+                }
+
+                if (!cloneable) {
+                    // Handle message in this thread.
+                    handleMessage(message);
+                } else {
+                    // Execute handleMessage on a seperate thread
+                    executorService.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            handleMessage(message);
+                        }
+                    });
+                }
+            } catch (InterruptedException ex) {
+                // Swallow the exception as a chance for us to unblock from the
+                // take() call and check whether we need to begin shutting down.
+                //System.out.println("Thread interupted, shutting down when finished: " + name);
+            }
+        }
+        
+    }
+        
+    /**
+     * Prevents any more messages from being added to the queue and processes
+     * any remaining in the queue. The queue is then shutdown and all links to
+     * other agents are removed.
+     */
+    public void shutdown() {
+        
+        // Set the signal to not accept anymore messages into the queue and for
+        // the queue to finish processing any remaining messages. We need the
+        // lock in so we can guarantee that everything added to the queue before
+        // this point will certainly be processed.
+        synchronized (shutdownLock) {
+            shutdown = true;
+            underlyingThread.interrupt();
+        }
+        
+        try {
+            // Wait for the queue thread to finish
+            underlyingThread.join();
+        } catch (InterruptedException ex) {
+            System.out.println(ex.getMessage());
+        }
+        
+        // Shutdown the the thread pool if we are cloneable and wait till
+        // all the threads are finished.
+        if (executorService != null) {
+            try {
+                executorService.shutdown();
+                executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException ex) {
+                // TODO: Handle this
+                System.out.println(ex.getMessage());
+            }
+        }    
+
+        // Remove all links to other Actor's
+        for (Actor actor : connectedActors) {
+            actor.unregisterConnectedActor(this);
+        }
+        
+        connectedActors.clear();
+    }
+    
     /**
      * Sends a message to every Actor connected to this Actor.
      *

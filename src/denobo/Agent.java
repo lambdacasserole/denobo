@@ -53,6 +53,7 @@ public class Agent extends Actor {
      * @param handler the {@link MessageHandler} to add as an observer
      */
     public void addMessageHandler(MessageHandler handler) {
+        //if (this.hasShutdown()) { return; }
         handlers.add(handler);
     }
 
@@ -119,5 +120,13 @@ public class Agent extends Actor {
 
         // Broadcast to peers.
         broadcastMessage(message);
+    }
+
+    @Override
+    public void shutdown() {
+        
+        super.shutdown();
+        
+        handlers.clear();
     }
 }

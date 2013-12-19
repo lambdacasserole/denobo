@@ -103,8 +103,9 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      */
     public void advertiseConnection(int portNumber) {
 
-        // shutdown in case we are already advertising
-        shutdown();
+        // shutdown the socket agent related stuff in case we are already
+        // advertising
+        socketAgentShutdown();
 
         try {
             serverSocket = new ServerSocket(portNumber);
@@ -227,13 +228,16 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
             connections.clear();
         }
     }
-
+    
     /**
      * Shuts down this SocketAgent. No more incoming connection requests will
-     * be accepted and any current connections are terminated and removed.
+     * be accepted and any current connections are terminated and removed. This
+     * only shuts down the socket parts and the base class isn't shutdown.
+     * Invoking advertiseConnection reverses the shutdown and permits socket
+     * connections again.
      */
-    public void shutdown() {
-
+    private void socketAgentShutdown() {
+        
         shutdown = true;
         
         // First prevent anyone else from connecting.
@@ -256,6 +260,20 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         }
             
         removeConnections();
+    }
+
+    /**
+     * Shuts down this SocketAgent. No more incoming connection requests will
+     * be accepted and any current connections are terminated and removed. This
+     * is a full shutdown that prevents this Agent being used again.
+     */
+    @Override
+    public void shutdown() {
+
+        socketAgentShutdown();
+        
+        // Super class can perform a shutdown now
+        super.shutdown();
     }
     
 
