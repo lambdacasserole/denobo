@@ -207,8 +207,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         ////////////////////////////////////////////////////////////////////////
         // THIS METHOD COULD POTENTIALLY BE EXECUTED BY MULTIPLE THREADS!     //
         ////////////////////////////////////////////////////////////////////////
-        
-        //final DenoboConnection newConnection = new DenoboConnection(s);
+
         newConnection.addObserver(this);
         connections.add(newConnection);
         newConnection.startRecieveThread();

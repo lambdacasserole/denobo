@@ -3,7 +3,6 @@ package denobo;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashSet;
 import java.util.Random;
 
 /**
@@ -21,7 +20,7 @@ public class UniqueIdFactory {
     /**
      * Holds a hash set of used ID strings to ensure no duplicates are dispensed.
      */
-    private static final HashSet<String> usedStrings = new HashSet<>();
+    //private static final HashSet<String> usedStrings = new HashSet<>();
     
     /**
      * Gets a SHA256 hash of the given string.
@@ -57,19 +56,19 @@ public class UniqueIdFactory {
     }
     
     private static String getRandomId() {
-        Random rand = new Random();
+        final Random rand = new Random();
         return sha256(Integer.toString(rand.nextInt(2048)) 
                 + Long.toString(System.currentTimeMillis()) 
                 + Integer.toString(incrementalId++));
     }
     
     public static String getId() {
-        String buffer = getRandomId();
-        while(usedStrings.contains(buffer)) {
-            buffer = getRandomId();
-        }
-        usedStrings.add(buffer);
-        return buffer;
+        //String buffer = getRandomId();
+        //while(usedStrings.contains(buffer)) {
+            //buffer = getRandomId();
+        //}
+        //usedStrings.add(buffer);
+        return getRandomId();
     }
         
 }

@@ -2,10 +2,13 @@ package denobo.socket.connection.state;
 
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.DenoboConnectionObserver;
-import denobo.socket.connection.DenoboPacket;
+import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
 
 /**
+ * This represents the state a connection in when we have have initialized a
+ * connection to another peer. It is our responsibility to send a GREETINGS
+ * packet to them to initiate a session.
  *
  * @author Alex Mullen
  */
@@ -17,12 +20,12 @@ public class GreetingState extends DenoboConnectionState {
         System.out.println("sending a GREETINGS packet to " + connection.getRemoteAddress()
                             + ":" + connection.getRemotePort());
         
-        connection.send(new DenoboPacket(PacketCode.GREETINGS));
+        connection.send(new Packet(PacketCode.GREETINGS));
         
     }
     
     @Override
-    public void handleReceivedPacket(DenoboConnection connection, DenoboPacket packet) {
+    public void handleReceivedPacket(DenoboConnection connection, Packet packet) {
 
         // Process packet according to status code.
         switch(packet.getCode()) {
@@ -42,7 +45,7 @@ public class GreetingState extends DenoboConnectionState {
             case CREDENTIALS_PLZ:
                 
                 // TODO: Implement credentials
-                //connection.send(new DenoboPacket(PacketCode.CREDENTIALS, "username=foo&password=bar"));
+                //connection.send(new Packet(PacketCode.CREDENTIALS, "username=foo&password=bar"));
                 break;
 
                 // All these mean we need to disconnect anyway so just let them

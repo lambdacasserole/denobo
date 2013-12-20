@@ -1,34 +1,27 @@
 package denobo.socket.connection;
 
-import denobo.Message;
-import denobo.MessageSerializer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
  *
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen
  */
-public class DenoboProtocol implements Protocol {
+public class DenoboPacketSerializer implements PacketSerializer {
         
     /**
      * Holds the packet header magic number for this protocol.
      */
     private static final String PACKET_HEADER = "DENOBO v0.9 (BENSON)";
     
-    
+
     @Override
-    public String getPacketHeader() {
-        return PACKET_HEADER;
-    }
-    
-    @Override
-    public void writePacket(PrintWriter writer, DenoboPacket packet) {
+    public void writePacket(PrintWriter writer, Packet packet) {
         
         final StringBuilder sb = new StringBuilder();
         sb.append(PACKET_HEADER).append("\n");
-        sb.append("status-code:").append(packet.getCode().toInt()).append("\n");
+        sb.append("code:").append(packet.getCode().toInt()).append("\n");
         sb.append("body-length:").append(packet.getBody().length()).append("\n");
         sb.append(packet.getBody());
         
@@ -38,7 +31,7 @@ public class DenoboProtocol implements Protocol {
     }
     
     @Override
-    public DenoboPacket readPacket(BufferedReader reader) throws IOException {
+    public Packet readPacket(BufferedReader reader) throws IOException {
         
         if (PACKET_HEADER.equals(reader.readLine())) {
             
@@ -46,11 +39,17 @@ public class DenoboProtocol implements Protocol {
                         + PACKET_HEADER);
 
             // Parse out status code.
-            final String[] statusCodeField = reader.readLine().split(":");
+            final String[] statusCodeField = reader.readLine().split(":", 2);
+            if (statusCodeField.length != 2) { 
+                return null; 
+            }
             final int code = Integer.parseInt(statusCodeField[1]);
-
+            
             // Parse out body length.
-            final String[] bodyLengthField = reader.readLine().split(":");
+            final String[] bodyLengthField = reader.readLine().split(":", 2);
+            if (bodyLengthField.length != 2) { 
+                return null; 
+            }
             final int bodyLength = Integer.parseInt(bodyLengthField[1]);
 
             // Parse out payload.
@@ -58,19 +57,18 @@ public class DenoboProtocol implements Protocol {
             reader.read(packetBody);
 
             // Let the observers deal with packet.
-            return new DenoboPacket(PacketCode.valueOf(code), String.valueOf(packetBody));   
+            final PacketCode packetCode = PacketCode.valueOf(code);
+            if (packetCode == null) {
+                return null;
+            }
+            return new Packet(packetCode, String.valueOf(packetBody));   
             
         } else {
             
             return null;
             
         }
-          
+        
     }
-
-    @Override
-    public void writeMessage(PrintWriter writer, Message message) {
-        writePacket(writer, new DenoboPacket(PacketCode.PROPAGATE, MessageSerializer.serialize(message)));
-    }
-
+    
 }

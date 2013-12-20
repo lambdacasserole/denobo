@@ -3,9 +3,9 @@ package denobo.socket.connection;
 /**
  * Represents a packet of data passed between DenoboConnection objects.
  * 
- * @author Saul
+ * @author Saul Johnson, Alex Mullen
  */
-public class DenoboPacket {
+public class Packet {
         
     /**
      * Holds a code representing the type of packet.
@@ -23,7 +23,7 @@ public class DenoboPacket {
      * @param code    the code contained within the packet
      * @param body    the packet payload.
      */
-    public DenoboPacket(PacketCode code, String body) {
+    public Packet(PacketCode code, String body) {
         
         this.code = code;
         this.body = body;
@@ -35,7 +35,7 @@ public class DenoboPacket {
      * 
      * @param code    the code contained within the packet
      */
-    public DenoboPacket(PacketCode code) {
+    public Packet(PacketCode code) {
         this(code, "");
     }
     

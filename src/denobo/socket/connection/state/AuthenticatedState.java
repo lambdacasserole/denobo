@@ -4,16 +4,18 @@ import denobo.Message;
 import denobo.MessageSerializer;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.DenoboConnectionObserver;
-import denobo.socket.connection.DenoboPacket;
+import denobo.socket.connection.Packet;
+import denobo.socket.connection.PacketCode;
 
 /**
+ * This represents the state of a connection has completed the hand-shake.
  *
  * @author Alex Mullen
  */
 public class AuthenticatedState extends DenoboConnectionState {
 
     @Override
-    public void handleReceivedPacket(DenoboConnection connection, DenoboPacket packet) {
+    public void handleReceivedPacket(DenoboConnection connection, Packet packet) {
 
         // Process packet according to status code.
         switch(packet.getCode()) {
@@ -25,8 +27,11 @@ public class AuthenticatedState extends DenoboConnectionState {
                     currentObserver.messageReceived(connection, deserializedMessage); 
                 }
                 break;
-                    
-                // TODO: More codes probably
+
+            case POKE:
+                
+                connection.send(new Packet(PacketCode.POKE));
+                break;
                 
             default:
                 

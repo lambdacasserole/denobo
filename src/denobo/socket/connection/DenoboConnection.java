@@ -51,9 +51,9 @@ public class DenoboConnection {
     private PrintWriter connectionWriter;
 
     /**
-     * Holds the protocol used to read and write to and from this connection.
+     * Holds the packetSerializer used to read and write to and from this connection.
      */
-    private final Protocol protocol;
+    private final PacketSerializer packetSerializer;
     
     /**
      * The current state of this DenoboConnection.
@@ -64,6 +64,7 @@ public class DenoboConnection {
      * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
      *
      * @param connection    the connection to handle receiving data from
+     * @param initialState  the initial state this connection will be in
      */
     public DenoboConnection(Socket connection, DenoboConnectionState initialState) {
         
@@ -72,8 +73,8 @@ public class DenoboConnection {
         this.state = initialState;
         this.observers = new CopyOnWriteArrayList<>();
      
-        // Protocol to be used for message serialization and packet I/O.
-        protocol = new DenoboProtocol();
+        // PacketSerializer to be used for message serialization and packet I/O.
+        packetSerializer = new DenoboPacketSerializer();
         
         try {
             
@@ -144,25 +145,7 @@ public class DenoboConnection {
     public String getRemoteAddress() {
         return connection.getInetAddress().getHostAddress();
     }
-    
-    /**
-     * Returns the current state handler for this connection.
-     * 
-     * @return      The current state of this connection
-     */
-    public DenoboConnectionState getState() {
-        return state;
-    }
-    
-    /**
-     * Returns the current protocol being used.
-     * 
-     * @return      The protocol being used
-     */
-    public Protocol getProtocol() {
-        return protocol;
-    }
-    
+
     /**
      * Sets the current state handler for this connection.
      * 
@@ -198,36 +181,19 @@ public class DenoboConnection {
         state.handleConnectionEstablished(this);
         
         try {
+            
             while (!disconnected) {
 
                 // Read a packet
-                final DenoboPacket nextPacket = protocol.readPacket(connectionReader);
+                final Packet nextPacket = packetSerializer.readPacket(connectionReader);
                 if (nextPacket == null) { 
                     break;
                 }
                 
                 state.handleReceivedPacket(this, nextPacket);
-
-//                // Process packet according to status code.
-//                switch(nextPacket.getStatusCode()) {
-//                    
-//                    case 300:
-//
-//                        // Status code 300 (PROPAGATE). Send message to observers.
-//                        final Message deserializedMessage = MessageSerializer.deserialize(nextPacket.getBody());
-//                        for (DenoboConnectionObserver currentObserver : observers) {
-//                            currentObserver.messageReceived(this, deserializedMessage); 
-//                        }
-//
-//                        break;
-//                        
-//                    default:
-//
-//                        // TODO: Bad status code.
-//                        break;
-//                        
-//                }
+                
             }
+            
         } catch (IOException ex) {
             
             // TODO: Handle exception.
@@ -292,23 +258,20 @@ public class DenoboConnection {
      * @param message   the message to send 
      */
     public void send(Message message) {
-        
-        System.out.println("Writing data to port [" + connection.getPort() + "]...");
-        
-        /* 
-         * Write serialized message to output stream, letting protocol handle 
-         * packet construction.
-         */
-        protocol.writeMessage(connectionWriter, message);
+
+        send(new Packet(PacketCode.PROPAGATE, MessageSerializer.serialize(message)));
         
     }
     
     /**
-     * Sends a packet over this connection
+     * Sends a packet over this connection.
      * @param packet    the packet to send
      */
-    public void send(DenoboPacket packet) {
+    public void send(Packet packet) {
         
-        protocol.writePacket(connectionWriter, packet);
+        System.out.println("Writing data to port [" + connection.getPort() + "]...");
+        
+        packetSerializer.writePacket(connectionWriter, packet);
+        
     }
 }
