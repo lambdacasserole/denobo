@@ -4,12 +4,14 @@ import denobo.socket.connection.state.DenoboConnectionState;
 import denobo.Message;
 import denobo.MessageSerializer;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Represents a bidirectional communication line between two {@link NetworkPortal} objects.
@@ -46,9 +48,9 @@ public class DenoboConnection {
     private BufferedReader connectionReader;
     
     /**
-     * Holds a {@link PrintWriter} object for writing to the connection's underlying socket.
+     * Holds a {@link BufferedWriter} object for writing to the connection's underlying socket.
      */
-    private PrintWriter connectionWriter;
+    private BufferedWriter connectionWriter;
 
     /**
      * Holds the packetSerializer used to read and write to and from this connection.
@@ -59,6 +61,26 @@ public class DenoboConnection {
      * The current state of this DenoboConnection.
      */
     private DenoboConnectionState state;
+
+    /**
+     * Indicates whether we have send a poke packet and we are expecting a poke 
+     * packet back.
+     */
+    private boolean pokeSent;
+    
+    /**
+     * An indicator to the poke method that we received a poke packet back.
+     */
+    private boolean pokeReturned;
+    
+    /**
+     * The lock object that we use for waiting for a poke reply and notifying
+     * when we get the reply.
+     */
+    private final Object pokeLock;
+    
+    
+    
 
     /**
      * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
@@ -72,6 +94,7 @@ public class DenoboConnection {
         this.connection = connection;
         this.state = initialState;
         this.observers = new CopyOnWriteArrayList<>();
+        this.pokeLock = new Object();
      
         // PacketSerializer to be used for message serialization and packet I/O.
         packetSerializer = new DenoboPacketSerializer();
@@ -80,7 +103,7 @@ public class DenoboConnection {
             
             // Get I/O streams.
             connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            connectionWriter = new PrintWriter(connection.getOutputStream());
+            connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
             
         } catch (IOException ex) {
             
@@ -190,7 +213,23 @@ public class DenoboConnection {
                     break;
                 }
                 
-                state.handleReceivedPacket(this, nextPacket);
+                // We handle POKE here because they can be handled in any state
+                if (nextPacket.getCode() == PacketCode.POKE) {
+                    
+                    synchronized (pokeLock) {
+                        if (pokeSent) {
+                            pokeReturned = true;
+                            pokeLock.notify();
+                        } else {
+                            send(new Packet(PacketCode.POKE));
+                        }
+                    }
+                    
+                } else {
+                
+                    state.handleReceivedPacket(this, nextPacket);
+                    
+                }
                 
             }
             
@@ -260,7 +299,7 @@ public class DenoboConnection {
     public void send(Message message) {
 
         send(new Packet(PacketCode.PROPAGATE, MessageSerializer.serialize(message)));
-        
+
     }
     
     /**
@@ -270,8 +309,59 @@ public class DenoboConnection {
     public void send(Packet packet) {
         
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
+        try {
+            packetSerializer.writePacket(connectionWriter, packet);
+        } catch (IOException ex) {
+            // TODO: Handle exception
+            disconnect();
+        }
         
-        packetSerializer.writePacket(connectionWriter, packet);
-        
+    }
+    
+    /**
+     * Sends a POKE packet to the remote peer which should reply with one back.
+     * This process is measured to give an indicator to how healthy the connection
+     * to this peer is. The lower the number, the faster packets get there and
+     * the faster they are getting processed.
+     * 
+     * @param timeout   The maximum time to wait for a reply in milliseconds.
+     * @return          The total round time it taken for us to send a packet
+     *                  and receive one back in milliseconds.
+     * @throws TimeoutException     If we did not receive a reply before the 
+     *                              specified timeout.
+     */
+    public long poke(long timeout) throws TimeoutException {
+
+        synchronized (pokeLock) {
+            
+            // Mark the current time
+            final long startTime = System.currentTimeMillis();
+            
+            // Send a poke packet
+            pokeSent = true;
+            send(new Packet(PacketCode.POKE));
+
+
+            // Check if we have recieved a reply poke
+            while (!pokeReturned) {
+                // Check if we have waited the elapsed time or longer with still
+                // no reply.
+                if ((System.currentTimeMillis() - startTime) >= timeout) {
+                    throw new TimeoutException();
+                }
+
+                // Go to sleep until we are notified of a reply
+                try {
+                    pokeLock.wait(timeout);
+                } catch (InterruptedException ex) { }
+            }
+            
+            // Reset variables
+            pokeSent = false;
+            pokeReturned = false;
+            
+            // Return how long the process took
+            return (System.currentTimeMillis() - startTime);
+        }
     }
 }

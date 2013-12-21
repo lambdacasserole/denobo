@@ -5,7 +5,6 @@ import denobo.MessageSerializer;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.Packet;
-import denobo.socket.connection.PacketCode;
 
 /**
  * This represents the state of a connection has completed the hand-shake.
@@ -28,11 +27,6 @@ public class AuthenticatedState extends DenoboConnectionState {
                 }
                 break;
 
-            case POKE:
-                
-                connection.send(new Packet(PacketCode.POKE));
-                break;
-                
             default:
                 
                 // TODO: Bad status code that we weren't expecting.

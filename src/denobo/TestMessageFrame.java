@@ -1,5 +1,7 @@
 package denobo;
 
+import denobo.socket.SocketAgentObserver;
+import denobo.socket.SocketAgent;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -16,13 +18,14 @@ import javax.swing.SwingUtilities;
 
 /**
  *
- * @author Alex
+ * @author Alex 
  */
 public class TestMessageFrame extends JFrame implements ActionListener, MessageHandler, SocketAgentObserver {
 
     private static final String LOCAL_AGENT_NAME = "Alex";
     private static final String REMOTE_AGENT_NAME = "Lee";
-    private static final int LOCAL_PORT = 4756;
+    private static final int LOCAL_PORT = 4757;
+    private static final int MAX_CONNECTIONS = 20;
     
     private final SocketAgent localAgent;
 
@@ -127,7 +130,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         this.add(sendButton, c);
 
         
-        localAgent = new SocketAgent(LOCAL_AGENT_NAME);
+        localAgent = new SocketAgent(LOCAL_AGENT_NAME, MAX_CONNECTIONS);
         localAgent.addObserver(this);
         localAgent.addMessageHandler(this);
         localAgent.advertiseConnection(LOCAL_PORT);

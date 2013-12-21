@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Semaphore;
 
 /**
  * Represents an Agent with the ability to use sockets to connect Agents.
@@ -42,6 +43,11 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      * accept and add to our connection list.
      */
     private Thread acceptThread;
+    
+    /**
+     * The maximum number of connections permitted to be connected.
+     */
+    private Semaphore connectionsPermits;
 
     /**
      * A status variable we use to indicate that
@@ -54,11 +60,14 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      * Creates a {@link SocketAgent} with the specified name and cloneable
      * option.
      *
-     * @param name      The name assigned to the SocketAgent
-     * @param cloneable Whether or not the agent is cloneable
+     * @param name          The name assigned to the SocketAgent
+     * @param cloneable     Whether or not the agent is cloneable
+     * @param maxConnections    The maximum number of connections from this Agent
+     *                          permitted.
      */
-    public SocketAgent(String name, boolean cloneable) {
+    public SocketAgent(String name, boolean cloneable, int maxConnections) {
         super(name, cloneable);
+        connectionsPermits = new Semaphore(maxConnections, false);
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
         observers = new CopyOnWriteArrayList<>();
     }
@@ -66,10 +75,12 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     /**
      * Creates a non-cloneable {@link SocketAgent} with the specified name.
      *
-     * @param name The name assigned to the SocketAgent
+     * @param name          The name assigned to the SocketAgent
+     * @param maxConnections    The maximum number of connections from this Agent
+     *                          permitted.
      */
-    public SocketAgent(String name) {
-        this(name, false);
+    public SocketAgent(String name, int maxConnections) {
+        this(name, false, maxConnections);
     }
 
 
@@ -142,6 +153,13 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                         + serverSocket.getLocalPort() + "] and listening...");
 
                 final Socket acceptedSocket = serverSocket.accept();
+                if (!connectionsPermits.tryAcquire()) {
+                    // TODO: Tell them there is too many connected peers then
+                    //       disconnect them.
+                    acceptedSocket.close();
+                    continue;
+                }
+                
 
                 // notify any observers
                 for (SocketAgentObserver currentObserver : observers) {
@@ -169,6 +187,13 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      * @param portNumber the port number the remote agent is listening on
      */
     public void addConnection(String hostName, int portNumber) {
+        
+        if (!connectionsPermits.tryAcquire()) {
+            // Reached connection limit
+            // TODO: Notify the caller in some way
+            return;
+        }
+        
         try {
 
             final Socket newSocket = new Socket();
@@ -186,6 +211,8 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
 
         } catch (IOException ex) {
 
+            connectionsPermits.release();
+            
             // notify any observers that we failed to connect
             for (SocketAgentObserver currentObserver : observers) {
                 currentObserver.connectionAddFailed(this, hostName, portNumber);
@@ -224,13 +251,19 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         // connection from the list we are iterating which will result in a 
         // ConcurrentModificationException
         synchronized (connections) {
+            
             final ArrayList<DenoboConnection> connectionsListCopy = new ArrayList<>(connections);
+            
+            // Remove all the connections from our collection since we've already
+            // copied it and it's much faster clearing it than removing each one
+            // individually - especially if the List implementation is a
+            // CopyOnWriteArrayList.
+            connections.clear();            
+            
             for (DenoboConnection currentConnection : connectionsListCopy) {
                 currentConnection.disconnect();
             }
-            // Remove all the connections from our collection. (Even though they
-            // should all be removed from the connectionShutdown event anyway)
-            connections.clear();
+            
         }
     }
     
@@ -341,6 +374,8 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         System.out.println(connection.getRemoteAddress() + ":" + connection.getRemotePort()
                 + " has disconnected");
 
+        connectionsPermits.release();
+        
         connections.remove(connection);
 
         // notify any observers

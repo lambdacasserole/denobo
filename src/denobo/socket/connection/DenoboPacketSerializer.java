@@ -1,8 +1,8 @@
 package denobo.socket.connection;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 /**
  *
@@ -17,7 +17,7 @@ public class DenoboPacketSerializer implements PacketSerializer {
     
 
     @Override
-    public void writePacket(PrintWriter writer, Packet packet) {
+    public void writePacket(BufferedWriter writer, Packet packet) throws IOException {
         
         final StringBuilder sb = new StringBuilder();
         sb.append(PACKET_HEADER).append("\n");
