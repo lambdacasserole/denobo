@@ -23,6 +23,8 @@ public class Agent extends Actor {
      */
     private final MessageHistory messageHistory;
 
+    
+    
     /**
      * Initialises a new instance of a portal.
      *
@@ -53,7 +55,6 @@ public class Agent extends Actor {
      * @param handler the {@link MessageHandler} to add as an observer
      */
     public void addMessageHandler(MessageHandler handler) {
-        //if (this.hasShutdown()) { return; }
         handlers.add(handler);
     }
 
@@ -126,7 +127,5 @@ public class Agent extends Actor {
     public void shutdown() {
         
         super.shutdown();
-        
-        handlers.clear();
     }
 }

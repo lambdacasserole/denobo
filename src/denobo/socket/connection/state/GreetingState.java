@@ -51,8 +51,14 @@ public class GreetingState extends DenoboConnectionState {
                 // All these mean we need to disconnect anyway so just let them
                 // fall through to the default.
                 
+            case TOO_MANY_PEERS:  
+                
+                System.out.println(connection.getRemoteAddress()
+                    + ":" + connection.getRemotePort() + " has declined our connection"
+                        + " request because it has reached its peer limit.");
+                break;
+                
             case NO:
-            case TOO_MANY_PEERS:
             case NOT_A_SERVER:
             default:
                 

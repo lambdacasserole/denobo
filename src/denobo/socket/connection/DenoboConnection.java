@@ -273,8 +273,12 @@ public class DenoboConnection {
             // If the thread executing this isn't the receiveThread, block and
             // wait for the receiveThread to finish executing
             if (Thread.currentThread() != receiveThread) {
-                // Wait for the receive thread to terminate.
-                receiveThread.join();
+                // Wait for the receive thread to terminate. Check if receiveThread
+                // is null because it can be if startRecieveThread wasn't called
+                // because it might not have been needed such as when telling
+                // this connection that we can't service them so we firstly
+                // tell them then close.
+                if (receiveThread != null) { receiveThread.join(); }
             }
 
         } catch (IOException | InterruptedException ex) {

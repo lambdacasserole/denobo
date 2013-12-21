@@ -131,9 +131,13 @@ public abstract class Actor {
      * @param actor the actor to connect to
      */
     public void connectActor(Actor actor) {
-        //if (shutdown || actor == this) { return; }
-        connectedActors.add(actor);
-        actor.registerConnectedActor(this);
+        // We don't want to connect any Actor's if we are shutting down or are 
+        // in the process of shutting down.
+        synchronized (shutdownLock) {
+            if (shutdown || actor == this) { return; }
+            connectedActors.add(actor);
+            actor.registerConnectedActor(this);
+        }
     }
 
     /**
