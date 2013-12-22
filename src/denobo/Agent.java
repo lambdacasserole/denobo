@@ -122,10 +122,4 @@ public class Agent extends Actor {
         // Broadcast to peers.
         broadcastMessage(message);
     }
-
-    @Override
-    public void shutdown() {
-        
-        super.shutdown();
-    }
 }

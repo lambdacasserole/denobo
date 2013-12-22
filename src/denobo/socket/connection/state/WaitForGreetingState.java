@@ -1,6 +1,6 @@
 package denobo.socket.connection.state;
 
-import denobo.socket.connection.DenoboConnection;
+import denobo.socket.connection.SocketConnection;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
 
@@ -14,7 +14,7 @@ import denobo.socket.connection.PacketCode;
 public class WaitForGreetingState extends DenoboConnectionState {
 
     @Override
-    public void handleReceivedPacket(DenoboConnection connection, Packet packet) {
+    public void handleReceivedPacket(SocketConnection connection, Packet packet) {
 
         // Process packet according to status code.
         switch(packet.getCode()) {

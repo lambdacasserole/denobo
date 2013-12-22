@@ -1,39 +1,39 @@
 package denobo.socket;
 
-import denobo.socket.connection.DenoboConnection;
+import denobo.socket.connection.SocketConnection;
 import denobo.Message;
 
 /**
- * A wrapper class for a Message that we received from a DenoboConnection instance.
- * This will be used to hold the DenoboConnection we received the message from
- * so we know who not to broadcast it to.
+ * A wrapper class for a Message that we received from a SocketConnection instance.
+ * This will be used to hold the SocketConnection we received the message from
+ so we know who not to broadcast it to.
  * 
  * @author Alex Mullen
  */
 public class SocketAgentMessage extends Message {
 
     /**
-     * The DenoboConnection instance we received this Message from.
+     * The SocketConnection instance we received this Message from.
      */
-    private final DenoboConnection receivedFrom;
+    private final SocketConnection receivedFrom;
     
     /**
      * Creates a SocketAgentMessage.
      * 
-     * @param receivedFrom  The DenoboConnection we received the Message from.
+     * @param receivedFrom  The SocketConnection we received the Message from.
      * @param message       The Message we received.
      */
-    public SocketAgentMessage(DenoboConnection receivedFrom, Message message) {
+    public SocketAgentMessage(SocketConnection receivedFrom, Message message) {
         super(message.getId(), message.getFrom(), message.getRecipients(), message.getData());
         this.receivedFrom = receivedFrom;
     }
     
     /**
-     * Returns the DenoboConnection instance we received this Message from.
+     * Returns the SocketConnection instance we received this Message from.
      * 
-     * @return The DenoboConnection instance
+     * @return The SocketConnection instance
      */
-    public DenoboConnection getReceivedFrom() {
+    public SocketConnection getReceivedFrom() {
         return receivedFrom;
     }
 }

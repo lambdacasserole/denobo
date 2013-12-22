@@ -14,11 +14,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Represents a bidirectional communication line between two {@link NetworkPortal} objects.
+ * Represents a bidirectional communication line between two {@link SocketAgent} objects.
  * 
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public class DenoboConnection {
+public class SocketConnection {
 
     /**
      * Holds the socket used to send and receive data.
@@ -28,7 +28,7 @@ public class DenoboConnection {
     /**
      * The observers that we notify in response to connection events.
      */
-    private final List<DenoboConnectionObserver> observers;
+    private final List<SocketConnectionObserver> observers;
 
     /**
      * A thread that handles waiting for data to be received from this connection.
@@ -36,7 +36,7 @@ public class DenoboConnection {
     private Thread receiveThread;
     
     /**
-     * A boolean flag that is used to signal {@link DenoboConnection#receiveThread} to terminate
+     * A boolean flag that is used to signal {@link SocketConnection#receiveThread} to terminate
      * and prevent any more actions from occurring on the object.
      */
     private volatile boolean disconnected;
@@ -58,7 +58,7 @@ public class DenoboConnection {
     private final PacketSerializer packetSerializer;
     
     /**
-     * The current state of this DenoboConnection.
+     * The current state of this SocketConnection.
      */
     private DenoboConnectionState state;
 
@@ -83,12 +83,12 @@ public class DenoboConnection {
     
 
     /**
-     * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
+     * Creates a {@link SocketConnection} that will handle receiving data from a socket.
      *
      * @param connection    the connection to handle receiving data from
      * @param initialState  the initial state this connection will be in
      */
-    public DenoboConnection(Socket connection, DenoboConnectionState initialState) {
+    public SocketConnection(Socket connection, DenoboConnectionState initialState) {
         
         // Store reference to socket and initialise observer list.
         this.connection = connection;
@@ -121,33 +121,33 @@ public class DenoboConnection {
      * @param observer  the observer to add
      * @return          true if it was successfully added to he list of observers, otherwise false
      */
-    public boolean addObserver(DenoboConnectionObserver observer) {
+    public boolean addObserver(SocketConnectionObserver observer) {
         return observers.add(observer);
     }
     
     /**
-     * Removes an observer from the list of observers for this DenoboConnection.
+     * Removes an observer from the list of observers for this SocketConnection.
      * 
      * @param observer  the observer to remove
      * @return          true if the observer to remove was found and removed, otherwise false
      */
-    public boolean removeObserver(DenoboConnectionObserver observer) {
+    public boolean removeObserver(SocketConnectionObserver observer) {
         return observers.remove(observer);
     }
     
     /**
-     * Removes all observers from this DenoboConnection.
+     * Removes all observers from this SocketConnection.
      */
     public void removeObservers() {
         observers.clear();
     }
     
     /**
-     * Returns all the observers watching this DenoboConnection.
+     * Returns all the observers watching this SocketConnection.
      * 
      * @return      The list of observers
      */
-    public List<DenoboConnectionObserver> getObservers() {
+    public List<SocketConnectionObserver> getObservers() {
         return observers;
     }
 
@@ -246,7 +246,7 @@ public class DenoboConnection {
     }
     
     /**
-     * Disconnects and frees up any resources used by this DenoboConnection.
+     * Disconnects and frees up any resources used by this SocketConnection.
      */
     public void disconnect() {
 
@@ -289,7 +289,7 @@ public class DenoboConnection {
         }
 
         // Notify any observers that this connection has been shut down.
-        for (DenoboConnectionObserver currentObserver : observers) {
+        for (SocketConnectionObserver currentObserver : observers) {
             currentObserver.connectionShutdown(this);
         }  
 
@@ -338,7 +338,7 @@ public class DenoboConnection {
 
         synchronized (pokeLock) {
             
-            // Mark the current time
+            // Save the current time
             final long startTime = System.currentTimeMillis();
             
             // Send a poke packet

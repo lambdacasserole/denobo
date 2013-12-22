@@ -1,7 +1,7 @@
 package denobo.socket.connection.state;
 
-import denobo.socket.connection.DenoboConnection;
-import denobo.socket.connection.DenoboConnectionObserver;
+import denobo.socket.connection.SocketConnection;
+import denobo.socket.connection.SocketConnectionObserver;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
 
@@ -15,7 +15,7 @@ import denobo.socket.connection.PacketCode;
 public class GreetingState extends DenoboConnectionState {
 
     @Override
-    public void handleConnectionEstablished(DenoboConnection connection) {
+    public void handleConnectionEstablished(SocketConnection connection) {
         
         System.out.println("sending a GREETINGS packet to " + connection.getRemoteAddress()
                             + ":" + connection.getRemotePort());
@@ -25,7 +25,7 @@ public class GreetingState extends DenoboConnectionState {
     }
     
     @Override
-    public void handleReceivedPacket(DenoboConnection connection, Packet packet) {
+    public void handleReceivedPacket(SocketConnection connection, Packet packet) {
 
         // Process packet according to status code.
         switch(packet.getCode()) {
@@ -36,7 +36,7 @@ public class GreetingState extends DenoboConnectionState {
                     + ":" + connection.getRemotePort() + " has accepted our "
                         + "GREETINGS request");
                 
-                for (DenoboConnectionObserver currentObserver : connection.getObservers()) {
+                for (SocketConnectionObserver currentObserver : connection.getObservers()) {
                     currentObserver.connectionAuthenticated(connection);
                 }
                 connection.setState(new AuthenticatedState());

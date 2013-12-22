@@ -1,10 +1,10 @@
 package denobo.socket.connection.state;
 
-import denobo.socket.connection.DenoboConnection;
+import denobo.socket.connection.SocketConnection;
 import denobo.socket.connection.Packet;
 
 /**
- * Represents a state that a DenoboConnection can be in.
+ * Represents a state that a SocketConnection can be in.
  *
  * @author Alex Mullen
  */
@@ -16,7 +16,7 @@ public abstract class DenoboConnectionState {
      * 
      * @param connection    The connection that was established.
      */
-    public void handleConnectionEstablished(DenoboConnection connection) {
+    public void handleConnectionEstablished(SocketConnection connection) {
         
     }
     
@@ -26,5 +26,5 @@ public abstract class DenoboConnectionState {
      * @param connection    The connection that received the packet.
      * @param packet        The packet that was received.
      */
-    public abstract void handleReceivedPacket(DenoboConnection connection, Packet packet);
+    public abstract void handleReceivedPacket(SocketConnection connection, Packet packet);
 }

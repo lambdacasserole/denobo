@@ -129,14 +129,23 @@ public abstract class Actor {
      * Connects the actor to another.
      *
      * @param actor the actor to connect to
+     * @return true if the specified actor was successfully connected to this
+     * actor, otherwise false is returned if this Actor has shutdown or is in
+     * the process of shutting down.
      */
-    public void connectActor(Actor actor) {
+    public boolean connectActor(Actor actor) {
         // We don't want to connect any Actor's if we are shutting down or are 
         // in the process of shutting down.
         synchronized (shutdownLock) {
-            if (shutdown || actor == this) { return; }
-            connectedActors.add(actor);
-            actor.registerConnectedActor(this);
+            if (shutdown || actor == this) { return false; }
+            
+            // Don't allow duplicates into the list
+            if (!connectedActors.contains(actor)) {
+                connectedActors.add(actor);
+                actor.registerConnectedActor(this);
+            }
+            
+            return true;
         }
     }
 
@@ -144,10 +153,13 @@ public abstract class Actor {
      * Disconnects the actor from another.
      *
      * @param actor the actor to disconnect from
+     * @return true if the specified actor was connected and then was successfully
+     * disconnected, otherwise, false is returned if the specified actor wasn't
+     * connected to this actor.
      */
-    public void disconnectActor(Actor actor) {
+    public boolean disconnectActor(Actor actor) {
         actor.unregisterConnectedActor(this);
-        connectedActors.remove(actor);
+        return connectedActors.remove(actor);
     }
 
     /**
@@ -173,8 +185,11 @@ public abstract class Actor {
      * Adds a message to the actor's message queue.
      *
      * @param message the message to add
+     * @return true if the message was successfully submitted into the message
+     * queue, otherwise, false is returned if the queue has shutdown or is in
+     * the process of shutting down which means the message can't be delivered.
      */
-    public void queueMessage(Message message) {
+    public boolean queueMessage(Message message) {
         
         // We need to make sure the thread won't be shutdown between checking
         // if it has shutdown and adding the message to the queue - we want to
@@ -182,26 +197,24 @@ public abstract class Actor {
         synchronized (shutdownLock) {
             // Don't queue the message if we have shutdown or we are in the process
             // of shutting down.
-            if (shutdown) {
-                // TODO: I'd rather notify the caller that their message won't be
-                // delivered in some way.
-                return;
-            }
+            if (shutdown) { return false; }
 
             // Make sure our message gets added to the queue as something interrupting
             // our thread could cause our message to be lost.
-            boolean added = false;
+            boolean added = false, interuppted = false;
             while (!added) {
                 try {
                     // Queue message for processing.
                     messageQueue.put(message);
                     added = true; 
                 } catch (InterruptedException ex) {
-                    // Reset the interrupt flag for this thread for any higher
-                    // up the chain caller.
-                    Thread.currentThread().interrupt();
+                    interuppted = true;
                 }
             }
+            // Remember to reset the interrupt flag for this thread for any 
+            // higher up the chain caller if we were interuppted.
+            if (interuppted) { Thread.currentThread().interrupt(); }
+            return added;
         }
     }
 
@@ -217,9 +230,7 @@ public abstract class Actor {
                 final Message message = messageQueue.take();
                 System.out.println("[" + this.getName() + " takes a message from its queue]");
                 // Check if we should bother handling this message
-                if (!shouldHandleMessage(message)) {
-                    continue;
-                }
+                if (!shouldHandleMessage(message)) { continue; }
 
                 if (!cloneable) {
                     // Handle message in this thread.
