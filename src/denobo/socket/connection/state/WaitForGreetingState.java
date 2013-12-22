@@ -1,6 +1,8 @@
 package denobo.socket.connection.state;
 
-import denobo.socket.connection.SocketConnection;
+import denobo.Message;
+import denobo.socket.connection.DenoboConnectionState;
+import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
 
@@ -14,7 +16,14 @@ import denobo.socket.connection.PacketCode;
 public class WaitForGreetingState extends DenoboConnectionState {
 
     @Override
-    public void handleReceivedPacket(SocketConnection connection, Packet packet) {
+    public void handleSendMessage(DenoboConnection connection, Message message) {
+        
+        // Don't send messages to this peer until authentication has been performed
+        
+    }
+    
+    @Override
+    public void handleReceivedPacket(DenoboConnection connection, Packet packet) {
 
         // Process packet according to status code.
         switch(packet.getCode()) {
@@ -25,7 +34,7 @@ public class WaitForGreetingState extends DenoboConnectionState {
                         + ":" + connection.getRemotePort());
                 
                 // We'll just accept everyone who greets us for now
-                connection.send(new Packet(PacketCode.ACCEPTED));
+                sendPacket(connection, new Packet(PacketCode.ACCEPTED));
                 connection.setState(new AuthenticatedState());
                 break;
             

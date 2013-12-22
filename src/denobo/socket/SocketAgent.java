@@ -1,12 +1,11 @@
 package denobo.socket;
 
-import denobo.socket.connection.SocketConnectionObserver;
-import denobo.socket.connection.SocketConnection;
+import denobo.socket.connection.DenoboConnectionObserver;
+import denobo.socket.connection.DenoboConnection;
 import denobo.Agent;
 import denobo.Message;
-import denobo.socket.connection.Packet;
-import denobo.socket.connection.PacketCode;
 import denobo.socket.connection.state.GreetingState;
+import denobo.socket.connection.state.TooManyPeersState;
 import denobo.socket.connection.state.WaitForGreetingState;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -23,12 +22,12 @@ import java.util.concurrent.Semaphore;
  *
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public class SocketAgent extends Agent implements SocketConnectionObserver {
+public class SocketAgent extends Agent implements DenoboConnectionObserver {
 
     /**
      * The list of connections that we have connected to us.
      */
-    private final List<SocketConnection> connections;
+    private final List<DenoboConnection> connections;
 
     /**
      * The list of observers we need to notify on certain events.
@@ -70,7 +69,7 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
     public SocketAgent(String name, boolean cloneable, int maxConnections) {
         super(name, cloneable);
         connectionsPermits = new Semaphore(maxConnections, false);
-        connections = Collections.synchronizedList(new ArrayList<SocketConnection>(maxConnections));
+        connections = Collections.synchronizedList(new ArrayList<DenoboConnection>(maxConnections));
         observers = new CopyOnWriteArrayList<>();
     }
     
@@ -156,13 +155,7 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
                 if (!connectionsPermits.tryAcquire()) {
                     // Tell them there we cannot accept them because we have too
                     // many peers already connected.
-                    final SocketConnection tempConnection = 
-                            new SocketConnection(acceptedSocket, null);
-                    
-                    // TODO: This packet never seems to get there, the conenction
-                    // is probably shut down too fast.
-                    tempConnection.send(new Packet(PacketCode.TOO_MANY_PEERS));
-                    tempConnection.disconnect();
+                    new DenoboConnection(acceptedSocket, new TooManyPeersState());
                     continue;
                 }
                 
@@ -171,7 +164,7 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
                     currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
                 }
 
-                addRunningConnection(new SocketConnection(acceptedSocket, new WaitForGreetingState()));
+                addRunningConnection(new DenoboConnection(acceptedSocket, new WaitForGreetingState()));
 
             } catch (IOException ex) {
                 // TODO: Handle exception.
@@ -207,7 +200,7 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
                 currentObserver.connectionAddSucceeded(this, hostName, portNumber);
             }
 
-            addRunningConnection(new SocketConnection(newSocket, new GreetingState()));
+            addRunningConnection(new DenoboConnection(newSocket, new GreetingState()));
 
         } catch (IOException ex) {
 
@@ -222,15 +215,28 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
 
         }
     }
+    
+    /**
+     * Returns a read-only snapshot of all current connected connections to this
+     * SocketAgent.
+     * 
+     * @return The unmodifiable list of connections.
+     */
+    public List<DenoboConnection> getConnections() {
+        
+        synchronized (connections) {
+            return Collections.unmodifiableList(new ArrayList<>(connections));
+        }
+    }
 
     /**
-     * Initializes a SocketConnection. We attach ourselves as an observer to it,
+     * Initializes a DenoboConnection. We attach ourselves as an observer to it,
      * add it into our collection of connections then starts up it's receive
      * thread so we can begin receiving data from it.
      *
-     * @param newConnection The SocketConnection to initialize.
+     * @param newConnection The DenoboConnection to initialize.
      */
-    private void addRunningConnection(SocketConnection newConnection) {
+    private void addRunningConnection(DenoboConnection newConnection) {
 
         newConnection.addObserver(this);
         connections.add(newConnection);
@@ -238,7 +244,7 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
     }
 
     /**
-     * Closes and removes any SocketConnection objects we have attached.
+     * Closes and removes any DenoboConnection objects we have attached.
      */
     public void removeConnections() {
 
@@ -248,11 +254,11 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
         // connection from the list we are iterating which will result in a 
         // ConcurrentModificationException
         
-        final SocketConnection[] connectionsListCopy;
+        final DenoboConnection[] connectionsListCopy;
         
         synchronized (connections) {
             
-            connectionsListCopy = connections.toArray(new SocketConnection[connections.size()]);
+            connectionsListCopy = connections.toArray(new DenoboConnection[connections.size()]);
 
             // Remove all the connections from our collection since we've already
             // copied it and it's much faster clearing it than removing each one
@@ -261,7 +267,7 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
             connections.clear();                    
         }
             
-        for (SocketConnection currentConnection : connectionsListCopy) {
+        for (DenoboConnection currentConnection : connectionsListCopy) {
             currentConnection.disconnect();
         }
     }
@@ -325,10 +331,10 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
         // to them.
         if (message instanceof SocketAgentMessage) {
             
-            final SocketConnection connectionRecievedFrom = ((SocketAgentMessage) message).getReceivedFrom();
+            final DenoboConnection connectionRecievedFrom = ((SocketAgentMessage) message).getReceivedFrom();
             // Broadcast to connected peers.
             synchronized (connections) {
-                for (SocketConnection connection : connections) {
+                for (DenoboConnection connection : connections) {
                     // Check if we received the message from one of our connections,
                     // and if it was then we don't need to bother broadcasting it
                     // back to that connection.
@@ -342,7 +348,7 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
             // The message was probably internal so we need to broadcast it to
             // everyone connected to us.
             synchronized (connections) {
-                for (SocketConnection connection : connections) {
+                for (DenoboConnection connection : connections) {
                     connection.send(message);
                 }
             }
@@ -354,14 +360,14 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
     ////////////////////////////////////////////////////////////////////////////
     
     @Override
-    public void connectionAuthenticated(SocketConnection connection) {
+    public void connectionAuthenticated(DenoboConnection connection) {
 
         System.out.println(connection.getRemoteAddress() + ":" 
                 + connection.getRemotePort() + " Authenticated");
     }
 
     @Override
-    public void connectionShutdown(SocketConnection connection) {
+    public void connectionShutdown(DenoboConnection connection) {
 
         // Release the connection limit permit this connection used
         connectionsPermits.release();
@@ -375,7 +381,7 @@ public class SocketAgent extends Agent implements SocketConnectionObserver {
     }
 
     @Override
-    public void messageReceived(SocketConnection connection, Message message) {
+    public void messageReceived(DenoboConnection connection, Message message) {
 
         // Let our message queue deal with the message. We wrap the messsage in
         // a SocketAgentMessage so that we know not to broadcast this message

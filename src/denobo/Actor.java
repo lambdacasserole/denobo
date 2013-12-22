@@ -1,5 +1,6 @@
 package denobo;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -161,7 +162,17 @@ public abstract class Actor {
         actor.unregisterConnectedActor(this);
         return connectedActors.remove(actor);
     }
-
+    
+    /**
+     * Returns a read-only snapshot of the instances of Actors that are connected
+     * to this Actor.
+     * 
+     * @return The unmodifiable list of Actors.
+     */
+    public List<Actor> getConnectedActors() {
+        return Collections.unmodifiableList(connectedActors);
+    }
+    
     /**
      * Registers the actor as connected to another.
      *
@@ -228,7 +239,7 @@ public abstract class Actor {
         while (!shutdown || !messageQueue.isEmpty()) {
             try {
                 final Message message = messageQueue.take();
-                System.out.println("[" + this.getName() + " takes a message from its queue]");
+                //System.out.println("[" + this.getName() + " takes a message from its queue]");
                 // Check if we should bother handling this message
                 if (!shouldHandleMessage(message)) { continue; }
 

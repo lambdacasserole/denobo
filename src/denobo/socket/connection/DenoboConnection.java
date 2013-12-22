@@ -1,6 +1,5 @@
 package denobo.socket.connection;
 
-import denobo.socket.connection.state.DenoboConnectionState;
 import denobo.Message;
 import denobo.MessageSerializer;
 import java.io.BufferedReader;
@@ -18,7 +17,7 @@ import java.util.concurrent.TimeoutException;
  * 
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public class SocketConnection {
+public class DenoboConnection {
 
     /**
      * Holds the socket used to send and receive data.
@@ -28,7 +27,7 @@ public class SocketConnection {
     /**
      * The observers that we notify in response to connection events.
      */
-    private final List<SocketConnectionObserver> observers;
+    private final List<DenoboConnectionObserver> observers;
 
     /**
      * A thread that handles waiting for data to be received from this connection.
@@ -36,7 +35,7 @@ public class SocketConnection {
     private Thread receiveThread;
     
     /**
-     * A boolean flag that is used to signal {@link SocketConnection#receiveThread} to terminate
+     * A boolean flag that is used to signal {@link DenoboConnection#receiveThread} to terminate
      * and prevent any more actions from occurring on the object.
      */
     private volatile boolean disconnected;
@@ -58,7 +57,7 @@ public class SocketConnection {
     private final PacketSerializer packetSerializer;
     
     /**
-     * The current state of this SocketConnection.
+     * The current state of this DenoboConnection.
      */
     private DenoboConnectionState state;
 
@@ -83,12 +82,12 @@ public class SocketConnection {
     
 
     /**
-     * Creates a {@link SocketConnection} that will handle receiving data from a socket.
+     * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
      *
      * @param connection    the connection to handle receiving data from
      * @param initialState  the initial state this connection will be in
      */
-    public SocketConnection(Socket connection, DenoboConnectionState initialState) {
+    public DenoboConnection(Socket connection, DenoboConnectionState initialState) {
         
         // Store reference to socket and initialise observer list.
         this.connection = connection;
@@ -104,6 +103,8 @@ public class SocketConnection {
             // Get I/O streams.
             connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+            
+            state.handleConnectionEstablished(this);
             
         } catch (IOException ex) {
             
@@ -121,33 +122,33 @@ public class SocketConnection {
      * @param observer  the observer to add
      * @return          true if it was successfully added to he list of observers, otherwise false
      */
-    public boolean addObserver(SocketConnectionObserver observer) {
+    public boolean addObserver(DenoboConnectionObserver observer) {
         return observers.add(observer);
     }
     
     /**
-     * Removes an observer from the list of observers for this SocketConnection.
+     * Removes an observer from the list of observers for this DenoboConnection.
      * 
      * @param observer  the observer to remove
      * @return          true if the observer to remove was found and removed, otherwise false
      */
-    public boolean removeObserver(SocketConnectionObserver observer) {
+    public boolean removeObserver(DenoboConnectionObserver observer) {
         return observers.remove(observer);
     }
     
     /**
-     * Removes all observers from this SocketConnection.
+     * Removes all observers from this DenoboConnection.
      */
     public void removeObservers() {
         observers.clear();
     }
     
     /**
-     * Returns all the observers watching this SocketConnection.
+     * Returns all the observers watching this DenoboConnection.
      * 
      * @return      The list of observers
      */
-    public List<SocketConnectionObserver> getObservers() {
+    public List<DenoboConnectionObserver> getObservers() {
         return observers;
     }
 
@@ -201,8 +202,6 @@ public class SocketConnection {
         
         System.out.println("Waiting for data on port [" + connection.getPort() + "]...");
 
-        state.handleConnectionEstablished(this);
-        
         try {
             
             while (!disconnected) {
@@ -246,7 +245,7 @@ public class SocketConnection {
     }
     
     /**
-     * Disconnects and frees up any resources used by this SocketConnection.
+     * Disconnects and frees up any resources used by this DenoboConnection.
      */
     public void disconnect() {
 
@@ -289,7 +288,7 @@ public class SocketConnection {
         }
 
         // Notify any observers that this connection has been shut down.
-        for (SocketConnectionObserver currentObserver : observers) {
+        for (DenoboConnectionObserver currentObserver : observers) {
             currentObserver.connectionShutdown(this);
         }  
 
@@ -302,15 +301,15 @@ public class SocketConnection {
      */
     public void send(Message message) {
 
-        send(new Packet(PacketCode.PROPAGATE, MessageSerializer.serialize(message)));
-
+        state.handleSendMessage(this, message);
+        
     }
     
     /**
      * Sends a packet over this connection.
      * @param packet    the packet to send
      */
-    public void send(Packet packet) {
+    protected void send(Packet packet) {
         
         System.out.println("Writing data to port [" + connection.getPort() + "]...");
         try {

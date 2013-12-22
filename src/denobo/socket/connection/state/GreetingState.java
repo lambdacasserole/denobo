@@ -1,7 +1,9 @@
 package denobo.socket.connection.state;
 
-import denobo.socket.connection.SocketConnection;
-import denobo.socket.connection.SocketConnectionObserver;
+import denobo.Message;
+import denobo.socket.connection.DenoboConnectionState;
+import denobo.socket.connection.DenoboConnection;
+import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
 
@@ -15,17 +17,23 @@ import denobo.socket.connection.PacketCode;
 public class GreetingState extends DenoboConnectionState {
 
     @Override
-    public void handleConnectionEstablished(SocketConnection connection) {
+    public void handleConnectionEstablished(DenoboConnection connection) {
         
         System.out.println("sending a GREETINGS packet to " + connection.getRemoteAddress()
                             + ":" + connection.getRemotePort());
         
-        connection.send(new Packet(PacketCode.GREETINGS));
+        sendPacket(connection, new Packet(PacketCode.GREETINGS));
+    }
+    
+    @Override
+    public void handleSendMessage(DenoboConnection connection, Message message) {
+        
+        // Don't send messages to this peer until authentication has been performed
         
     }
     
     @Override
-    public void handleReceivedPacket(SocketConnection connection, Packet packet) {
+    public void handleReceivedPacket(DenoboConnection connection, Packet packet) {
 
         // Process packet according to status code.
         switch(packet.getCode()) {
@@ -36,7 +44,7 @@ public class GreetingState extends DenoboConnectionState {
                     + ":" + connection.getRemotePort() + " has accepted our "
                         + "GREETINGS request");
                 
-                for (SocketConnectionObserver currentObserver : connection.getObservers()) {
+                for (DenoboConnectionObserver currentObserver : connection.getObservers()) {
                     currentObserver.connectionAuthenticated(connection);
                 }
                 connection.setState(new AuthenticatedState());

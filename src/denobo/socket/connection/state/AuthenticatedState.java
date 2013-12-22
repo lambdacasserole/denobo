@@ -1,9 +1,10 @@
 package denobo.socket.connection.state;
 
+import denobo.socket.connection.DenoboConnectionState;
 import denobo.Message;
 import denobo.MessageSerializer;
-import denobo.socket.connection.SocketConnection;
-import denobo.socket.connection.SocketConnectionObserver;
+import denobo.socket.connection.DenoboConnection;
+import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.Packet;
 
 /**
@@ -14,7 +15,7 @@ import denobo.socket.connection.Packet;
 public class AuthenticatedState extends DenoboConnectionState {
 
     @Override
-    public void handleReceivedPacket(SocketConnection connection, Packet packet) {
+    public void handleReceivedPacket(DenoboConnection connection, Packet packet) {
 
         // Process packet according to status code.
         switch(packet.getCode()) {
@@ -22,7 +23,7 @@ public class AuthenticatedState extends DenoboConnectionState {
             case PROPAGATE:
                 
                 final Message deserializedMessage = MessageSerializer.deserialize(packet.getBody());
-                for (SocketConnectionObserver currentObserver : connection.getObservers()) {
+                for (DenoboConnectionObserver currentObserver : connection.getObservers()) {
                     currentObserver.messageReceived(connection, deserializedMessage); 
                 }
                 break;
