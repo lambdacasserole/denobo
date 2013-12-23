@@ -39,11 +39,20 @@ public class Packet {
         this(code, "");
     }
     
-    
+    /**
+     * Returns the packet code that states what type of Packet it is.
+     * 
+     * @return      the packet code of the packet.
+     */
     public PacketCode getCode() {
         return code;
     }
     
+    /**
+     * Returns the body payload of this packet.
+     * 
+     * @return      the body payload of this packet.
+     */
     public String getBody() {
         return body;
     }

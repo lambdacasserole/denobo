@@ -19,13 +19,11 @@ public class DenoboPacketSerializer implements PacketSerializer {
     @Override
     public void writePacket(BufferedWriter writer, Packet packet) throws IOException {
         
-        final StringBuilder sb = new StringBuilder();
-        sb.append(PACKET_HEADER).append("\n");
-        sb.append("code:").append(packet.getCode().toInt()).append("\n");
-        sb.append("body-length:").append(packet.getBody().length()).append("\n");
-        sb.append(packet.getBody());
+        writer.append(PACKET_HEADER).append("\n");
+        writer.append("code:").append(String.valueOf(packet.getCode().toInt())).append("\n");
+        writer.append("body-length:").append(String.valueOf(packet.getBody().length())).append("\n");
+        writer.append(packet.getBody());
         
-        writer.write(sb.toString());
         writer.flush();
         
     }

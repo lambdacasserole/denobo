@@ -1,13 +1,14 @@
 package denobo.socket.connection;
 
 import denobo.Message;
-import denobo.MessageSerializer;
+import denobo.socket.SocketAgent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
@@ -44,12 +45,12 @@ public class DenoboConnection {
      * The {@link BufferedReader} object to use for efficiently reading any data we have
      * received from this connection.
      */
-    private BufferedReader connectionReader;
+    private final BufferedReader connectionReader;
     
     /**
      * Holds a {@link BufferedWriter} object for writing to the connection's underlying socket.
      */
-    private BufferedWriter connectionWriter;
+    private final BufferedWriter connectionWriter;
 
     /**
      * Holds the packetSerializer used to read and write to and from this connection.
@@ -86,8 +87,9 @@ public class DenoboConnection {
      *
      * @param connection    the connection to handle receiving data from
      * @param initialState  the initial state this connection will be in
+     * @throws IOException  If an IO error occurs whilst setting up the connection.
      */
-    public DenoboConnection(Socket connection, DenoboConnectionState initialState) {
+    public DenoboConnection(Socket connection, DenoboConnectionState initialState) throws IOException {
         
         // Store reference to socket and initialise observer list.
         this.connection = connection;
@@ -98,21 +100,11 @@ public class DenoboConnection {
         // PacketSerializer to be used for message serialization and packet I/O.
         packetSerializer = new DenoboPacketSerializer();
         
-        try {
-            
-            // Get I/O streams.
-            connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-            
-            state.handleConnectionEstablished(this);
-            
-        } catch (IOException ex) {
-            
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
-            
-        }
-        
+        // Get I/O streams.
+        connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+
+        state.handleConnectionEstablished(this);
     }
     
         
@@ -146,10 +138,10 @@ public class DenoboConnection {
     /**
      * Returns all the observers watching this DenoboConnection.
      * 
-     * @return      The list of observers
+     * @return      The read-only list of observers
      */
     public List<DenoboConnectionObserver> getObservers() {
-        return observers;
+        return Collections.unmodifiableList(observers);
     }
 
     /**
@@ -183,6 +175,11 @@ public class DenoboConnection {
      * Starts waiting to receive data through this connection.
      */
     public void startRecieveThread() {
+        
+        // Don't bother starting the thread again if there is already one. Not
+        // thread safe as there is a race condition but more than one thread
+        // shouldn't be executing this anyway.
+        if (receiveThread != null) { return; }
         
         receiveThread = new Thread(new Runnable() {
             @Override
@@ -261,9 +258,11 @@ public class DenoboConnection {
 
             // Close I/O streams.
 
-            // commented out this because for some reason it causes the program to hang.
-            //connectionReader.close();
+            // Need to close connectionWriter first as connectionReader causes
+            // deadlock if we try to close that first. (Probably to do with some
+            // internal lock statement)
             connectionWriter.close();
+            connectionReader.close();
 
             // Close the socket to the connection which will cause an exception
             // to be thrown by receiveThread.
@@ -315,8 +314,7 @@ public class DenoboConnection {
         try {
             packetSerializer.writePacket(connectionWriter, packet);
         } catch (IOException ex) {
-            // TODO: Handle exception
-            disconnect();
+            //disconnect();
         }
         
     }
@@ -343,7 +341,6 @@ public class DenoboConnection {
             // Send a poke packet
             pokeSent = true;
             send(new Packet(PacketCode.POKE));
-
 
             // Check if we have recieved a reply poke
             while (!pokeReturned) {

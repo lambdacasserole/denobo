@@ -152,19 +152,22 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
             try {
 
                 final Socket acceptedSocket = serverSocket.accept();
-                if (!connectionsPermits.tryAcquire()) {
+                if (connectionsPermits.tryAcquire()) {
+                    
+                    // notify any observers
+                    for (SocketAgentObserver currentObserver : observers) {
+                        currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
+                    }
+
+                    addRunningConnection(new DenoboConnection(acceptedSocket, new WaitForGreetingState()));
+                    
+                } else {
+                    
                     // Tell them there we cannot accept them because we have too
                     // many peers already connected.
                     new DenoboConnection(acceptedSocket, new TooManyPeersState());
-                    continue;
+                    
                 }
-                
-                // notify any observers
-                for (SocketAgentObserver currentObserver : observers) {
-                    currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
-                }
-
-                addRunningConnection(new DenoboConnection(acceptedSocket, new WaitForGreetingState()));
 
             } catch (IOException ex) {
                 // TODO: Handle exception.
@@ -184,7 +187,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         
         if (!connectionsPermits.tryAcquire()) {
             // Reached connection limit
-            // TODO: Notify the caller in some way
+            // TODO: Maybe notify the caller in some way
             return;
         }
         
@@ -241,6 +244,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         newConnection.addObserver(this);
         connections.add(newConnection);
         newConnection.startRecieveThread();
+        
     }
 
     /**
