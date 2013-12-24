@@ -22,7 +22,7 @@ import java.util.concurrent.Semaphore;
  *
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public class SocketAgent extends Agent implements DenoboConnectionObserver {
+public class SocketAgent extends Agent {
 
     /**
      * The list of connections that we have connected to us.
@@ -35,6 +35,17 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     private final List<SocketAgentObserver> observers;
 
     /**
+     * The DenoboConnectionObserver that will observer each DenoboConnection that
+     * is connected to this SocketAgent.
+     */
+    private final DenoboConnectionObserver connectionObserver;
+    
+    /**
+     * The maximum number of connections permitted to be connected.
+     */
+    private final Semaphore connectionsPermits;
+    
+    /**
      * The socket we listen and accept connection requests on.
      */
     private ServerSocket serverSocket;
@@ -44,17 +55,14 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      * accept and add to our connection list.
      */
     private Thread acceptThread;
-    
-    /**
-     * The maximum number of connections permitted to be connected.
-     */
-    private Semaphore connectionsPermits;
 
     /**
      * A status variable we use to indicate that
      * {@link SocketAgent#acceptThread} should abort.
      */
-    private volatile boolean shutdown;
+    private volatile boolean shutdownAcceptThread;
+
+    
 
     
     /**
@@ -71,6 +79,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         connectionsPermits = new Semaphore(maxConnections, false);
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>(maxConnections));
         observers = new CopyOnWriteArrayList<>();
+        connectionObserver = new SocketAgentDenoboConnectionObserver();
     }
     
     /**
@@ -121,11 +130,12 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      */
     public void advertiseConnection(int portNumber) {
 
-        // shutdown the socket agent related stuff in case we are already
+        // shutdownAcceptThread the socket agent related stuff in case we are already
         // advertising
         socketAgentShutdown();
 
         try {
+
             serverSocket = new ServerSocket(portNumber);
             acceptThread = new Thread() {
                 @Override
@@ -134,9 +144,12 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
                 }
             };
             acceptThread.start();
+
         } catch (IOException ex) {
+            
             // TODO: Handle exception.
             System.out.println(ex.getMessage());
+            
         }
     }
 
@@ -146,9 +159,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      */
     private void acceptConnectionsLoop() {
 
-        shutdown = false;
-
-        while (!shutdown) {
+        while (!shutdownAcceptThread) {
             try {
 
                 final Socket acceptedSocket = serverSocket.accept();
@@ -241,10 +252,9 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
      */
     private void addRunningConnection(DenoboConnection newConnection) {
 
-        newConnection.addObserver(this);
+        newConnection.addObserver(connectionObserver);
         connections.add(newConnection);
         newConnection.startRecieveThread();
-        
     }
 
     /**
@@ -279,35 +289,37 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
     /**
      * Shuts down this SocketAgent. No more incoming connection requests will
      * be accepted and any current connections are terminated and removed. This
-     * only shuts down the socket parts and the base class isn't shutdown.
-     * Invoking advertiseConnection reverses the shutdown and permits socket
+     * only shuts down the socket parts and the base class isn't shutdownAcceptThread.
+     * Invoking advertiseConnection reverses the shutdownAcceptThread and permits socket
      * connections again.
      */
     private void socketAgentShutdown() {
         
-        shutdown = true;
-        
+        shutdownAcceptThread = true;
+
         // First prevent anyone else from connecting.
         if (serverSocket != null) {
             try {
                 serverSocket.close();
             } catch (IOException ex) { System.out.println(ex.getMessage()); }
         }
-        
+
         // Wait for the connection accepting thread to terminate.
         if (acceptThread != null) {
             try {
                 acceptThread.join();
             } catch (InterruptedException ex) { System.out.println(ex.getMessage()); }
         }
-            
+
         removeConnections();
+        
+        shutdownAcceptThread = false;
     }
 
     /**
      * Shuts down this SocketAgent. No more incoming connection requests will
      * be accepted and any current connections are terminated and removed. This
-     * is a full shutdown that prevents this Agent being used again.
+     * is a full shutdownAcceptThread that prevents this Agent being used again.
      */
     @Override
     public void shutdown() {
@@ -316,7 +328,7 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         // coming through.
         socketAgentShutdown();
         
-        // Super class can perform a shutdown now
+        // Super class can perform a shutdownAcceptThread now
         super.shutdown();
     }
     
@@ -359,37 +371,45 @@ public class SocketAgent extends Agent implements DenoboConnectionObserver {
         }
         
     }
-    
-    // Observer notify Methods
+
     ////////////////////////////////////////////////////////////////////////////
     
-    @Override
-    public void connectionAuthenticated(DenoboConnection connection) {
+    /**
+     * Anonymous class that a SocketAgent creates to observer all DenoboConnections
+     * that are connected.
+     */
+    private class SocketAgentDenoboConnectionObserver implements DenoboConnectionObserver {
 
-        System.out.println(connection.getRemoteAddress() + ":" 
-                + connection.getRemotePort() + " Authenticated");
-    }
+        @Override
+        public void connectionAuthenticated(DenoboConnection connection) {
 
-    @Override
-    public void connectionShutdown(DenoboConnection connection) {
+            System.out.println(connection.getRemoteAddress() + ":" 
+                    + connection.getRemotePort() + " Authenticated");
+        }
 
-        // Release the connection limit permit this connection used
-        connectionsPermits.release();
-        
-        connections.remove(connection);
+        @Override
+        public void connectionShutdown(DenoboConnection connection) {
 
-        // notify any observers
-        for (SocketAgentObserver currentObserver : observers) {
-            currentObserver.connectionClosed(this, connection.getRemoteAddress(), connection.getRemotePort());
+            // Release the connection limit permit this connection used
+            connectionsPermits.release();
+
+            connections.remove(connection);
+
+            // notify any observers
+            for (SocketAgentObserver currentObserver : observers) {
+                currentObserver.connectionClosed(SocketAgent.this, connection.getRemoteAddress(), connection.getRemotePort());
+            }
+        }
+
+        @Override
+        public void messageReceived(DenoboConnection connection, Message message) {
+
+            // Let our message queue deal with the message. We wrap the messsage in
+            // a SocketAgentMessage so that we know not to broadcast this message
+            // back to the Agent who sent us the message originally.
+            queueMessage(new SocketAgentMessage(connection, message));
         }
     }
-
-    @Override
-    public void messageReceived(DenoboConnection connection, Message message) {
-
-        // Let our message queue deal with the message. We wrap the messsage in
-        // a SocketAgentMessage so that we know not to broadcast this message
-        // back to the Agent who sent us the message originally.
-        queueMessage(new SocketAgentMessage(connection, message));
-    }
+    
+    
 }
