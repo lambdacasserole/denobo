@@ -1,6 +1,7 @@
 package denobo;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -55,7 +56,7 @@ public class Agent extends Actor {
      * @param handler the {@link MessageHandler} to add as an observer
      */
     public void addMessageHandler(MessageHandler handler) {
-        handlers.add(handler);
+        handlers.add(Objects.requireNonNull(handler, "The message handler to add is null"));
     }
 
     /**
@@ -65,7 +66,7 @@ public class Agent extends Actor {
      * @param handler the {@link MessageHandler} to remove as an observer
      */
     public void removeMessageHandler(MessageHandler handler) {
-        handlers.remove(handler);
+        handlers.remove(Objects.requireNonNull(handler, "The message handler to remove is null"));
     }
 
     /**
@@ -76,6 +77,8 @@ public class Agent extends Actor {
      */
     public void sendMessage(String to, String message) {
 
+        // TODO: Validation
+        
         final Message propagatingMessage = new Message(getName(), to, message);
 
         messageHistory.update(propagatingMessage.getId());
@@ -85,6 +88,7 @@ public class Agent extends Actor {
         // just deal with it now.
         handleMessage(propagatingMessage);
         //queueMessage(propagatingMessage);
+        
     }
 
     @Override
@@ -102,6 +106,7 @@ public class Agent extends Actor {
         // Record the ID of this message in the history.
         messageHistory.update(message.getId());
         return true;
+        
     }
 
     @Override
@@ -121,5 +126,6 @@ public class Agent extends Actor {
 
         // Broadcast to peers.
         broadcastMessage(message);
+        
     }
 }

@@ -2,6 +2,7 @@ package denobo;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -67,7 +68,7 @@ public abstract class Actor {
      */
     public Actor(String name, boolean cloneable) {
 
-        this.name = name;
+        this.name = Objects.requireNonNull(name, "The name of the Actor is null");
         this.cloneable = cloneable;
 
         messageQueue = new LinkedBlockingQueue<>();
@@ -135,9 +136,13 @@ public abstract class Actor {
      * the process of shutting down.
      */
     public boolean connectActor(Actor actor) {
+
+        Objects.requireNonNull(actor, "Actor to connect is null");
+        
         // We don't want to connect any Actor's if we are shutting down or are 
         // in the process of shutting down.
         synchronized (shutdownLock) {
+            
             if (shutdown || actor == this) { return false; }
             
             // Don't allow duplicates into the list
@@ -148,6 +153,7 @@ public abstract class Actor {
             
             return true;
         }
+        
     }
 
     /**
@@ -159,8 +165,12 @@ public abstract class Actor {
      * connected to this actor.
      */
     public boolean disconnectActor(Actor actor) {
+
+        Objects.requireNonNull(actor, "Actor to disconnect from is null");
+        
         actor.unregisterConnectedActor(this);
         return connectedActors.remove(actor);
+        
     }
     
     /**
@@ -213,7 +223,7 @@ public abstract class Actor {
             // Make sure our message gets added to the queue as something interrupting
             // our thread could cause our message to be lost.
             boolean added = false, interuppted = false;
-            while (!added) {
+            do {
                 try {
                     // Queue message for processing.
                     messageQueue.put(message);
@@ -221,7 +231,7 @@ public abstract class Actor {
                 } catch (InterruptedException ex) {
                     interuppted = true;
                 }
-            }
+            } while (!added);
             // Remember to reset the interrupt flag for this thread for any 
             // higher up the chain caller if we were interuppted.
             if (interuppted) { Thread.currentThread().interrupt(); }

@@ -31,17 +31,6 @@ public class DenoboConnection {
     private final List<DenoboConnectionObserver> observers;
 
     /**
-     * A thread that handles waiting for data to be received from this connection.
-     */
-    private Thread receiveThread;
-    
-    /**
-     * A boolean flag that is used to signal {@link DenoboConnection#receiveThread} to terminate
-     * and prevent any more actions from occurring on the object.
-     */
-    private volatile boolean disconnected;
-    
-    /**
      * The {@link BufferedReader} object to use for efficiently reading any data we have
      * received from this connection.
      */
@@ -57,11 +46,28 @@ public class DenoboConnection {
      */
     private final PacketSerializer packetSerializer;
     
+        /**
+     * A thread that handles waiting for data to be received from this connection.
+     */
+    private Thread receiveThread;
+    
+    /**
+     * A boolean flag that is used to signal {@link DenoboConnection#receiveThread} to terminate
+     * and prevent any more actions from occurring on the object.
+     */
+    private volatile boolean disconnected;
+    
     /**
      * The current state of this DenoboConnection.
      */
     private DenoboConnectionState state;
 
+    /**
+     * The lock object that we use for waiting for a poke reply and notifying
+     * when we get the reply.
+     */
+    private final Object pokeLock;
+    
     /**
      * Indicates whether we have send a poke packet and we are expecting a poke 
      * packet back.
@@ -72,13 +78,7 @@ public class DenoboConnection {
      * An indicator to the poke method that we received a poke packet back.
      */
     private boolean pokeReturned;
-    
-    /**
-     * The lock object that we use for waiting for a poke reply and notifying
-     * when we get the reply.
-     */
-    private final Object pokeLock;
-    
+
     
     
 
@@ -143,11 +143,29 @@ public class DenoboConnection {
     public List<DenoboConnectionObserver> getObservers() {
         return Collections.unmodifiableList(observers);
     }
+    
+    /**
+     * Returns the local address this connection is bound to.
+     * 
+     * @return  The local IP address this connection is bound to.
+     */
+    public String getLocalAddress() {
+        return connection.getLocalAddress().getHostAddress();
+    }
+    
+    /**
+     * Returns the local port the connected socket is bound to.
+     * 
+     * @return  The local port address this connection is bound to.
+     */
+    public int getLocalPort() {
+        return connection.getLocalPort();
+    }
 
     /**
      * Returns the port number the remote peer is using to connect to us on.
      * 
-     * @return      The port number
+     * @return  The port number
      */
     public int getRemotePort() {
         return connection.getPort();
@@ -156,7 +174,7 @@ public class DenoboConnection {
     /**
      * Returns the remote IP address of the remote peer for this connection.
      * 
-     * @return  the remote IP address of the remote peer for this connection
+     * @return  The remote IP address of the remote peer for this connection
      */
     public String getRemoteAddress() {
         return connection.getInetAddress().getHostAddress();

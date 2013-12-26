@@ -14,6 +14,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
@@ -75,11 +76,18 @@ public class SocketAgent extends Agent {
      *                          permitted.
      */
     public SocketAgent(String name, boolean cloneable, int maxConnections) {
+        
         super(name, cloneable);
+        
+        if (maxConnections < 1) { 
+            throw new IllegalArgumentException("Maximum number of connections is less than 1: " + maxConnections);
+        }
+        
         connectionsPermits = new Semaphore(maxConnections, false);
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>(maxConnections));
         observers = new CopyOnWriteArrayList<>();
         connectionObserver = new SocketAgentDenoboConnectionObserver();
+
     }
     
     /**
@@ -102,7 +110,7 @@ public class SocketAgent extends Agent {
      * otherwise false is returned
      */
     public boolean addObserver(SocketAgentObserver observer) {
-        return observers.add(observer);
+        return observers.add(Objects.requireNonNull(observer, "The observer to add is null"));
     }
 
     /**
@@ -113,7 +121,7 @@ public class SocketAgent extends Agent {
      * false
      */
     public boolean removeObserver(SocketAgentObserver observer) {
-        return observers.remove(observer);
+        return observers.remove(Objects.requireNonNull(observer, "The observer to remove is null"));
     }
 
     /**
@@ -130,6 +138,10 @@ public class SocketAgent extends Agent {
      */
     public void advertiseConnection(int portNumber) {
 
+        if (portNumber < 0 || portNumber > 0xFFFF) {
+            throw new IllegalArgumentException("Port value out of range: " + portNumber);
+        }
+        
         // shutdownAcceptThread the socket agent related stuff in case we are already
         // advertising
         socketAgentShutdown();
@@ -151,6 +163,7 @@ public class SocketAgent extends Agent {
             System.out.println(ex.getMessage());
             
         }
+        
     }
 
     /**
@@ -181,10 +194,13 @@ public class SocketAgent extends Agent {
                 }
 
             } catch (IOException ex) {
+                
                 // TODO: Handle exception.
-                System.out.println(ex.getMessage());
+                System.out.println("acceptConnectionsLoop: " + ex.getMessage());
+                
             }
         }
+        
     }
 
     /**
@@ -228,6 +244,7 @@ public class SocketAgent extends Agent {
             }
 
         }
+        
     }
     
     /**
@@ -241,6 +258,7 @@ public class SocketAgent extends Agent {
         synchronized (connections) {
             return Collections.unmodifiableList(new ArrayList<>(connections));
         }
+        
     }
 
     /**
@@ -252,9 +270,10 @@ public class SocketAgent extends Agent {
      */
     private void addRunningConnection(DenoboConnection newConnection) {
 
-        newConnection.addObserver(connectionObserver);
+        newConnection.addObserver(connectionObserver);  
         connections.add(newConnection);
         newConnection.startRecieveThread();
+        
     }
 
     /**
@@ -284,6 +303,7 @@ public class SocketAgent extends Agent {
         for (DenoboConnection currentConnection : connectionsListCopy) {
             currentConnection.disconnect();
         }
+        
     }
     
     /**
@@ -314,6 +334,7 @@ public class SocketAgent extends Agent {
         removeConnections();
         
         shutdownAcceptThread = false;
+        
     }
 
     /**
@@ -330,6 +351,7 @@ public class SocketAgent extends Agent {
         
         // Super class can perform a shutdownAcceptThread now
         super.shutdown();
+        
     }
     
 
@@ -399,6 +421,7 @@ public class SocketAgent extends Agent {
             for (SocketAgentObserver currentObserver : observers) {
                 currentObserver.connectionClosed(SocketAgent.this, connection.getRemoteAddress(), connection.getRemotePort());
             }
+            
         }
 
         @Override
@@ -408,6 +431,7 @@ public class SocketAgent extends Agent {
             // a SocketAgentMessage so that we know not to broadcast this message
             // back to the Agent who sent us the message originally.
             queueMessage(new SocketAgentMessage(connection, message));
+            
         }
     }
     

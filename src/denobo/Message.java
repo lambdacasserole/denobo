@@ -102,8 +102,9 @@ public class Message {
      * @return      true if the specified actor is a recipient, otherwise false
      */
     public final boolean hasRecipient(Actor actor) {
-        for (String string : recipients) {
-            if (actor.getName().equals(string)) { return true; }
+        for (String currentRecipient : recipients) {
+            // TODO: Decide on whether Actors can have null for a name.
+            if (actor.getName().equals(currentRecipient)) { return true; }
         }
         return false;
     }
