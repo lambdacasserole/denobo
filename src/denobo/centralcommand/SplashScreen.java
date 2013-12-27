@@ -15,7 +15,7 @@ import javax.swing.JFrame;
  * 
  * @author Saul Johnson
  */
-public class SplashScreen extends JFrame {
+public class SplashScreen extends DenoboWindow {
         
     /**
      * The number of milliseconds the splash screen will wait before 
@@ -45,6 +45,7 @@ public class SplashScreen extends JFrame {
         panel.setPreferredSize(new Dimension(480, 300));
         this.add(panel, BorderLayout.CENTER);
         
+        this.setTitle("Denobo Central Command");
         this.setUndecorated(true);
         this.pack();
         this.setLocationRelativeTo(null);

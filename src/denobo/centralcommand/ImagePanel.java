@@ -18,6 +18,13 @@ public class ImagePanel extends JComponent {
     
     /**
      * Initialises a new instance of an image display component.
+     */
+    public ImagePanel() {
+        this(null);
+    }
+    
+    /**
+     * Initialises a new instance of an image display component.
      * 
      * @param image the {@link BufferedImage} to display in the component
      */
@@ -42,6 +49,7 @@ public class ImagePanel extends JComponent {
      */
     public void setImage(BufferedImage image) {
         this.image = image;
+        this.repaint();
     }
         
     @Override
