@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package denobo.compression;
 
 import java.io.File;
@@ -15,7 +9,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
+ * Represents a unit test for {@link BasicCompressor}.
+ * 
  * @author Saul Johnson
  */
 public class BasicCompressorTest {
@@ -40,7 +35,7 @@ public class BasicCompressorTest {
     }
 
     /**
-     * Test of compress method, of class BasicCompressor.
+     * Test of {@link BasicCompressor#compress} method, of class {@link BasicCompressor}.
      */
     @Test
     public void testCompress() {
@@ -55,7 +50,7 @@ public class BasicCompressorTest {
     }
 
     /**
-     * Test of decompress method, of class BasicCompressor.
+     * Test of {@link BasicCompressor#decompress} method, of class {@link BasicCompressor}.
      */
     @Test
     public void testDecompress() {

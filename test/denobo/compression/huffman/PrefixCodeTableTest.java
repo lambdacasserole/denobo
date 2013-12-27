@@ -38,7 +38,7 @@ public class PrefixCodeTableTest {
     @After
     public void tearDown() {
     }
-
+    
     /**
      * Test of getCodes method, of class PrefixCodeTable.
      */
