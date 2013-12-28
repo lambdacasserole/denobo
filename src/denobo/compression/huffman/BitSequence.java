@@ -3,6 +3,7 @@ package denobo.compression.huffman;
 import static denobo.compression.huffman.Word.SIZE;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a sequence of bits.
@@ -38,7 +39,8 @@ public class BitSequence {
      
         // Bounds check.
         if (index < 0 || index >= length) {
-            throw new RuntimeException("Cannot get bit " + index + " of bit sequence (length " + length + ").");
+            throw new RuntimeException("Cannot get bit at index [" + index 
+                    + "] of bit sequence (length " + length + ").");
         }
         
         // Return bit.
@@ -56,7 +58,8 @@ public class BitSequence {
         
         // Bounds check.
         if (index < 0 || index >= length) {
-            throw new RuntimeException("Cannot set bit " + index + " of bit sequence (length " + length + ").");
+            throw new RuntimeException("Cannot set bit at index [" + index 
+                    + "] of bit sequence (length " + length + ").");
         }
         
         // Set bit.
@@ -65,17 +68,76 @@ public class BitSequence {
     }
     
     /**
+     * Gets the word at the specified index.
+     * 
+     * @param index the index of the word to get
+     * @return      the word at the specified index
+     */
+    public Word getWord(int index) {
+        
+        return words.get(index);
+        
+    }
+    
+    /**
      * Appends a word to this bit sequence.
+     * 
      * @param word      the word to append
      * @param length    the length of the word, legal values are 1-8 (inclusive)
      */
     public void appendWord(Word word, int length) {
                 
-        // TODO: Make this more efficient.
-        for (int i = 0; i < length; i++) {
-            append(word.getBit(i));
+        final int overflow = this.length % SIZE;        
+        if (overflow == 0) {
+            
+            // Mask to zero unused bits in word.
+            final byte mask = (byte) (Math.pow(2, SIZE - length) - 1);
+            
+            // Apply mask to copy of specified word.
+            final Word wordToAdd = new Word(word);
+            wordToAdd.and((byte) ~mask);
+            
+            // Add word.
+            words.add(wordToAdd);
+            
+        } else {
+           
+            // Calculate remaining space in unfilled word.
+            final int remainder = SIZE - overflow;
+            
+            // Create byte to fill previous word.
+            byte fillWordByte = word.getData();
+            fillWordByte = (byte) (fillWordByte >> overflow);
+            
+            // Create word from filler byte.
+            final Word fillWord = new Word(fillWordByte);
+            
+            // Mask to zero unused byte in filler byte.
+            final byte mask = (byte) (Math.pow(2, remainder) - 1);
+            fillWord.and(mask);
+            
+            // Fill unfilled word.
+            getLastWord().or(fillWord);
+            
+            // If our word did not fit in the remainder of the previous word.
+            if (length > remainder) {
+                
+                // Chop data we put into previous word off this byte.
+                byte newWordByte = word.getData();
+                newWordByte = (byte) (newWordByte << remainder);
+                
+                // Create word from new byte.
+                final Word newWord = new Word(newWordByte);
+                newWord.and((byte) ~mask);
+                
+                // Add byte to words.
+                words.add(newWord);
+                
+            }
+            
         }
-        
+        this.length += length;
+         
     }
             
     /**
@@ -101,11 +163,12 @@ public class BitSequence {
      */
     public void append(BitSequence value) {
         
-        final Word[] wordsToAdd = value.getWords();
-        
+        // Sequence cannot be null.
+        Objects.requireNonNull(value);
+                
         int newSequenceLength = value.getLength();
-        for (Word word : wordsToAdd) {
-            appendWord(word, newSequenceLength >= SIZE ? SIZE : newSequenceLength);
+        for (int i = 0; i < value.getLengthInWords(); i++) {
+            appendWord(value.getWord(i), newSequenceLength >= SIZE ? SIZE : newSequenceLength);
             newSequenceLength -= SIZE;
         }
         
@@ -163,17 +226,7 @@ public class BitSequence {
     public Word[] getWords() {
         return words.toArray(new Word[] {});
     }
-    
-    /**
-     * Gets the word at the specified index.
-     * 
-     * @param index the index of the word to get
-     * @return      the word at the specified index
-     */
-    public Word getWord(int index) {
-        return words.get(index);
-    }
-    
+        
     /**
      * Gets the last word in the sequence.
      * 

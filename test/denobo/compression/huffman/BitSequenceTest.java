@@ -151,7 +151,7 @@ public class BitSequenceTest {
         final String expectedResult = "00000000111111110000001111";
         
         firstBitSequence.append(secondBitSequence);
-        assertEquals(firstBitSequence.toBitString(), expectedResult);
+        assertEquals(expectedResult, firstBitSequence.toBitString());
         
     }
 

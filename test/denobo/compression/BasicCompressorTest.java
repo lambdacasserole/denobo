@@ -57,13 +57,8 @@ public class BasicCompressorTest {
         
         final Compressor instance = new BasicCompressor();
         
-        byte[] fileBytes = FileUtils.getFileBytes(new File("compression_test.bmp"));
-        byte[] outputBytes = instance.compress(fileBytes);
-        
-        FileUtils.setFileBytes(new File("decompression_test.arc"), outputBytes);
-                
-        fileBytes = FileUtils.getFileBytes(new File("decompression_test.arc"));
-        outputBytes = instance.decompress(fileBytes);
+        final byte[] fileBytes = FileUtils.getFileBytes(new File("decompression_test.arc"));
+        final byte[] outputBytes = instance.compress(fileBytes);
         
         FileUtils.setFileBytes(new File("decompression_test.bmp"), outputBytes);
         
