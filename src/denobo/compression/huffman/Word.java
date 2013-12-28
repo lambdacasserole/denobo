@@ -1,5 +1,7 @@
 package denobo.compression.huffman;
 
+import java.util.Objects;
+
 /**
  * Represents a word.
  */
@@ -13,13 +15,13 @@ public class Word {
     /**
      * The word data.
      */
-    byte data;
+    private byte value;
 
     /**
      * Initialises a new instance of a word.
      */
     public Word() {
-        data = 0;
+        value = 0;
     }
 
     /**
@@ -28,7 +30,7 @@ public class Word {
      * @param data  the initial value of the word
      */
     public Word(int data) {
-        this.data = (byte) data;
+        this.value = (byte) data;
     }
 
     /**
@@ -37,7 +39,13 @@ public class Word {
      * @param word  the word to clone
      */
     public Word(Word word) {
-        this.data = word.getData();
+        
+        // Word cannot be null.
+        Objects.requireNonNull(word, "Word cannot be null.");
+        
+        // Assign value.
+        this.value = word.getValue();
+        
     }
     
     /**
@@ -55,7 +63,7 @@ public class Word {
 
         // Set specified bit.
         final byte mask = (byte) Math.pow(2, SIZE - index - 1);
-        data = (byte) (value ? data | mask : data & ~mask);
+        this.value = (byte) (value ? this.value | mask : this.value & ~mask);
 
     }
 
@@ -73,62 +81,62 @@ public class Word {
         }
 
         // Get specified bit.
-        return (data & (byte) Math.pow(2, SIZE - index - 1)) != 0;
+        return (value & (byte) Math.pow(2, SIZE - index - 1)) != 0;
 
     }
 
     /**
      * Makes this word equal to itself AND the specified byte.
      * 
-     * @param b the byte to AND with this word
+     * @param value the byte to AND with this word
      */
-    public void and(byte b) {
-        data = (byte) (data & b);
+    public void and(byte value) {
+        this.value = (byte) (this.value & value);
     }
     
     /**
      * Makes this word equal to itself AND the specified word.
      * 
-     * @param w the word to AND with this word
+     * @param word  the word to AND with this word
      */
-    public void and(Word w) {
-        and(w.getData());
+    public void and(Word word) {
+        and(word.getValue());
     }
 
     /**
      * Makes this word equal to itself OR the specified byte.
      * 
-     * @param b the byte to OR with this word
+     * @param value the byte to OR with this word
      */
-    public void or(byte b) {
-        data = (byte) (data | b);
+    public void or(byte value) {
+        this.value = (byte) (this.value | value);
     }
 
     /**
      * Makes this word equal to itself OR the specified word.
      * 
-     * @param w the word to OR with this word
+     * @param word the word to OR with this word
      */
-    public void or(Word w) {
-        or(w.getData());
+    public void or(Word word) {
+        or(word.getValue());
     }
     
     /**
      * Makes this word equal to itself XOR the specified byte.
      * 
-     * @param b the byte to XOR with this word
+     * @param value the byte to XOR with this word
      */
-    public void xor(byte b) {
-        data = (byte) (data ^ b);
+    public void xor(byte value) {
+        this.value = (byte) (this.value ^ value);
     }
     
     /**
      * Makes this word equal to itself XOR the specified word.
      * 
-     * @param w the word to XOR with this word
+     * @param word  the word to XOR with this word
      */
-    public void xor(Word w) {
-        xor(w.getData());
+    public void xor(Word word) {
+        xor(word.getValue());
     }
     
     /**
@@ -136,8 +144,8 @@ public class Word {
      * 
      * @return  the value of the word as a byte
      */
-    public byte getData() {
-        return data;
+    public byte getValue() {
+        return value;
     }
 
     /**
@@ -146,11 +154,14 @@ public class Word {
      * @return  the word represented a as a bit string
      */
     public String toBitString() {
+        
+        // Build string.
         final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < SIZE; i++) {
             sb.append(getBit(i) ? "1" : "0");
         }
         return sb.toString();
+        
     }
 
     /**
@@ -160,7 +171,15 @@ public class Word {
      * @return      true if the words are equal in value, otherwise false
      */
     public boolean equals(Word word) {
-        return word.getData() == data;
+        
+        // This word is not null.
+        if (word == null) {
+            return false;
+        }
+        
+        // Compare by value.
+        return word.getValue() == value;
+        
     }
 
 }

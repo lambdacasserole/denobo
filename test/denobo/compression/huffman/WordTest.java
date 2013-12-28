@@ -147,7 +147,7 @@ public class WordTest {
     }
     
     /**
-     * Test of {@link Word#getData} method, of class {@link Word}.
+     * Test of {@link Word#getValue} method, of class {@link Word}.
      */
     @Test
     public void testGetData() {
@@ -155,7 +155,7 @@ public class WordTest {
         final int expResult = 10;
         final Word instance = new Word(expResult);
         
-        assertEquals(expResult, instance.getData());
+        assertEquals(expResult, instance.getValue());
         
     }
 

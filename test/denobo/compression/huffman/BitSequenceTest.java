@@ -248,7 +248,7 @@ public class BitSequenceTest {
         instance.append(true);
         instance.append(true);
         
-        assertEquals(instance.getWord(2).getData(), -128);
+        assertEquals(instance.getWord(2).getValue(), -128);
         
     }
 

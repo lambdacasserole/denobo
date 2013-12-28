@@ -87,6 +87,16 @@ public class BitSequence {
      */
     public void appendWord(Word word, int length) {
                 
+        // Word cannot be null.
+        Objects.requireNonNull(word, "Cannot append a null Word.");
+        
+        // Check length.
+        if (length > Word.SIZE || length < 1) {
+            throw new IllegalArgumentException("Length of appended word cannot"
+                    + " be less than 1 or greater than " + Word.SIZE);
+        }
+        
+        // Check if we have spare bits in current word.
         final int overflow = this.length % SIZE;        
         if (overflow == 0) {
             
@@ -106,7 +116,7 @@ public class BitSequence {
             final int remainder = SIZE - overflow;
             
             // Create byte to fill previous word.
-            byte fillWordByte = word.getData();
+            byte fillWordByte = word.getValue();
             fillWordByte = (byte) (fillWordByte >> overflow);
             
             // Create word from filler byte.
@@ -123,7 +133,7 @@ public class BitSequence {
             if (length > remainder) {
                 
                 // Chop data we put into previous word off this byte.
-                byte newWordByte = word.getData();
+                byte newWordByte = word.getValue();
                 newWordByte = (byte) (newWordByte << remainder);
                 
                 // Create word from new byte.
@@ -164,7 +174,7 @@ public class BitSequence {
     public void append(BitSequence value) {
         
         // Sequence cannot be null.
-        Objects.requireNonNull(value);
+        Objects.requireNonNull(value, "Cannot append a null BitSequence.");
                 
         int newSequenceLength = value.getLength();
         for (int i = 0; i < value.getLengthInWords(); i++) {
@@ -213,7 +223,7 @@ public class BitSequence {
     public byte[] toArray() {
         final byte[] data = new byte[words.size()];
         for (int i = 0; i < words.size(); i++) {
-            data[i] = words.get(i).getData();
+            data[i] = words.get(i).getValue();
         }
         return data;
     }
