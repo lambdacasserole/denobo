@@ -1,5 +1,6 @@
 package denobo.centralcommand;
 
+import denobo.centralcommand.designer.NetworkDesignTab;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -19,6 +20,7 @@ public class MainWindow extends DenoboWindow implements ActionListener {
         
     private final JTabbedPane tabHolder;
     private final JMenuItem huffmanCodingItem;
+    private final JMenuItem networkDesignerItem;
     
     /**
      * Initialises the program main window.
@@ -48,6 +50,10 @@ public class MainWindow extends DenoboWindow implements ActionListener {
         huffmanCodingItem.addActionListener(this);
         testMenu.add(huffmanCodingItem);
         
+        networkDesignerItem = new JMenuItem("Network Designer");
+        networkDesignerItem.addActionListener(this);
+        testMenu.add(networkDesignerItem);
+        
         this.pack();
         
     }
@@ -55,8 +61,10 @@ public class MainWindow extends DenoboWindow implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         
-        if(e.getSource() == huffmanCodingItem) {
+        if (e.getSource() == huffmanCodingItem) {
             tabHolder.addTab("Huffman Coding [" + HuffmanTestTab.nextTabNumber() + "]", new HuffmanTestTab());
+        } else if (e.getSource() == networkDesignerItem) {
+            tabHolder.addTab("Network Design [" + NetworkDesignTab.nextTabNumber() + "]", new NetworkDesignTab());
         }
         
     }
