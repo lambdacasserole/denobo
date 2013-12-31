@@ -22,10 +22,19 @@ public class BitOutputStream {
     /**
      * Writes a {@link BitSequence} to the stream.
      * 
-     * @param b the {@link BitSequence} to write to the stream
+     * @param value the {@link BitSequence} to write to the stream
      */
-    public void write(BitSequence b) {
-        seq.append(b);
+    public void write(BitSequence value) {
+        seq.append(value);
+    }
+    
+    /**
+     * Writes a bit to the stream.
+     * 
+     * @param value the value of the bit to write
+     */
+    public void write(boolean value) {
+        seq.append(value);
     }
     
     /**

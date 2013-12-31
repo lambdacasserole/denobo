@@ -1,46 +1,71 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package denobo.compression.huffman;
 
+import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
+ * Represents a unit test for {@link PrefixCodeTable}.
+ * 
  * @author Saul Johnson
  */
 public class PrefixCodeTableTest {
     
+    /**
+     * Initialises a new instance of a unit test for {@link PrefixCodeTable}.
+     */
     public PrefixCodeTableTest() {
-    }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
-    }
-    
-    @Before
-    public void setUp() {
-    }
-    
-    @After
-    public void tearDown() {
+        
+        // Nothing to do.
+        
     }
     
     /**
-     * Test of getCodes method, of class PrefixCodeTable.
+     * Run before this unit test.
+     */
+    @BeforeClass
+    public static void setUpClass() {
+        
+        // Nothing to do.
+        
+    }
+    
+    /**
+     * Run after this unit test.
+     */
+    @AfterClass
+    public static void tearDownClass() {
+        
+        // Nothing to do.
+        
+    }
+
+    /**
+     * Run before each test case.
+     */
+    @Before
+    public void setUp() {
+        
+        // Nothing to do.
+        
+    }
+    
+    /**
+     * Run after each test case.
+     */
+    @After
+    public void tearDown() {
+        
+        // Nothing to do.
+        
+    }
+    
+    /**
+     * Test of {@link PrefixCodeTable#getCodes} method, of class {@link PrefixCodeTable}.
      */
     @Test
     public void testGetCodes() {
@@ -60,7 +85,7 @@ public class PrefixCodeTableTest {
     }
 
     /**
-     * Test of getSymbols method, of class PrefixCodeTable.
+     * Test of {@link PrefixCodeTable#getSymbols} method, of class {@link PrefixCodeTable}.
      */
     @Test
     public void testGetSymbols() {
@@ -80,7 +105,7 @@ public class PrefixCodeTableTest {
     }
 
     /**
-     * Test of translateSymbol method, of class PrefixCodeTable.
+     * Test of {@link PrefixCodeTable#translateSymbol} method, of class {@link PrefixCodeTable}.
      */
     @Test
     public void testTranslateSymbol() {
@@ -102,7 +127,7 @@ public class PrefixCodeTableTest {
     }
 
     /**
-     * Test of translateCode method, of class PrefixCodeTable.
+     * Test of {@link PrefixCodeTable#translateCode} method, of class {@link PrefixCodeTable}.
      */
     @Test
     public void testTranslateCode() {
@@ -127,7 +152,7 @@ public class PrefixCodeTableTest {
     }
 
     /**
-     * Test of hasCode method, of class PrefixCodeTable.
+     * Test of {@link PrefixCodeTable#hasCode} method, of class {@link PrefixCodeTable}.
      */
     @Test
     public void testHasCode() {
@@ -157,12 +182,24 @@ public class PrefixCodeTableTest {
     }
 
     /**
-     * Test of toString method, of class PrefixCodeTable.
+     * Test of {@link PrefixCodeTable#toString} method, of class {@link PrefixCodeTable}.
      */
     @Test
     public void testToString() {
         
+        final int[] symbols = new int[] {1, 2, 3};
+        final BitSequence[] codes = new BitSequence[3];
         
+        for (int i = 0; i < codes.length; i++) {
+            final BitSequence seq = new BitSequence();
+            seq.appendWord(new Word(i), 8);
+            codes[i] = seq;
+        }
+        
+        final PrefixCodeTable instance = new PrefixCodeTable(symbols, codes);
+        final String expectedResult = FileUtils.readFile(new File("data/prefix_code_table_expected.txt"));
+        
+        assertEquals(expectedResult, instance.toString());
         
     }
     

@@ -9,16 +9,16 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Represents a unit test for {@link BasicCompressor}.
+ * Represents a unit test for {@link LZWCompressor}.
  * 
  * @author Saul Johnson
  */
-public class BasicCompressorTest {
+public class LZWCompressorTest {
     
     /**
-     * Initialises a new instance of a unit test for {@link BasicCompressor}.
+     * Initialises a new instance of a unit test for {@link LZWCompressor}.
      */
-    public BasicCompressorTest() {
+    public LZWCompressorTest() {
         
         // Nothing to do.
         
@@ -65,12 +65,12 @@ public class BasicCompressorTest {
     }
 
     /**
-     * Test of {@link BasicCompressor#compress} method, of class {@link BasicCompressor}.
+     * Test of {@link LZWCompressor#compress} method, of class {@link LZWCompressor}.
      */
     @Test
     public void testCompress() {
         
-        final Compressor instance = new BasicCompressor();
+        final LZWCompressor instance = new LZWCompressor();
         
         final byte[] fileBytes = FileIO.getFileBytes(new File("data/_compression_test.bmp"));
         
@@ -80,24 +80,22 @@ public class BasicCompressorTest {
         
         System.out.println("Compression took: " + timer + "ms");
         
-        FileIO.setFileBytes(new File("data/basic_compression_actual.arc"), outputBytes);
+        FileIO.setFileBytes(new File("data/lzw_compression_actual.lzw"), outputBytes);
         
-        final byte[] expectedBytes = FileIO.getFileBytes(new File("data/basic_compression_expected.arc"));
-        final byte[] actualBytes = FileIO.getFileBytes(new File("data/basic_compression_actual.arc"));
-        
-        assertArrayEquals(expectedBytes, actualBytes);
+        final byte[] expectedBytes = FileIO.getFileBytes(new File("data/lzw_compression_expected.lzw"));
+        assertArrayEquals(outputBytes, expectedBytes);
         
     }
-
+    
     /**
-     * Test of {@link BasicCompressor#decompress} method, of class {@link BasicCompressor}.
+     * Test of {@link LZWCompressor#decompress} method, of class {@link LZWCompressor}.
      */
     @Test
     public void testDecompress() {
         
-        final Compressor instance = new BasicCompressor();
+        final LZWCompressor instance = new LZWCompressor();
         
-        final byte[] fileBytes = FileIO.getFileBytes(new File("data/basic_decompression_test.arc"));
+        final byte[] fileBytes = FileIO.getFileBytes(new File("data/lzw_compression_expected.lzw"));
         
         long timer = System.currentTimeMillis();
         final byte[] outputBytes = instance.decompress(fileBytes);
@@ -105,12 +103,10 @@ public class BasicCompressorTest {
         
         System.out.println("Decompression took: " + timer + "ms");
         
-        FileIO.setFileBytes(new File("data/basic_decompression_actual.bmp"), outputBytes);
-        
-        final byte[] expectedBytes = FileIO.getFileBytes(new File("data/basic_decompression_expected.bmp"));
-        final byte[] actualBytes = FileIO.getFileBytes(new File("data/basic_decompression_actual.bmp"));
-        
-        assertArrayEquals(expectedBytes, actualBytes);
+        FileIO.setFileBytes(new File("data/lzw_decompression_actual.bmp"), outputBytes);
+
+        final byte[] expectedBytes = FileIO.getFileBytes(new File("data/lzw_decompression_expected.bmp"));
+        assertArrayEquals(outputBytes, expectedBytes);
         
     }
     

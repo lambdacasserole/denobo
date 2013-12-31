@@ -5,14 +5,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 
 /**
- *
+ * Offers basic helper methods for reading and writing bytes to and from files.
+ * 
  * @author Saul Johnson
  */
-public class FileUtils {
+public class FileIO {
     
+    /**
+     * Returns the contents of a file as a byte array.
+     * 
+     * @param file  the file to read from
+     * @return      the contents of the file as a byte array
+     */
     public static byte[] getFileBytes(File file) {
         
         final Path filepath = Paths.get(file.getAbsolutePath());
@@ -28,6 +34,12 @@ public class FileUtils {
         
     }
     
+    /**
+     * Writes a byte array to a file.
+     * 
+     * @param file  the file to write the array to
+     * @param bytes the bytes to write to the file
+     */
     public static void setFileBytes(File file, byte[] bytes) {
         
         final Path filepath = Paths.get(file.getAbsolutePath());

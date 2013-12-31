@@ -175,12 +175,12 @@ public class PrefixCodeTable {
     public String toString() {
         
         // Return ASCII table.
-        final StringBuilder sb = new StringBuilder("Symbol    |Code      \n"
-                + "---------------------\n");
+        final StringBuilder sb = new StringBuilder("Symbol    |Code      \r\n"
+                + "---------------------\r\n");
         for (int i = 0; i < codes.length; i++) {
             sb.append(padRight(Integer.toString(symbols[i]), 11))
                     .append(codes[i].toBitString())
-                    .append(";").append("\n");
+                    .append(";").append("\r\n");
         }
         
         return sb.toString();

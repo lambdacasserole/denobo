@@ -64,8 +64,6 @@ public class BasicCompressor implements Compressor {
             out.write(bitOut.toArray());
             out.close();
                         
-            System.out.println(table.toString());
-            
             // Return compressed data, complete with table and header.
             return out.toByteArray();
             
@@ -82,11 +80,12 @@ public class BasicCompressor implements Compressor {
     public byte[] decompress(byte[] data) {
         try {
             
+            // Get data as input stream.
             final ByteArrayInputStream in = new ByteArrayInputStream(data);
             
+            // Get length in bits of compressed file.
             final byte[] lengthBytes = new byte[4];
             in.read(lengthBytes);
-            
             final int lengthInBits = ByteBuffer.allocate(4).put(lengthBytes).getInt(0);
             
             // Create lists of symbols and codes.
@@ -131,16 +130,18 @@ public class BasicCompressor implements Compressor {
             // Initialise translation table from codes and symbols.
             final PrefixCodeTable table = new PrefixCodeTable(primitiveSymbols, 
                     codes.toArray(new BitSequence[] {}));
-            
+                        
             // Get compressed data payload.
             final byte[] compressedData = new byte[in.available()];
             in.read(compressedData);
             
             in.close();
             
+            // Read data in a bits, output as bytes.
             final BitInputStream bitIn = new BitInputStream(compressedData);
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             
+            // Decompress data.
             BitSequence buffer = new BitSequence();
             while (bitIn.getPosition() < lengthInBits) {
                 buffer.append(bitIn.read());

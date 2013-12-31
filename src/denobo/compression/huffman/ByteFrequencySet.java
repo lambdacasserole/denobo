@@ -1,7 +1,7 @@
 package denobo.compression.huffman;
 
+import denobo.compression.FileIO;
 import java.io.File;
-import denobo.compression.FileUtils;
 
 /**
  * Represents a set of byte occurrence frequencies.
@@ -57,7 +57,7 @@ public class ByteFrequencySet {
      * @return      a {@link ByteFrequencySet} for the specified file
      */
     public static ByteFrequencySet fromFile(File file) {
-        return new ByteFrequencySet(FileUtils.getFileBytes(file));
+        return new ByteFrequencySet(FileIO.getFileBytes(file));
     }
     
 }

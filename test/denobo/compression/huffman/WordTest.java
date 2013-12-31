@@ -150,7 +150,7 @@ public class WordTest {
      * Test of {@link Word#getValue} method, of class {@link Word}.
      */
     @Test
-    public void testGetData() {
+    public void testGetValue() {
         
         final int expResult = 10;
         final Word instance = new Word(expResult);
