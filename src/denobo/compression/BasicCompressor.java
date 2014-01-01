@@ -1,5 +1,7 @@
 package denobo.compression;
 
+import denobo.compression.checksum.BSDChecksum;
+import denobo.compression.checksum.Checksum;
 import denobo.compression.huffman.BitInputStream;
 import denobo.compression.huffman.BitOutputStream;
 import denobo.compression.huffman.BitSequence;
@@ -42,8 +44,13 @@ public class BasicCompressor implements Compressor {
             // Final output.
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             
+            // Write checksum byte.
+            final Checksum checker = new BSDChecksum();
+            final byte[] checksum = checker.compute(data);
+            out.write(checksum);
+                     
             out.write(lengthInBits); // Write length in bits.
-            
+                        
             // Get symbols and codes in translation table.
             final int[] symbols = table.getSymbols();
             final BitSequence[] codes = table.getCodes();
@@ -63,7 +70,7 @@ public class BasicCompressor implements Compressor {
             // Write payload to output and close stream.
             out.write(bitOut.toArray());
             out.close();
-                        
+             
             // Return compressed data, complete with table and header.
             return out.toByteArray();
             
@@ -82,6 +89,10 @@ public class BasicCompressor implements Compressor {
             
             // Get data as input stream.
             final ByteArrayInputStream in = new ByteArrayInputStream(data);
+            
+            // Read checksum.
+            final byte[] checksum = new byte[1];
+            in.read(checksum);
             
             // Get length in bits of compressed file.
             final byte[] lengthBytes = new byte[4];
@@ -150,13 +161,20 @@ public class BasicCompressor implements Compressor {
                     buffer = new BitSequence();
                 }
             }
+            final byte[] payload = out.toByteArray();
+            
+            // Make sure our checksum matches.
+            final Checksum checker = new BSDChecksum();
+            if (checksum[0] != checker.compute(payload)[0]) {
+                throw new IOException("Bad checksum.");
+            }
             
             return out.toByteArray();
             
         } catch (IOException ex) {
             
             // TODO: Handle exception.
-            System.out.println("Could not decompress data.");
+            System.out.println("Could not decompress data: " + ex.getMessage());
             return null;
             
         }
