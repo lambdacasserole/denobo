@@ -2,7 +2,7 @@ package denobo.centralcommand;
 
 import denobo.compression.BasicCompressor;
 import denobo.compression.Compressor;
-import denobo.compression.FileUtils;
+import denobo.compression.FileIO;
 import denobo.compression.huffman.ByteFrequencySet;
 import denobo.compression.huffman.FrequencyTree;
 import denobo.compression.huffman.PrefixCodeTable;
@@ -167,11 +167,11 @@ public class HuffmanTestTab extends JPanel implements ActionListener {
                 
                 // Compress data.
                 final Compressor compressor = new BasicCompressor();
-                final byte[] input = FileUtils.getFileBytes(sourceFile);
+                final byte[] input = FileIO.getFileBytes(sourceFile);
                 final byte[] output = compressor.compress(input);
                 
                 // Save compressed file.
-                FileUtils.setFileBytes(destFile, output);
+                FileIO.setFileBytes(destFile, output);
                 
                 // Visualise frequency change.
                 afterCompressionGraph.setFile(destFile);
@@ -190,7 +190,7 @@ public class HuffmanTestTab extends JPanel implements ActionListener {
                 
                 beforeCompressionGraph.setFile(sourceFile);
                 
-                final byte[] sourceFileBytes = FileUtils.getFileBytes(sourceFile);
+                final byte[] sourceFileBytes = FileIO.getFileBytes(sourceFile);
 //                final PrefixCodeTable table = PrefixCodeTable.deserialize(sourceFileBytes, 8);
                 
                 // Clear table.
@@ -203,11 +203,11 @@ public class HuffmanTestTab extends JPanel implements ActionListener {
                 
                 // Compress data.
                 final Compressor compressor = new BasicCompressor();
-                final byte[] input = FileUtils.getFileBytes(sourceFile);
+                final byte[] input = FileIO.getFileBytes(sourceFile);
                 final byte[] output = compressor.decompress(input);
                 
                 // Save compressed file.
-                FileUtils.setFileBytes(destFile, output);
+                FileIO.setFileBytes(destFile, output);
                 
                 // Visualise frequency change.
                 afterCompressionGraph.setFile(destFile);

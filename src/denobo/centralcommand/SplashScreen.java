@@ -21,7 +21,7 @@ public class SplashScreen extends DenoboWindow {
      * The number of milliseconds the splash screen will wait before 
      * the main window is displayed.
      */
-    public static final int SPLASH_DELAY = 3000;
+    public static final int SPLASH_DELAY = 0000;
         
     /**
      * Initialises the program splash screen.

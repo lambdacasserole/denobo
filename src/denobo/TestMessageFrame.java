@@ -8,6 +8,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -133,7 +136,11 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         localAgent = new SocketAgent(LOCAL_AGENT_NAME, MAX_CONNECTIONS);
         localAgent.addObserver(this);
         localAgent.addMessageHandler(this);
-        localAgent.advertiseConnection(LOCAL_PORT);
+        try {
+            localAgent.startAdvertising(LOCAL_PORT);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
     @Override
@@ -201,4 +208,17 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
             }
         });
     }
+
+    @Override
+    public void advertisingStarted(SocketAgent agent, int port) {
+        
+        
+    }
+
+    @Override
+    public void advertisingStopped(SocketAgent agent, int port) {
+        
+        
+    }
+    
 }

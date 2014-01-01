@@ -51,8 +51,9 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
     private final JMenuItem menuOptionsConnections;
     private final JMenuItem menuOptionProperties;
     
-    // Dialog for adding an agent into the designer
+    // Dialogs
     private final AddAgentDialog addAgentDialog;
+    private final AgentPropertiesDialog agentPropertiesDialog;
     
     // Collections to hold the data for this designer
     private final List<AgentDisplayable> agents;
@@ -116,6 +117,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         
         
         addAgentDialog = new AddAgentDialog();
+        agentPropertiesDialog = new AgentPropertiesDialog();
         
         
         this.addMouseListener(this);
@@ -206,7 +208,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
 
         } else if (e.getSource() == menuOptionProperties) {
             
-            
+            agentPropertiesDialog.showDialog(agentSelected.getBounds().getLocation(), agentSelected.getAgent());
             
         } else if (e.getSource() == menuOptionAddSocketAgent) { 
 
@@ -260,6 +262,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         } else {
             
             if (agentClicked == null) {
+                isSelectedAgentTryingToLink = false;
                 agentSelected = null;
                 this.repaint();
             }
@@ -317,6 +320,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         } else {
             
             if (agentClicked == null) {
+                isSelectedAgentTryingToLink = false;
                 agentSelected = null;
                 this.repaint();
             }
@@ -340,6 +344,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
             agentSelectedPopup.show(e.getComponent(), e.getX(), e.getY());
         } else {
             if (agentClicked == null) {
+                isSelectedAgentTryingToLink = false;
                 agentSelected = null;
                 this.repaint();
             }

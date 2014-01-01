@@ -40,6 +40,11 @@ public class AddAgentDialog {
     public AddAgentDialog() {
 
         dialog = new JDialog();
+        dialog.setLayout(new BorderLayout());
+        dialog.setTitle("Add Agent");
+        dialog.setResizable(false);
+        dialog.setModal(true);
+        
         
         agentNameField = new JTextField(12);
         agentNameField.setText(agentNamePrefix + agentNameNumber);
@@ -53,14 +58,7 @@ public class AddAgentDialog {
         
         registerActionListeners();
         
-        
-        
-        dialog.setLayout(new BorderLayout());
-        dialog.setTitle("Add Agent");
-        dialog.setResizable(false);
-        dialog.setModal(true);
-        
-        
+
         final JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         dialog.add(contentPanel);
@@ -136,7 +134,7 @@ public class AddAgentDialog {
     }
     
     /**
-     * Handles the browse button been clicked.
+     * Handles the browse button being clicked.
      */
     private void handleBrowseButtonClicked() {
         
@@ -154,7 +152,7 @@ public class AddAgentDialog {
     }
     
     /**
-     * Handles the add button been clicked.
+     * Handles the add button being clicked.
      */
     private void handleAddButtonClicked() {
         
@@ -189,7 +187,7 @@ public class AddAgentDialog {
     }
     
     /**
-     * Handles the cancel button been clicked.
+     * Handles the cancel button being clicked.
      */
     private void handleCancelButtonClicked() {
         

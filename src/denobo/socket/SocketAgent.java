@@ -63,6 +63,10 @@ public class SocketAgent extends Agent {
      */
     private volatile boolean shutdownAcceptThread;
 
+    /**
+     * A status variable we use to indicate that this SocketAgent is advertising.
+     */
+    private boolean advertising;
     
 
     
@@ -134,34 +138,90 @@ public class SocketAgent extends Agent {
     /**
      * Sets up allowing incoming connection requests to be accepted.
      *
-     * @param portNumber The port number to listen for connection requests on
+     * @param portNumber    The port number to listen for connection requests on
+     * @throws IOException  If an I/O error occurred whilst creating the socket to
+     *                      listen for connections on.
      */
-    public void advertiseConnection(int portNumber) {
+    public void startAdvertising(int portNumber) throws IOException {
 
         if (portNumber < 0 || portNumber > 0xFFFF) {
             throw new IllegalArgumentException("Port value out of range: " + portNumber);
         }
         
-        // shutdownAcceptThread the socket agent related stuff in case we are already
-        // advertising
-        socketAgentShutdown();
+        // Stop advertising in case we already are
+        stopAdvertising();
 
-        try {
 
-            serverSocket = new ServerSocket(portNumber);
-            acceptThread = new Thread() {
-                @Override
-                public void run() {
-                    acceptConnectionsLoop();
-                }
-            };
-            acceptThread.start();
+        serverSocket = new ServerSocket(portNumber);
 
-        } catch (IOException ex) {
-            
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
-            
+        advertising = true;
+        
+        // notify any observers
+        for (SocketAgentObserver currentObserver : observers) {
+            currentObserver.advertisingStarted(this, portNumber);
+        }          
+
+        // Start the acceptThread to start accepting connection requests
+        acceptThread = new Thread() {
+            @Override
+            public void run() {
+                acceptConnectionsLoop();
+            }
+        };
+        acceptThread.start();
+
+    }
+    
+    /**
+     * Returns whether this SocketAgent is currently advertising at the time this
+     * method was called.
+     * 
+     * @return true if this SocketAgent is advertising, otherwise false.
+     */
+    public boolean isAdvertising() {
+        return advertising;
+    }
+    
+    /**
+     * Returns the local port this SocketAgent is advertising on or the last port
+     * it was advertising on if it is now not advertising. If it has never advertised,
+     * -1 is returned.
+     * 
+     * @return  The port currently advertising on or the last port advertised on. -1
+     *          if it has never advertised yet.
+     */
+    public int getAdvertisingPort() {
+        return (serverSocket != null) ? serverSocket.getLocalPort() : -1;
+    }
+    
+    /**
+     * Stops this SocketAgent from accepting anymore connection requests.
+     */
+    public void stopAdvertising() {
+        
+        shutdownAcceptThread = true;
+
+        // First prevent anyone else from connecting.
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException ex) { System.out.println(ex.getMessage()); }
+        }
+
+        // Wait for the connection accepting thread to terminate.
+        if (acceptThread != null) {
+            try {
+                acceptThread.join();
+            } catch (InterruptedException ex) { System.out.println(ex.getMessage()); }
+        }
+        
+        shutdownAcceptThread = false;
+        
+        advertising = false;
+        
+        // notify any observers
+        for (SocketAgentObserver currentObserver : observers) {
+            currentObserver.advertisingStopped(this, serverSocket.getLocalPort());
         }
         
     }
@@ -199,6 +259,7 @@ public class SocketAgent extends Agent {
                 System.out.println("acceptConnectionsLoop: " + ex.getMessage());
                 
             }
+            
         }
         
     }
@@ -309,38 +370,20 @@ public class SocketAgent extends Agent {
     /**
      * Shuts down this SocketAgent. No more incoming connection requests will
      * be accepted and any current connections are terminated and removed. This
-     * only shuts down the socket parts and the base class isn't shutdownAcceptThread.
-     * Invoking advertiseConnection reverses the shutdownAcceptThread and permits socket
-     * connections again.
+     * only shuts down the socket parts and the base class isn't shutdown.
      */
     private void socketAgentShutdown() {
         
-        shutdownAcceptThread = true;
-
-        // First prevent anyone else from connecting.
-        if (serverSocket != null) {
-            try {
-                serverSocket.close();
-            } catch (IOException ex) { System.out.println(ex.getMessage()); }
-        }
-
-        // Wait for the connection accepting thread to terminate.
-        if (acceptThread != null) {
-            try {
-                acceptThread.join();
-            } catch (InterruptedException ex) { System.out.println(ex.getMessage()); }
-        }
+        stopAdvertising();
 
         removeConnections();
-        
-        shutdownAcceptThread = false;
-        
+
     }
 
     /**
      * Shuts down this SocketAgent. No more incoming connection requests will
      * be accepted and any current connections are terminated and removed. This
-     * is a full shutdownAcceptThread that prevents this Agent being used again.
+     * is a full shutdown that prevents this Agent being used again.
      */
     @Override
     public void shutdown() {
@@ -349,7 +392,7 @@ public class SocketAgent extends Agent {
         // coming through.
         socketAgentShutdown();
         
-        // Super class can perform a shutdownAcceptThread now
+        // Super class can perform a shutdown now
         super.shutdown();
         
     }
