@@ -25,9 +25,9 @@ import javax.swing.SwingUtilities;
  */
 public class TestMessageFrame extends JFrame implements ActionListener, MessageHandler, SocketAgentObserver {
 
-    private static final String LOCAL_AGENT_NAME = "Alex";
-    private static final String REMOTE_AGENT_NAME = "Lee";
-    private static final int LOCAL_PORT = 4757;
+    private static final String LOCAL_AGENT_NAME = "Lee";
+    private static final String REMOTE_AGENT_NAME = "Alex";
+    private static final int LOCAL_PORT = 4754;
     private static final int MAX_CONNECTIONS = 20;
     
     private final SocketAgent localAgent;
@@ -43,7 +43,7 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
         ipTextField.setText("localhost");
 
         portTextField = new JTextField(5);
-        portTextField.setText("4757");
+        portTextField.setText("1234");
 
         localAgentNameField = new JTextField(10);
         localAgentNameField.setText(LOCAL_AGENT_NAME);

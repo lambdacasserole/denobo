@@ -198,32 +198,34 @@ public class SocketAgent extends Agent {
      * Stops this SocketAgent from accepting anymore connection requests.
      */
     public void stopAdvertising() {
-        
+       
         shutdownAcceptThread = true;
-
+ 
         // First prevent anyone else from connecting.
         if (serverSocket != null) {
             try {
                 serverSocket.close();
             } catch (IOException ex) { System.out.println(ex.getMessage()); }
         }
-
+ 
         // Wait for the connection accepting thread to terminate.
         if (acceptThread != null) {
             try {
                 acceptThread.join();
             } catch (InterruptedException ex) { System.out.println(ex.getMessage()); }
         }
-        
+       
         shutdownAcceptThread = false;
-        
+       
         advertising = false;
-        
-        // notify any observers
-        for (SocketAgentObserver currentObserver : observers) {
-            currentObserver.advertisingStopped(this, serverSocket.getLocalPort());
+       
+        // notify any observers if this was previously advertising
+        if (serverSocket != null) {
+            for (SocketAgentObserver currentObserver : observers) {
+                currentObserver.advertisingStopped(this, serverSocket.getLocalPort());
+            }
         }
-        
+       
     }
 
     /**
