@@ -1,5 +1,6 @@
 package denobo.compression;
 
+import denobo.FileIO;
 import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -72,7 +73,7 @@ public class BasicCompressorTest {
         
         final Compressor instance = new BasicCompressor();
         
-        final byte[] fileBytes = FileIO.getFileBytes(new File("data/_compression_test.bmp"));
+        final byte[] fileBytes = FileIO.readBytesFromFile(new File("data/_compression_test.bmp"));
         
         long timer = System.currentTimeMillis();
         final byte[] outputBytes = instance.compress(fileBytes);
@@ -80,10 +81,10 @@ public class BasicCompressorTest {
         
         System.out.println("Compression took: " + timer + "ms");
         
-        FileIO.setFileBytes(new File("data/basic_compression_actual.arc"), outputBytes);
+        FileIO.writeBytesToFile(new File("data/basic_compression_actual.arc"), outputBytes);
         
-        final byte[] expectedBytes = FileIO.getFileBytes(new File("data/basic_compression_expected.arc"));
-        final byte[] actualBytes = FileIO.getFileBytes(new File("data/basic_compression_actual.arc"));
+        final byte[] expectedBytes = FileIO.readBytesFromFile(new File("data/basic_compression_expected.arc"));
+        final byte[] actualBytes = FileIO.readBytesFromFile(new File("data/basic_compression_actual.arc"));
         
         assertArrayEquals(expectedBytes, actualBytes);
         
@@ -97,7 +98,7 @@ public class BasicCompressorTest {
         
         final Compressor instance = new BasicCompressor();
         
-        final byte[] fileBytes = FileIO.getFileBytes(new File("data/basic_decompression_test.arc"));
+        final byte[] fileBytes = FileIO.readBytesFromFile(new File("data/basic_decompression_test.arc"));
         
         long timer = System.currentTimeMillis();
         final byte[] outputBytes = instance.decompress(fileBytes);
@@ -105,10 +106,10 @@ public class BasicCompressorTest {
         
         System.out.println("Decompression took: " + timer + "ms");
         
-        FileIO.setFileBytes(new File("data/basic_decompression_actual.bmp"), outputBytes);
+        FileIO.writeBytesToFile(new File("data/basic_decompression_actual.bmp"), outputBytes);
         
-        final byte[] expectedBytes = FileIO.getFileBytes(new File("data/basic_decompression_expected.bmp"));
-        final byte[] actualBytes = FileIO.getFileBytes(new File("data/basic_decompression_actual.bmp"));
+        final byte[] expectedBytes = FileIO.readBytesFromFile(new File("data/basic_decompression_expected.bmp"));
+        final byte[] actualBytes = FileIO.readBytesFromFile(new File("data/basic_decompression_actual.bmp"));
         
         assertArrayEquals(expectedBytes, actualBytes);
         

@@ -1,7 +1,6 @@
 package denobo.crypto;
 
-import denobo.compression.FileIO;
-import denobo.compression.huffman.FileUtils;
+import denobo.FileIO;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import org.junit.After;
@@ -115,10 +114,10 @@ public class RC4CryptoAlgorithmTest {
             final RC4CryptoAlgorithm instance = new RC4CryptoAlgorithm();
             instance.setKey(key);
             
-            final byte[] ciphertext = instance.encrypt(FileUtils.readFile(new File("data/encryption_test.txt")).getBytes("US-ASCII"));
-            FileIO.setFileBytes(new File("data/encrypted_actual.rc4"), ciphertext);
+            final byte[] ciphertext = instance.encrypt(FileIO.readTextFromFile(new File("data/encryption_test.txt")).getBytes("US-ASCII"));
+            FileIO.writeBytesToFile(new File("data/encrypted_actual.rc4"), ciphertext);
             
-            final byte[] expected = FileIO.getFileBytes(new File("data/encrypted_expected.rc4"));
+            final byte[] expected = FileIO.readBytesFromFile(new File("data/encrypted_expected.rc4"));
             
             assertArrayEquals(expected, ciphertext);
             
@@ -145,10 +144,10 @@ public class RC4CryptoAlgorithmTest {
             final RC4CryptoAlgorithm instance = new RC4CryptoAlgorithm();
             instance.setKey(key);
             
-            final byte[] plaintext = instance.decrypt(FileIO.getFileBytes(new File("data/encrypted_expected.rc4")));
-            FileIO.setFileBytes(new File("data/decrypted_actual.txt"), plaintext);
+            final byte[] plaintext = instance.decrypt(FileIO.readBytesFromFile(new File("data/encrypted_expected.rc4")));
+            FileIO.writeBytesToFile(new File("data/decrypted_actual.txt"), plaintext);
             
-            final byte[] expected = FileIO.getFileBytes(new File("data/decrypted_expected.txt"));
+            final byte[] expected = FileIO.readBytesFromFile(new File("data/decrypted_expected.txt"));
             
             assertArrayEquals(expected, plaintext);
             

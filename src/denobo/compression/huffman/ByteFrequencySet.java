@@ -1,6 +1,6 @@
 package denobo.compression.huffman;
 
-import denobo.compression.FileIO;
+import denobo.FileIO;
 import java.io.File;
 
 /**
@@ -57,7 +57,7 @@ public class ByteFrequencySet {
      * @return      a {@link ByteFrequencySet} for the specified file
      */
     public static ByteFrequencySet fromFile(File file) {
-        return new ByteFrequencySet(FileIO.getFileBytes(file));
+        return new ByteFrequencySet(FileIO.readBytesFromFile(file));
     }
     
 }

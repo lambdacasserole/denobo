@@ -1,5 +1,6 @@
 package denobo.compression;
 
+import denobo.FileIO;
 import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -72,7 +73,7 @@ public class LZWCompressorTest {
         
         final LZWCompressor instance = new LZWCompressor();
         
-        final byte[] fileBytes = FileIO.getFileBytes(new File("data/_compression_test.bmp"));
+        final byte[] fileBytes = FileIO.readBytesFromFile(new File("data/_compression_test.bmp"));
         
         long timer = System.currentTimeMillis();
         final byte[] outputBytes = instance.compress(fileBytes);
@@ -80,9 +81,9 @@ public class LZWCompressorTest {
         
         System.out.println("Compression took: " + timer + "ms");
         
-        FileIO.setFileBytes(new File("data/lzw_compression_actual.lzw"), outputBytes);
+        FileIO.writeBytesToFile(new File("data/lzw_compression_actual.lzw"), outputBytes);
         
-        final byte[] expectedBytes = FileIO.getFileBytes(new File("data/lzw_compression_expected.lzw"));
+        final byte[] expectedBytes = FileIO.readBytesFromFile(new File("data/lzw_compression_expected.lzw"));
         assertArrayEquals(outputBytes, expectedBytes);
         
     }
@@ -95,7 +96,7 @@ public class LZWCompressorTest {
         
         final LZWCompressor instance = new LZWCompressor();
         
-        final byte[] fileBytes = FileIO.getFileBytes(new File("data/lzw_compression_expected.lzw"));
+        final byte[] fileBytes = FileIO.readBytesFromFile(new File("data/lzw_compression_expected.lzw"));
         
         long timer = System.currentTimeMillis();
         final byte[] outputBytes = instance.decompress(fileBytes);
@@ -103,9 +104,9 @@ public class LZWCompressorTest {
         
         System.out.println("Decompression took: " + timer + "ms");
         
-        FileIO.setFileBytes(new File("data/lzw_decompression_actual.bmp"), outputBytes);
+        FileIO.writeBytesToFile(new File("data/lzw_decompression_actual.bmp"), outputBytes);
 
-        final byte[] expectedBytes = FileIO.getFileBytes(new File("data/lzw_decompression_expected.bmp"));
+        final byte[] expectedBytes = FileIO.readBytesFromFile(new File("data/lzw_decompression_expected.bmp"));
         assertArrayEquals(outputBytes, expectedBytes);
         
     }

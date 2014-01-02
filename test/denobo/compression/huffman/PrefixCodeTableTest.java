@@ -1,5 +1,6 @@
 package denobo.compression.huffman;
 
+import denobo.FileIO;
 import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -197,7 +198,7 @@ public class PrefixCodeTableTest {
         }
         
         final PrefixCodeTable instance = new PrefixCodeTable(symbols, codes);
-        final String expectedResult = FileUtils.readFile(new File("data/prefix_code_table_expected.txt"));
+        final String expectedResult = FileIO.readTextFromFile(new File("data/prefix_code_table_expected.txt"));
         
         assertEquals(expectedResult, instance.toString());
         
