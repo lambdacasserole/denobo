@@ -1,5 +1,7 @@
 package denobo.compression;
 
+import denobo.compression.checksum.BSDChecksum;
+import denobo.compression.checksum.Checksum;
 import denobo.compression.lzw.LZWDictionary;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -91,6 +93,10 @@ public class LZWCompressor implements Compressor {
             // Get ouput stream.
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             
+            // Write checksum byte to output.
+            final Checksum checker = new BSDChecksum();
+            out.write(checker.compute(data));
+            
             String sequence = "";
             String byteString;
 
@@ -132,6 +138,10 @@ public class LZWCompressor implements Compressor {
             // Initialise dictionary.
             final LZWDictionary dictionary = getInitializedDictionary();
 
+            // Get checksum.
+            final byte[] checksum = new byte[1];
+            in.read(checksum);
+            
             // Get I/O streams.
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             
@@ -150,15 +160,22 @@ public class LZWCompressor implements Compressor {
                 out.write(fromHexString(dictionary.getData(k)));
                 sequence = dictionary.getData(k);
             }
+            final byte[] payload = out.toByteArray();
          
             out.close();
             
-            return out.toByteArray();
+            // Make sure our checksum matches.
+            final Checksum checker = new BSDChecksum();
+            if (checksum[0] != checker.compute(payload)[0]) {
+                throw new IOException("Bad checksum.");
+            }
+            
+            return payload;
             
         } catch (IOException ex) {
             
             // TODO: Handle exception.
-            System.out.println("Could not decompress data.");
+            System.out.println("Could not decompress data: " + ex.getMessage());
             return null;
             
         }
