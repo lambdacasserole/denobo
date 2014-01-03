@@ -1,6 +1,7 @@
 package denobo.centralcommand.designer;
 
 import denobo.Agent;
+import denobo.centralcommand.designer.dialogs.AgentMonitorDialog;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
@@ -17,11 +18,17 @@ public class AgentDisplayable {
     
     private final Rectangle bounds;
     private final Agent agent;
+    private final AgentMonitorDialog monitorDialog;
     
     
     public AgentDisplayable(Agent agent, int x, int y) {
         this.agent = agent;
+        monitorDialog = new AgentMonitorDialog(agent);
         bounds = new Rectangle(x, y, width, height);
+    }
+    
+    public AgentMonitorDialog getMonitorDialog() {
+        return monitorDialog;
     }
 
     public Rectangle getBounds() {

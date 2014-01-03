@@ -56,6 +56,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
     private final JMenuItem menuOptionLink;
     private final JMenuItem menuOptionsConnections;
     private final JMenuItem menuOptionProperties;
+    private final JMenuItem menuOptionMonitor;
     
     // Dialogs
     private final AddAgentDialog addAgentDialog;
@@ -101,11 +102,17 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         menuOptionsConnections.addActionListener(this);
         agentSelectedPopup.add(menuOptionsConnections);
         
+        menuOptionMonitor = new JMenuItem("Monitor");
+        menuOptionMonitor.addActionListener(this);
+        agentSelectedPopup.add(menuOptionMonitor);       
+        
+        agentSelectedPopup.addSeparator();
+        
         menuOptionProperties = new JMenuItem("Properties");
         menuOptionProperties.addActionListener(this);
         agentSelectedPopup.add(menuOptionProperties);
         
-        
+
         
         emptySpacePopup = new JPopupMenu();
         
@@ -223,10 +230,14 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
             
             agentConnectionsDialog.showDialog(agentSelected.getBounds().getLocation(), agentSelected);
 
+        } else if (e.getSource() == menuOptionMonitor) {
+            
+            agentSelected.getMonitorDialog().show(agentSelected.getBounds().getLocation());
+            
         } else if (e.getSource() == menuOptionProperties) {
             
             agentPropertiesDialog.showDialog(agentSelected.getBounds().getLocation(), agentSelected.getAgent());
-            
+
         } else if (e.getSource() == menuOptionAddSocketAgent) { 
 
             agents.add(new SocketAgentDisplayable(new SocketAgent("test-socket-agent", 32), 

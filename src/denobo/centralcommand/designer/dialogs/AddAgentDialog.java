@@ -2,6 +2,7 @@ package denobo.centralcommand.designer.dialogs;
 
 import denobo.Agent;
 import java.awt.BorderLayout;
+import java.awt.Dialog.ModalityType;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,7 +44,7 @@ public class AddAgentDialog {
         dialog.setLayout(new BorderLayout());
         dialog.setTitle("Add Agent");
         dialog.setResizable(false);
-        dialog.setModal(true);
+        dialog.setModalityType(ModalityType.APPLICATION_MODAL);    
         
         
         agentNameField = new JTextField(12);

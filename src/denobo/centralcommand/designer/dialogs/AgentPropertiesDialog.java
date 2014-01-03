@@ -4,6 +4,7 @@ import denobo.Agent;
 import denobo.socket.SocketAgent;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Point;
@@ -68,7 +69,7 @@ public class AgentPropertiesDialog {
         dialog.setLayout(new BorderLayout());
         dialog.setTitle("Properties");
         dialog.setResizable(false);
-        dialog.setModal(true);       
+        dialog.setModalityType(ModalityType.APPLICATION_MODAL);       
         
         
         agentNameField = new JTextField(12);

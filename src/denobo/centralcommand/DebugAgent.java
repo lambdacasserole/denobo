@@ -3,7 +3,6 @@ package denobo.centralcommand;
 import denobo.Agent;
 import denobo.Message;
 import denobo.MessageHandler;
-import denobo.socket.SocketAgent;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -90,7 +89,7 @@ public class DebugAgent extends Agent implements ActionListener, MessageHandler 
         clearButton.addActionListener(this);
         southPanel.add(clearButton);
         
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.pack();
     }
     
@@ -120,4 +119,10 @@ public class DebugAgent extends Agent implements ActionListener, MessageHandler 
         agentRecieveArea.append("From: " +  message.getFrom() + ":\n");
         messageRecieveArea.append("mgs: " + message.getData() + "\n");
     }
+
+    @Override
+    public void messageIntercepted(Agent agent, Message message) {
+        
+    }
+
 }

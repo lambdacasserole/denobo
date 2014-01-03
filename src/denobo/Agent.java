@@ -115,10 +115,15 @@ public class Agent extends Actor {
         // If we are cloneable, this method will possibly be executing in
         // multiple threads.
         
+        // Let any handlers know of the message received even though it may
+        // not be intended for us.
+        for (MessageHandler handler : handlers) {
+            handler.messageIntercepted(this, message);
+        }
+        
         // Pass message to each handler if the message has this Agent in the
         // receipients.
         if (message.hasRecipient(this)) {
-//System.out.println(this.getName() + " has received a message from: " + message.getFrom() + ": " + message.getData());
             for (MessageHandler handler : handlers) {
                 handler.messageRecieved(this, message);
             }

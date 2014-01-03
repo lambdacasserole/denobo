@@ -8,6 +8,7 @@ import denobo.socket.SocketAgent;
 import denobo.socket.SocketAgentObserver;
 import denobo.socket.connection.DenoboConnection;
 import java.awt.BorderLayout;
+import java.awt.Dialog.ModalityType;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -63,7 +64,7 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
     
     
     private AgentDisplayable agentModel;
-    private NetworkDesigner networkDesigner;
+    private final NetworkDesigner networkDesigner;
     
     
     /**
@@ -79,7 +80,7 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         dialog.setLayout(new BorderLayout());
         dialog.setTitle("Connections");
         dialog.setResizable(true);
-        dialog.setModal(true);
+        dialog.setModalityType(ModalityType.APPLICATION_MODAL);
         
         
 
@@ -287,7 +288,7 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         // "Remote" tab with a list of connections.
         if (agentModel.getAgent() instanceof SocketAgent) {
             
-            tabHolder.addTab("Socket", remoteTab);
+            tabHolder.addTab("Remote", remoteTab);
            
             final SocketAgent socketAgent = (SocketAgent) agentModel.getAgent();
             for (DenoboConnection currentConnection : socketAgent.getConnections()) {

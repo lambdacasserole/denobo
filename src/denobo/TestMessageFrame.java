@@ -167,6 +167,11 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
             }
         });
     }
+    
+    @Override
+    public void messageIntercepted(Agent agent, Message message) {
+        
+    }
 
     @Override
     public void incomingConnectionAccepted(SocketAgent agent, final DenoboConnection connection) {
