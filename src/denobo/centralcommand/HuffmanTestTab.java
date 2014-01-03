@@ -1,8 +1,8 @@
 package denobo.centralcommand;
 
+import denobo.FileIO;
 import denobo.compression.BasicCompressor;
 import denobo.compression.Compressor;
-import denobo.FileIO;
 import denobo.compression.huffman.ByteFrequencySet;
 import denobo.compression.huffman.FrequencyTree;
 import denobo.compression.huffman.PrefixCodeTable;

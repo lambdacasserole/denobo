@@ -1,6 +1,10 @@
 package denobo.centralcommand.designer;
 
+import denobo.centralcommand.designer.dialogs.AgentPropertiesDialog;
+import denobo.centralcommand.designer.dialogs.AddAgentDialog;
 import denobo.Agent;
+import denobo.centralcommand.DebugAgent;
+import denobo.centralcommand.designer.dialogs.AgentConnectionsDialog;
 import denobo.socket.SocketAgent;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -26,6 +30,8 @@ import javax.swing.SwingUtilities;
  * @author Alex Mullen, Saul Johnson
  */
 public class NetworkDesigner extends JComponent implements ActionListener, MouseListener, MouseMotionListener {
+    
+    private static int debugAgentCounter = 1;
     
     
     // Gridline constants.
@@ -54,6 +60,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
     // Dialogs
     private final AddAgentDialog addAgentDialog;
     private final AgentPropertiesDialog agentPropertiesDialog;
+    private final AgentConnectionsDialog agentConnectionsDialog;
     
     // Collections to hold the data for this designer
     private final List<AgentDisplayable> agents;
@@ -118,6 +125,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         
         addAgentDialog = new AddAgentDialog();
         agentPropertiesDialog = new AgentPropertiesDialog();
+        agentConnectionsDialog = new AgentConnectionsDialog(this);
         
         
         this.addMouseListener(this);
@@ -157,6 +165,15 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         designerEventListeners.add(listener);
         
     }
+    
+    public List<AgentLink> getAgentLinks() {
+        return agentLinks;
+    }
+    
+    public List<AgentDisplayable> getAgentDisplayables() {
+        return agents;
+    }
+    
     
     private void maybeShowEmptySpacePopup(MouseEvent e) {
         
@@ -204,7 +221,7 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
             
         } else if (e.getSource() == menuOptionsConnections) {
             
-            
+            agentConnectionsDialog.showDialog(agentSelected.getBounds().getLocation(), agentSelected);
 
         } else if (e.getSource() == menuOptionProperties) {
             
@@ -218,7 +235,14 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
             this.repaint();
            
         } else if (e.getSource() == menuOptionAddDebugAgent) {
-                    
+            
+            final DebugAgent nextDebugAgent = new DebugAgent("debug-agent" + debugAgentCounter++);
+            nextDebugAgent.show(mouseCursorPosition);
+            
+            agents.add(new AgentDisplayable(nextDebugAgent, 
+                            mouseCursorPosition.x - (AgentDisplayable.width / 2), 
+                            mouseCursorPosition.y - (AgentDisplayable.height / 2)));
+            this.repaint();
 
         } else if (e.getSource() == menuOptionLink) {
 

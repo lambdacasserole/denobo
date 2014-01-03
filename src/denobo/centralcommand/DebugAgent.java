@@ -7,11 +7,9 @@ import denobo.socket.SocketAgent;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -23,7 +21,7 @@ import javax.swing.JTextField;
  *
  * @author Lee Oliver
  */
-public class DebugAgent extends SocketAgent implements ActionListener, MessageHandler {
+public class DebugAgent extends Agent implements ActionListener, MessageHandler {
     
     private JFrame frame = new JFrame();
     
@@ -34,15 +32,12 @@ public class DebugAgent extends SocketAgent implements ActionListener, MessageHa
     private JPanel northPanel, centerPanel, southPanel;
     
 
-    public DebugAgent(String name, int maxConnections) {
-        super(name, maxConnections);
-        try {
-            this.startAdvertising(maxConnections);
-        } catch (IOException ex) {
-            Logger.getLogger(DebugAgent.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
+    public DebugAgent(String name) {
+        super(name);
+
         this.addMessageHandler(this);
+        
+        frame.setLayout(new BorderLayout());
         
         northGrid = new GridLayout(1, 2);
         centerGrid = new GridLayout(1, 2);
@@ -52,7 +47,8 @@ public class DebugAgent extends SocketAgent implements ActionListener, MessageHa
         centerPanel = new JPanel();
         southPanel = new JPanel();
         
-        frame.setLayout(new BorderLayout());
+        
+        frame.setAlwaysOnTop(true);
         frame.add(northPanel, BorderLayout.NORTH);
         frame.add(centerPanel, BorderLayout.CENTER);
         frame.add(southPanel, BorderLayout.SOUTH);
@@ -94,12 +90,12 @@ public class DebugAgent extends SocketAgent implements ActionListener, MessageHa
         clearButton.addActionListener(this);
         southPanel.add(clearButton);
         
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
     }
     
-    public void show() {
-        frame.setLocation(100, 300);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    public void show(Point position) {
+        frame.setLocation(position);
         frame.setVisible(true);
     }
     
@@ -112,6 +108,7 @@ public class DebugAgent extends SocketAgent implements ActionListener, MessageHa
         if(e.getSource() == sendButton) {
             agentRecieveArea.append("To: " + agentSendArea.getText() + "\n");
             messageRecieveArea.append("mgs: " + messageSendArea.getText() + "\n");
+            this.sendMessage(agentName.getText(), message.getText());
         } else if(e.getSource() == clearButton) {
             agentRecieveArea.setText(null);
             messageRecieveArea.setText(null);
@@ -120,7 +117,6 @@ public class DebugAgent extends SocketAgent implements ActionListener, MessageHa
 
     @Override
     public void messageRecieved(Agent agent, Message message) {
-        System.out.println("message got");
         agentRecieveArea.append("From: " +  message.getFrom() + ":\n");
         messageRecieveArea.append("mgs: " + message.getData() + "\n");
     }

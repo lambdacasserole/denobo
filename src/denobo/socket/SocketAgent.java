@@ -240,13 +240,20 @@ public class SocketAgent extends Agent {
                 final Socket acceptedSocket = serverSocket.accept();
                 if (connectionsPermits.tryAcquire()) {
                     
+                    final DenoboConnection acceptedConnection = new DenoboConnection(acceptedSocket, new WaitForGreetingState());
+                    acceptedConnection.addObserver(connectionObserver);  
+                    connections.add(acceptedConnection);
+
                     // notify any observers
                     for (SocketAgentObserver currentObserver : observers) {
-                        currentObserver.incomingConnectionAccepted(this, acceptedSocket.getInetAddress().getHostAddress(), acceptedSocket.getPort());
+                        currentObserver.incomingConnectionAccepted(this, acceptedConnection);
                     }
-
-                    addRunningConnection(new DenoboConnection(acceptedSocket, new WaitForGreetingState()));
                     
+                    // Start receiving now after we have notified all the observers
+                    // so that if the connection disconnects, we are still in sync.
+                    // (We are notified of a disconnect when we are receiving)
+                    acceptedConnection.startRecieveThread(); 
+
                 } else {
                     
                     // Tell them there we cannot accept them because we have too
@@ -288,12 +295,16 @@ public class SocketAgent extends Agent {
             // attempt to connect
             newSocket.connect(new InetSocketAddress(hostName, portNumber));
 
+            final DenoboConnection addedConnection = new DenoboConnection(newSocket, new GreetingState());
+            addedConnection.addObserver(connectionObserver);
+            connections.add(addedConnection);
+
             // notify any observers that we have connected
             for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionAddSucceeded(this, hostName, portNumber);
+                currentObserver.connectionAddSucceeded(this, addedConnection, hostName, portNumber);
             }
-
-            addRunningConnection(new DenoboConnection(newSocket, new GreetingState()));
+            
+            addedConnection.startRecieveThread();
 
         } catch (IOException ex) {
 
@@ -464,7 +475,7 @@ public class SocketAgent extends Agent {
 
             // notify any observers
             for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionClosed(SocketAgent.this, connection.getRemoteAddress(), connection.getRemotePort());
+                currentObserver.connectionClosed(SocketAgent.this, connection);
             }
             
         }

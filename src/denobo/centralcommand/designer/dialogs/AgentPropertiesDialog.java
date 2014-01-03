@@ -1,4 +1,4 @@
-package denobo.centralcommand.designer;
+package denobo.centralcommand.designer.dialogs;
 
 import denobo.Agent;
 import denobo.socket.SocketAgent;
@@ -10,8 +10,6 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -36,6 +34,7 @@ public class AgentPropertiesDialog {
     
     private final JDialog dialog;
     
+    // Tab holder and tabs
     private final JTabbedPane tabHolder;
     private final JPanel socketTab;
     
@@ -95,14 +94,9 @@ public class AgentPropertiesDialog {
 
         registerActionListeners();
         
+
         
-        // Add some padding between the around the center cell which will hold
-        // our tab holder
-        dialog.add(Box.createRigidArea(new Dimension(0, 5)), BorderLayout.NORTH);
-        dialog.add(Box.createRigidArea(new Dimension(5, 0)), BorderLayout.EAST);
-        dialog.add(Box.createRigidArea(new Dimension(5, 0)), BorderLayout.WEST);
-        
-        // Create tab holder
+        // Create and add tab holder
         tabHolder = new JTabbedPane();
         dialog.add(tabHolder, BorderLayout.CENTER);
         
@@ -217,7 +211,7 @@ public class AgentPropertiesDialog {
     }
     
     /**
-     * Makes the dialog visible for the user.
+     * Makes the dialog visible.
      * 
      * @param position      The position to place the dialog.
      * @param agent         The agent to display the properties of.

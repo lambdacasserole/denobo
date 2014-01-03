@@ -39,4 +39,9 @@ public class AgentDisplayable {
         g.drawOval(bounds.x, bounds.y, height, width);
     }
     
+    @Override
+    public String toString() {
+        return agent.getName();
+    }
+    
 }

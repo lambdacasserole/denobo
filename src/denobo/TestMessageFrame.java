@@ -2,6 +2,7 @@ package denobo;
 
 import denobo.socket.SocketAgentObserver;
 import denobo.socket.SocketAgent;
+import denobo.socket.connection.DenoboConnection;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -9,8 +10,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -170,41 +169,41 @@ public class TestMessageFrame extends JFrame implements ActionListener, MessageH
     }
 
     @Override
-    public void incomingConnectionAccepted(SocketAgent agent, final String ip, final int port) {
+    public void incomingConnectionAccepted(SocketAgent agent, final DenoboConnection connection) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                receiveTextField.append("[" + ip + ":" + port + "] has connected\n");
+                receiveTextField.append("[" + connection.getRemoteAddress() + ":" + connection.getRemotePort() + "] has connected\n");
             }
         });
     }
 
     @Override
-    public void connectionClosed(SocketAgent agent, final String ip, final int port) {
+    public void connectionClosed(SocketAgent agent, final DenoboConnection connection) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                receiveTextField.append("[" + ip + ":" + port + "] has diconnected\n");
+                receiveTextField.append("[" + connection.getRemoteAddress() + ":" + connection.getRemotePort() + "] has diconnected\n");
             }
         });
     }
 
     @Override
-    public void connectionAddFailed(SocketAgent agent, final String ip, final int port) {
+    public void connectionAddFailed(SocketAgent agent, final String hostname, final int port) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                receiveTextField.append("Failed to connect to " + ip + ":" + port + "\n");
+                receiveTextField.append("Failed to connect to " + hostname + ":" + port + "\n");
             }
         });
     }
 
     @Override
-    public void connectionAddSucceeded(SocketAgent agent, final String ip, final int port) {
+    public void connectionAddSucceeded(SocketAgent agent, DenoboConnection connection, final String hostname, final int port) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                receiveTextField.append("Connected successfully to " + ip + ":" + port + "\n");
+                receiveTextField.append("Connected successfully to " + hostname + ":" + port + "\n");
             }
         });
     }

@@ -1,4 +1,4 @@
-package denobo.centralcommand.designer;
+package denobo.centralcommand.designer.dialogs;
 
 import denobo.Agent;
 import java.awt.BorderLayout;

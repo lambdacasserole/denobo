@@ -106,7 +106,13 @@ public class DenoboConnection {
 
         state.handleConnectionEstablished(this);
     }
-    
+
+    @Override
+    public String toString() {
+        return getLocalAddress() + ":" + getLocalPort() 
+                + " ----> "
+                + getRemoteAddress() + ":" + getRemotePort();
+    }
         
     /**
      * Adds an observer to the list of observers to be notified of events.

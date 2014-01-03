@@ -9,13 +9,14 @@ import java.awt.Graphics;
  */
 public class AgentLink {
     
-    private final AgentDisplayable agent1;
-    private final AgentDisplayable agent2;
+    public final AgentDisplayable agent1;
+    public final AgentDisplayable agent2;
     private final Color lineColour = Color.BLACK;
 
     public AgentLink(AgentDisplayable agent1, AgentDisplayable agent2) {
         this.agent1 = agent1;
         this.agent2 = agent2;
+        agent1.getAgent().connectActor(agent2.getAgent());
     }
     
     public void draw(Graphics g) {
