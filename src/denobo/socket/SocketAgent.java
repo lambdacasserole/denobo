@@ -4,9 +4,6 @@ import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.DenoboConnection;
 import denobo.Agent;
 import denobo.Message;
-import denobo.socket.connection.state.GreetingState;
-import denobo.socket.connection.state.TooManyPeersState;
-import denobo.socket.connection.state.WaitForGreetingState;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -240,7 +237,7 @@ public class SocketAgent extends Agent {
                 final Socket acceptedSocket = serverSocket.accept();
                 if (connectionsPermits.tryAcquire()) {
                     
-                    final DenoboConnection acceptedConnection = new DenoboConnection(acceptedSocket, new WaitForGreetingState());
+                    final DenoboConnection acceptedConnection = new DenoboConnection(acceptedSocket, DenoboConnection.InitialState.WAIT_FOR_GREETING);
                     acceptedConnection.addObserver(connectionObserver);  
                     connections.add(acceptedConnection);
 
@@ -258,7 +255,7 @@ public class SocketAgent extends Agent {
                     
                     // Tell them there we cannot accept them because we have too
                     // many peers already connected.
-                    new DenoboConnection(acceptedSocket, new TooManyPeersState());
+                    new DenoboConnection(acceptedSocket, DenoboConnection.InitialState.TOO_MANY_PEERS);
                     
                 }
 
@@ -295,7 +292,7 @@ public class SocketAgent extends Agent {
             // attempt to connect
             newSocket.connect(new InetSocketAddress(hostName, portNumber));
 
-            final DenoboConnection addedConnection = new DenoboConnection(newSocket, new GreetingState());
+            final DenoboConnection addedConnection = new DenoboConnection(newSocket, DenoboConnection.InitialState.INITIATE_GREETING);
             addedConnection.addObserver(connectionObserver);
             connections.add(addedConnection);
 
