@@ -1,7 +1,6 @@
 package denobo.centralcommand.designer;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import javax.swing.JPanel;
 
 /**
@@ -21,11 +20,11 @@ public class NetworkDesignTab extends JPanel {
         super();
 
         this.setLayout(new BorderLayout());
-        this.setMinimumSize(new Dimension(800, 600));
 
         final NetworkDesigner centerComponent = new NetworkDesigner();
         this.add(centerComponent, BorderLayout.CENTER);
-        
+
+        //this.add(new AgentPropertiesDialog().tabHolder, BorderLayout.EAST);
     }
     
 }

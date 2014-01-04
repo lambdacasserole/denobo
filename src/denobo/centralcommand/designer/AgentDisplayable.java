@@ -15,16 +15,23 @@ public class AgentDisplayable {
     
     public static final int height = 75;
     public static final int width = 75;
-    
+
     private final Rectangle bounds;
+    
     private final Agent agent;
+    private final AgentDebugWindow debugWindow;
     private final AgentMonitorDialog monitorDialog;
     
     
     public AgentDisplayable(Agent agent, int x, int y) {
         this.agent = agent;
+        debugWindow = new AgentDebugWindow(agent);
         monitorDialog = new AgentMonitorDialog(agent);
         bounds = new Rectangle(x, y, width, height);
+    }
+    
+    public AgentDebugWindow getDebugWindow() {
+        return debugWindow;
     }
     
     public AgentMonitorDialog getMonitorDialog() {

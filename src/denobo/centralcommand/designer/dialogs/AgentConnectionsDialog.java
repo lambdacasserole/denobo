@@ -341,52 +341,23 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
      * Handles the "Remove" button being clicked on the "Local" tab.
      */
     private void handleRemoveButtonClicked() {
-        
-        final List<AgentLink> agentLinksToDelete = new ArrayList<>();
-        
+     
         for (Object currentObject : localConnectionList.getSelectedValuesList()) {
             
             final AgentDisplayable currentAgent = (AgentDisplayable) currentObject;
-            agentModel.getAgent().disconnectActor(currentAgent.getAgent());
-            
+
             localListModel.removeElement(currentObject);
             localAgentsComboModel.addElement(currentObject);
 
-            for (AgentLink currentAgentLink : networkDesigner.getAgentLinks())  {
-                
-                if (agentLinkContains(currentAgentLink, agentModel, currentAgent)) {
-                    agentLinksToDelete.add(currentAgentLink);
-                }
-                
-            }
+            networkDesigner.removeAnyAgentLinksContaining(agentModel, currentAgent);
 
         }
         
         removeLocalConnectionButton.setEnabled(localListModel.getSize() > 0);
         addLocalConnectionButton.setEnabled(localAgentsComboModel.getSize() > 0);
 
-        networkDesigner.getAgentLinks().removeAll(agentLinksToDelete);
-        networkDesigner.repaint();
-        
     }
-    
-    /**
-     * Determines whether 2 agents are contained both contained in one AgentLink.
-     * 
-     * @param agentLink     The link to check.
-     * @param agent1        The first agent.
-     * @param agent2        The second agent.
-     * @return              true if both agents are contained within the link,
-     *                      otherwise false is returned.
-     */
-    private boolean agentLinkContains(AgentLink agentLink, AgentDisplayable agent1, AgentDisplayable agent2) {
-        
-        return (agentLink.agent1 == agent1 || agentLink.agent2 == agent1) 
-                &&
-               (agentLink.agent1 == agent2 || agentLink.agent2 == agent2);
-        
-    }
-    
+
     /**
      * Handles the "Disconnect" button being clicked on the "Remote" tab.
      */

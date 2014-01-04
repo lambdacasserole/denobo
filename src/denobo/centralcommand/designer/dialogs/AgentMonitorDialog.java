@@ -4,11 +4,13 @@ import denobo.Agent;
 import denobo.Message;
 import denobo.MessageHandler;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dialog.ModalityType;
 import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -35,6 +37,7 @@ public class AgentMonitorDialog {
     private final MessageTableModel messagesInterceptedTableModel;
     private final JTable messageTable;
     private final JComboBox messagesFilterComboBox;
+    private final JButton clearMessageTableButton;
     
     // The filter options for the filter combo box
     private static final String receivedFilterOptionName = "Received";
@@ -62,6 +65,8 @@ public class AgentMonitorDialog {
         
         // Instantiate "Messages" tab controls
         messagesFilterComboBox = new JComboBox(new Object[] {receivedFilterOptionName, interceptedFilterOptionName});
+        
+        clearMessageTableButton = new JButton("Clear");
         
         messagesReceivedTableModel = new MessageTableModel();
         messagesInterceptedTableModel = new MessageTableModel();
@@ -116,6 +121,7 @@ public class AgentMonitorDialog {
         final JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         northPanel.add(new JLabel("Filter:"));
         northPanel.add(messagesFilterComboBox);
+        northPanel.add(clearMessageTableButton);
         messagesTab.add(northPanel, BorderLayout.NORTH);
         
         final JScrollPane messageTableScrollPane = new JScrollPane(messageTable);
@@ -144,7 +150,12 @@ public class AgentMonitorDialog {
             }
         });
         
-        
+        clearMessageTableButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handleMessageTableClearButtonClicked();
+            }
+        });
     }
     
     /**
@@ -178,27 +189,45 @@ public class AgentMonitorDialog {
     }
     
     /**
+     * Returns which MessageTableModel represents what is selected from the "Filter"
+     * combo box.
+     * 
+     * @return  The MessageTableModel that is selected from the "Filter" combo box.
+     */
+    private MessageTableModel getSelectedMessageTableFromCombo() {
+        
+        switch (messagesFilterComboBox.getSelectedItem().toString()) {
+            
+            case receivedFilterOptionName:
+                return messagesReceivedTableModel;
+                
+            case interceptedFilterOptionName:
+                return messagesInterceptedTableModel;
+                
+            default:
+                // This shouldn't happen but if it ever does, we'll default to
+                // returning the received messages model.
+                return messagesReceivedTableModel;
+        }
+        
+    }
+    
+    /**
      * Handles the Message filtering combo box changing.
      */
     private void handleMessageFilterComboChanged() {
         
-        // Determine what option was selected then change the message table model
-        // to that.
-        switch (messagesFilterComboBox.getSelectedItem().toString()) {
-            
-            case receivedFilterOptionName:
-                messageTable.setModel(messagesReceivedTableModel);
-                break;
-                
-            case interceptedFilterOptionName:
-                messageTable.setModel(messagesInterceptedTableModel);
-                break;
-                
-            default:
-                // This shouldn't happen
-                messageTable.setModel(messagesReceivedTableModel);
-        }
+        messageTable.setModel(getSelectedMessageTableFromCombo());
 
+    }
+    
+    /**
+     * Handles the clear button been clicked on the "Messages" tab.
+     */
+    private void handleMessageTableClearButtonClicked() {
+        
+        getSelectedMessageTableFromCombo().setRowCount(0);
+        
     }
     
 }

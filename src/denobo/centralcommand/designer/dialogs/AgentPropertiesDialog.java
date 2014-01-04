@@ -175,7 +175,7 @@ public class AgentPropertiesDialog {
 
         dialog.pack();
     }
-    
+
     /**
      * Registers all the action listeners required for the controls we are using.
      */

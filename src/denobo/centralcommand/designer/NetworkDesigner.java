@@ -3,7 +3,6 @@ package denobo.centralcommand.designer;
 import denobo.centralcommand.designer.dialogs.AgentPropertiesDialog;
 import denobo.centralcommand.designer.dialogs.AddAgentDialog;
 import denobo.Agent;
-import denobo.centralcommand.DebugAgent;
 import denobo.centralcommand.designer.dialogs.AgentConnectionsDialog;
 import denobo.socket.SocketAgent;
 import java.awt.BasicStroke;
@@ -11,7 +10,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -29,16 +27,11 @@ import javax.swing.SwingUtilities;
  *
  * @author Alex Mullen, Saul Johnson
  */
-public class NetworkDesigner extends JComponent implements ActionListener, MouseListener, MouseMotionListener {
-    
-    private static int debugAgentCounter = 1;
-    
+public class NetworkDesigner extends JComponent implements ActionListener {
     
     // Gridline constants.
     private final int gridSpacing = 15;
     private final Color gridLineColor = new Color(0, 0, 0, 25);      // 0xF0F4F5    
-    private final float[] gridLineDash = new float[] {2.0f};
-    private final BasicStroke gridLineStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, gridLineDash, 0.0f);
     
     // Selection line constants.
     private final Color selectionBoundingBoxColor = new Color(0, 0, 0, 100);
@@ -49,7 +42,6 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
     private final JPopupMenu emptySpacePopup;
     private final JMenuItem menuOptionAddAgent;
     private final JMenuItem menuOptionAddSocketAgent;
-    private final JMenuItem menuOptionAddDebugAgent;
     
     // Menu for right-clicking on a agent
     private final JPopupMenu agentSelectedPopup;
@@ -57,6 +49,8 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
     private final JMenuItem menuOptionsConnections;
     private final JMenuItem menuOptionProperties;
     private final JMenuItem menuOptionMonitor;
+    private final JMenuItem menuOptionDebugWindow;
+    private final JMenuItem menuOptionDelete;
     
     // Dialogs
     private final AddAgentDialog addAgentDialog;
@@ -69,11 +63,11 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
     private final List<DesignerEventListener> designerEventListeners;
     
     // State data to save in-between events
-    private Point mouseCursorPosition;
+    private Point lastMenuClickPosition;
     private Point selectedComponentDragOffset;    // The offset of the cursor relative to the initial click on a component before dragging.
+    private NetworkDesignerState state;
     private AgentDisplayable agentSelected;
     private boolean isSelectedAgentTryingToLink;
-    private boolean isSelectedAgentDragging;
     
     private boolean showGrid = true; // Whether or not the grid (and snap-to-grid features) are currently enabled.
 
@@ -104,7 +98,17 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         
         menuOptionMonitor = new JMenuItem("Monitor");
         menuOptionMonitor.addActionListener(this);
-        agentSelectedPopup.add(menuOptionMonitor);       
+        agentSelectedPopup.add(menuOptionMonitor);
+        
+        menuOptionDebugWindow = new JMenuItem("Debug Window");
+        menuOptionDebugWindow.addActionListener(this);
+        agentSelectedPopup.add(menuOptionDebugWindow);
+        
+        agentSelectedPopup.addSeparator();
+        
+        menuOptionDelete = new JMenuItem("Delete");
+        menuOptionDelete.addActionListener(this);
+        agentSelectedPopup.add(menuOptionDelete);
         
         agentSelectedPopup.addSeparator();
         
@@ -124,9 +128,6 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         menuOptionAddSocketAgent.addActionListener(this);
         emptySpacePopup.add(menuOptionAddSocketAgent);
         
-        menuOptionAddDebugAgent = new JMenuItem("Add Debug Agent");
-        menuOptionAddDebugAgent.addActionListener(this);
-        emptySpacePopup.add(menuOptionAddDebugAgent);
         
         
         
@@ -135,8 +136,65 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         agentConnectionsDialog = new AgentConnectionsDialog(this);
         
         
-        this.addMouseListener(this);
-        this.addMouseMotionListener(this);
+        state = new DefaultState();
+        
+        
+        this.addMouseListener(new MouseListener() {
+            
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+                state.handleMouseClicked(e);
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                state.handleMousePressed(e);
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+                state.handleMouseReleased(e);
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+                state.handleMouseEntered(e);
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+                state.handleMouseExited(e);
+
+            }
+
+        });
+
+        this.addMouseMotionListener(new MouseMotionListener() {
+            
+            @Override
+            public void mouseDragged(MouseEvent e) {
+
+                state.handleMouseDragged(e);
+
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+
+                state.handleMouseMoved(e);
+
+            }
+            
+        });
         
     }
     
@@ -173,21 +231,24 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         
     }
     
+    /**
+     * Returns the list of AgentLink objects that visually represent the links
+     * between agents.
+     * 
+     * @return The list of AgentLink objects in this designer.
+     */
     public List<AgentLink> getAgentLinks() {
         return agentLinks;
     }
     
+    /**
+     * Returns the list of AgentDisplayable objects that visually represent the
+     * agents in the designer.
+     * 
+     * @return The list of AgentDisplayable objects in this designer.
+     */
     public List<AgentDisplayable> getAgentDisplayables() {
         return agents;
-    }
-    
-    
-    private void maybeShowEmptySpacePopup(MouseEvent e) {
-        
-        if (e.isPopupTrigger()) {
-            emptySpacePopup.show(e.getComponent(), e.getX(), e.getY());
-        }
-        
     }
     
     /**
@@ -211,18 +272,119 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         
     }
     
+    /**
+     * Shutdowns and removes the specified AgentDisplayable from the network.
+     * 
+     * @param agent The agent to shutdown and remove.
+     */
+    public void removeAgentDisplayable(AgentDisplayable agent) {
+        
+        agent.getDebugWindow().hide();
+        agent.getMonitorDialog().hide();
+        
+        agent.getAgent().shutdown();
+        
+        agents.remove(agent);
+        removeAnyAgentLinksContaining(agent);
+        
+        if (agentSelected == agent) {
+            agentSelected = null;
+            state = new DefaultState();
+        }
+        
+        this.repaint();
+        
+    }
+    
+    /**
+     * Removes any AgentLink's containing the specified agent.
+     * 
+     * @param agent The agent to remove any links to.
+     */
+    public void removeAnyAgentLinksContaining(AgentDisplayable agent) {
+        
+        final List<AgentLink> linksToRemove = new ArrayList<>();
+        
+        for (AgentLink currentAgentLink : agentLinks) {
+            if (currentAgentLink.contains(agent)) {
+                currentAgentLink.breakLink();
+                linksToRemove.add(currentAgentLink);
+            }
+        }
+        
+        agentLinks.removeAll(linksToRemove);
+        this.repaint();
+        
+    }
+    
+    /**
+     * Removes any AgentLink's between the specified two agents.
+     * 
+     * @param agent1 The first agent.
+     * @param agent2 The second agent.
+     */
+    public void removeAnyAgentLinksContaining(AgentDisplayable agent1, AgentDisplayable agent2) {
+        
+        final List<AgentLink> linksToRemove = new ArrayList<>();
+        
+        for (AgentLink currentAgentLink : agentLinks) {
+            if (currentAgentLink.contains(agent1, agent2)) {
+                currentAgentLink.breakLink();
+                linksToRemove.add(currentAgentLink);
+            }
+        }
+        
+        agentLinks.removeAll(linksToRemove);
+        this.repaint();
+        
+    }
+    
+//    
+//    /**
+//     * Nudges the selected component in the specified direction by the size of one grid square, or by 1 pixel if grid is not enabled.
+//     *
+//     * @param nudgeType The direction in which to nudge the component.
+//     */
+//    public void nudgeSelectedComponent(int nudgeType) {
+//        
+//        if(!isComponentSelected()) { // Abort if no component selected.
+//            return;
+//        }
+//        
+//        int xOffset = 0;
+//        int yOffset = 0;
+//        
+//        if(showGrid) { // If the grid is shown, nudge by the grid spacing in the specified direction.
+//            xOffset = (nudgeType == NUDGE_LEFT ? -gridSpacing : (nudgeType == NUDGE_RIGHT ? gridSpacing : 0));
+//            yOffset = (nudgeType == NUDGE_UP ? -gridSpacing : (nudgeType == NUDGE_DOWN ? gridSpacing : 0));
+//        }
+//        else { // If the grid is not shown, nudge by 1 pixel in the specified direction.
+//            xOffset = (nudgeType == NUDGE_LEFT ? -1 : (nudgeType == NUDGE_RIGHT ? 1 : 0));
+//            yOffset = (nudgeType == NUDGE_UP ? -1 : (nudgeType == NUDGE_DOWN ? 1 : 0));
+//        }
+//        
+//        // Move selected component.
+//        PlaceableComponent currentComponent = getSelectedComponent();
+//        currentComponent.setLocation(currentComponent.getX() + xOffset, currentComponent.getY() + yOffset);
+//        
+//        this.repaint(); // Repaint to show changes.
+//        
+//    }
+    
+    
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         
         if (e.getSource() == menuOptionAddAgent) {
             
-            final Agent agentToAdd = addAgentDialog.showDialog(mouseCursorPosition);
+            final Agent agentToAdd = addAgentDialog.showDialog(lastMenuClickPosition);
             if (agentToAdd != null) {
 
                 agents.add(new AgentDisplayable(agentToAdd, 
-                                mouseCursorPosition.x - (AgentDisplayable.width / 2), 
-                                mouseCursorPosition.y - (AgentDisplayable.height / 2)));
-                this.repaint();                
+                                lastMenuClickPosition.x - (AgentDisplayable.width / 2), 
+                                lastMenuClickPosition.y - (AgentDisplayable.height / 2)));
+                this.repaint();
 
             }
             
@@ -234,6 +396,14 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
             
             agentSelected.getMonitorDialog().show(agentSelected.getBounds().getLocation());
             
+        } else if (e.getSource() == menuOptionDebugWindow) {
+                    
+            agentSelected.getDebugWindow().show(lastMenuClickPosition);
+            
+        } else if (e.getSource() == menuOptionDelete) {
+            
+            removeAgentDisplayable(agentSelected);
+            
         } else if (e.getSource() == menuOptionProperties) {
             
             agentPropertiesDialog.showDialog(agentSelected.getBounds().getLocation(), agentSelected.getAgent());
@@ -241,208 +411,27 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         } else if (e.getSource() == menuOptionAddSocketAgent) { 
 
             agents.add(new SocketAgentDisplayable(new SocketAgent("test-socket-agent", 32), 
-                            mouseCursorPosition.x - (AgentDisplayable.width / 2), 
-                            mouseCursorPosition.y - (AgentDisplayable.height / 2)));
-            this.repaint();
-           
-        } else if (e.getSource() == menuOptionAddDebugAgent) {
-            
-            final DebugAgent nextDebugAgent = new DebugAgent("debug-agent" + debugAgentCounter++);
-            nextDebugAgent.show(mouseCursorPosition);
-            
-            agents.add(new AgentDisplayable(nextDebugAgent, 
-                            mouseCursorPosition.x - (AgentDisplayable.width / 2), 
-                            mouseCursorPosition.y - (AgentDisplayable.height / 2)));
+                            lastMenuClickPosition.x - (AgentDisplayable.width / 2), 
+                            lastMenuClickPosition.y - (AgentDisplayable.height / 2)));
             this.repaint();
 
         } else if (e.getSource() == menuOptionLink) {
 
             isSelectedAgentTryingToLink = true;
+            state = new AgentLinkingState();
             this.repaint();
             
         }
         
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-
-        final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
-        
-        if (SwingUtilities.isLeftMouseButton(e)) {
-            
-            if (agentClicked != null) {
-
-                if (isSelectedAgentTryingToLink) {
-                    isSelectedAgentTryingToLink = false;
-                    agentLinks.add(new AgentLink(agentSelected, agentClicked));
-                } else {
-                    agentSelected = agentClicked;
-                    for (DesignerEventListener currentListener : designerEventListeners) {
-                        currentListener.componentSelected(new DesignerEvent(agentSelected));
-                    }
-                }
-                this.repaint();
-
-            } else {
-
-                agentSelected = null;
-                isSelectedAgentTryingToLink = false;
-                for (DesignerEventListener currentListener : designerEventListeners) {
-                    currentListener.selectionCleared(null);
-                }
-                this.repaint();
-            }
-            
-        } else {
-            
-            if (agentClicked == null) {
-                isSelectedAgentTryingToLink = false;
-                agentSelected = null;
-                this.repaint();
-            }
-            
-            maybeShowEmptySpacePopup(e);
-        }
-        
-        
-        
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-        
-        final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
-        
-        if (SwingUtilities.isLeftMouseButton(e)) {
-            
-            if (isSelectedAgentTryingToLink) {      // Are we currently dragging a link around?
-
-                if (agentClicked != null) {
-                    isSelectedAgentTryingToLink = false;
-                    agentLinks.add(new AgentLink(agentSelected, agentClicked));
-                } else {
-                    isSelectedAgentTryingToLink = false;
-                }
-                this.repaint();
-
-            } else {
-
-                if (agentClicked != null) {
-
-                    agentSelected = agentClicked;
-                    isSelectedAgentDragging = true;
-                    selectedComponentDragOffset = new Point(e.getX() - agentSelected.getBounds().x, e.getY() - agentSelected.getBounds().y);
-                    this.repaint();
-                    
-                    for (DesignerEventListener currentListener : designerEventListeners) {
-                        currentListener.componentSelected(new DesignerEvent(agentSelected));
-                    }
-
-                } else {
-
-                    agentSelected = null;
-                    this.repaint();
-                    
-                    for (DesignerEventListener currentListener : designerEventListeners) {
-                        currentListener.selectionCleared(null);
-                    }
-                    
-                }
-
-            }
-            
-        } else {
-            
-            if (agentClicked == null) {
-                isSelectedAgentTryingToLink = false;
-                agentSelected = null;
-                this.repaint();
-            }
-            
-        }
-        
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        
-        isSelectedAgentDragging = false;
-        
-        final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
-        
-        // If we clicked with a button that is a popup trigger (right-click) on
-        // a agent.
-        if ((agentClicked != null) && (e.isPopupTrigger())) {
-            agentSelected = agentClicked;
-            this.repaint();
-            agentSelectedPopup.show(e.getComponent(), e.getX(), e.getY());
-        } else {
-            if (agentClicked == null) {
-                isSelectedAgentTryingToLink = false;
-                agentSelected = null;
-                this.repaint();
-            }
-            maybeShowEmptySpacePopup(e);
-        }
-        
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        
-        mouseCursorPosition = e.getPoint();
-        if (isSelectedAgentTryingToLink) {
-            this.repaint();
-        }
-        
-        if (isSelectedAgentDragging) {
-            
-            int newX = (e.getX() - selectedComponentDragOffset.x);
-            int newY = (e.getY() - selectedComponentDragOffset.y);
-
-            if (showGrid) {
-                newX = newX - (newX % gridSpacing);
-                newY = newY - (newY % gridSpacing);
-            }
-
-            agentSelected.getBounds().x = newX;
-            agentSelected.getBounds().y = newY;
-            this.repaint();
-            
-        }
-
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        
-        mouseCursorPosition = e.getPoint();
-        if (isSelectedAgentTryingToLink) {
-            this.repaint();
-        }
-        
-    }
-    
-    @Override
-    public void mouseEntered(MouseEvent e) {
-        // Maybe change cursor
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-        // Maybe change cursor
     }
    
     /**
      * Performs a repaint of this designer component.
      * 
-     * @param g     The graphics context we are going to paint to.
+     * @param g The graphics context we are going to paint to.
      */
     protected void paintComponent(Graphics2D g) {
-        
-        final Stroke defaultStroke = g.getStroke();
-        
+
         // Fill in background.
         g.setColor(this.getBackground());
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
@@ -450,7 +439,6 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         if (showGrid) { // Are we drawing a grid?
         
             g.setColor(gridLineColor);
-            //g.setStroke(gridLineStroke);  // Causes lag
 
             for (int x = 0; x < this.getWidth(); x += gridSpacing) { // Draw vertical gridlines.
                 g.drawLine(x, 0, x, this.getHeight());
@@ -462,15 +450,15 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
             
         }
 
-        g.setStroke(defaultStroke);
-        
         if (isSelectedAgentTryingToLink) {    // Are we dragging a link around?
             
             final int x = agentSelected.getBounds().x + (agentSelected.getBounds().width / 2);
             final int y = agentSelected.getBounds().y + (agentSelected.getBounds().height / 2);
             
             g.setColor(Color.black);
-            g.drawLine(x, y, mouseCursorPosition.x, mouseCursorPosition.y);
+            // TODO: NPE when mouse is behind something
+            g.drawLine(x, y, this.getMousePosition().x, this.getMousePosition().y);
+            
         }
         
         for (AgentLink currentLink : agentLinks) {
@@ -489,8 +477,9 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
             g.setColor(selectionBoundingBoxColor);
             g.setStroke(selectionBoundingBoxStroke);
             g.draw(agentSelected.getBounds());
-            
+
         }
+        
     }
     
     @Override
@@ -498,6 +487,280 @@ public class NetworkDesigner extends JComponent implements ActionListener, Mouse
         
         super.paintComponent(g);
         paintComponent((Graphics2D) g); // We need Graphics2D for advanced drawing methods.
+
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * A class that represents a state that a NetworkDesigner object can be in.
+     */
+    private abstract class NetworkDesignerState {
+        
+        protected void handleMouseClicked(MouseEvent e) { }
+        protected void handleMouseDragged(MouseEvent e) { }
+        protected void handleMouseMoved(MouseEvent e) { }
+        protected void handleMousePressed(MouseEvent e) { }
+        protected void handleMouseReleased(MouseEvent e) { }
+        protected void handleMouseEntered(MouseEvent e) { }
+        protected void handleMouseExited(MouseEvent e) { }
+        
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * A class that represents the default state where nothing is really currently 
+     * happening. (Nothing selected, nothing getting dragged or nothing linking)
+     */
+    private class DefaultState extends NetworkDesignerState {
+
+        @Override
+        protected void handleMouseClicked(MouseEvent e) {
+
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                
+                final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
+                
+                if (agentClicked != null) {
+                    
+                    agentSelected = agentClicked;
+                    state = new AgentSelectedState();
+                    NetworkDesigner.this.repaint();
+
+                }
+                
+            } else if (SwingUtilities.isRightMouseButton(e)) {
+                
+                lastMenuClickPosition = e.getPoint();
+                emptySpacePopup.show(e.getComponent(), e.getX(), e.getY());
+                
+            }
+
+        }
+
+        @Override
+        protected void handleMousePressed(MouseEvent e) {
+
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                
+                final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
+                
+                if (agentClicked != null) {
+                    
+                    agentSelected = agentClicked;
+                    state = new AgentDraggingState();
+                    selectedComponentDragOffset = new Point(e.getX() - agentSelected.getBounds().x, e.getY() - agentSelected.getBounds().y);
+                    NetworkDesigner.this.repaint();
+
+                }               
+                
+            }
+
+        }
+
+        @Override
+        protected void handleMouseReleased(MouseEvent e) {
+            
+            if (SwingUtilities.isRightMouseButton(e)) {
+                
+                final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
+                
+                if (agentClicked != null) {
+                    
+                    agentSelected = agentClicked;
+                    state = new AgentSelectedState();
+                    NetworkDesigner.this.repaint();
+                    
+                    lastMenuClickPosition = e.getPoint();
+                    agentSelectedPopup.show(e.getComponent(), e.getX(), e.getY());
+                    
+                } else {
+                    
+                    lastMenuClickPosition = e.getPoint();
+                    emptySpacePopup.show(e.getComponent(), e.getX(), e.getY());
+                    
+                }
+  
+            }
+
+        }
+
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * A class that represents a state where an agent has been selected.
+     */
+    private class AgentSelectedState extends NetworkDesignerState {
+
+        @Override
+        protected void handleMouseClicked(MouseEvent e) {
+
+            final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
+            
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                
+                if (agentClicked != null) {
+                    
+                    agentSelected = agentClicked;
+                    // We are already in the selected state so no need to change
+                    NetworkDesigner.this.repaint();
+                    
+                } else {
+                    
+                    agentSelected = null;
+                    state = new DefaultState();
+                    NetworkDesigner.this.repaint();
+                    
+                }
+                
+            } else if (SwingUtilities.isRightMouseButton(e)) {
+                
+                if (agentClicked != null) {
+                    
+                    agentSelected = agentClicked;
+                    // We are already in the selected state so no need to change
+                    NetworkDesigner.this.repaint();
+                    
+                    lastMenuClickPosition = e.getPoint();
+                    agentSelectedPopup.show(e.getComponent(), e.getX(), e.getY());
+                    
+                } else {
+                    
+                    agentSelected = null;
+                    state = new DefaultState();
+                    NetworkDesigner.this.repaint();
+                    
+                    lastMenuClickPosition = e.getPoint();
+                    emptySpacePopup.show(e.getComponent(), e.getX(), e.getY());
+                    
+                }
+                
+            }
+
+        }
+
+        @Override
+        protected void handleMousePressed(MouseEvent e) {
+            
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                
+                final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
+                
+                if (agentClicked != null) {
+                    
+                    agentSelected = agentClicked;
+                    state = new AgentDraggingState();
+                    selectedComponentDragOffset = new Point(e.getX() - agentSelected.getBounds().x, e.getY() - agentSelected.getBounds().y);
+                    NetworkDesigner.this.repaint();
+
+                }               
+                
+            }
+            
+        }
+
+        @Override
+        protected void handleMouseReleased(MouseEvent e) {
+
+            handleMouseClicked(e);
+
+        }
+
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * A class that represents a state where an agent is currently being dragged
+     * in the designer.
+     */
+    private class AgentDraggingState extends NetworkDesignerState {
+
+        @Override
+        protected void handleMouseDragged(MouseEvent e) {
+            
+            int newX = (e.getX() - selectedComponentDragOffset.x);
+            int newY = (e.getY() - selectedComponentDragOffset.y);
+
+            if (showGrid) {
+                newX = newX - (newX % gridSpacing);
+                newY = newY - (newY % gridSpacing);
+            }
+
+            agentSelected.getBounds().x = newX;
+            agentSelected.getBounds().y = newY;
+            NetworkDesigner.this.repaint();
+
+        }
+        
+        @Override
+        protected void handleMouseReleased(MouseEvent e) {
+            
+            state = new AgentSelectedState();
+            
+        }
+
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * A class that represents a state where there is a link attached to the
+     * selected agent with the other end attached to the mouse cursor position.
+     */
+    private class AgentLinkingState extends NetworkDesignerState {
+
+        @Override
+        protected void handleMouseClicked(MouseEvent e) {
+            
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                
+                final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
+                
+                if (agentClicked != null) {
+                    
+                    agentLinks.add(new AgentLink(agentSelected, agentClicked));
+                    isSelectedAgentTryingToLink = false;
+                    agentSelected = agentClicked;
+                    state = new AgentSelectedState();
+                    NetworkDesigner.this.repaint();
+
+                } else {
+                    
+                    agentSelected = null;
+                    isSelectedAgentTryingToLink = false;
+                    state = new AgentSelectedState();
+                    NetworkDesigner.this.repaint();
+                    
+                }
+                
+            }
+
+        }
+
+        @Override
+        protected void handleMouseDragged(MouseEvent e) {
+
+            NetworkDesigner.this.repaint();
+            
+        }
+
+        @Override
+        protected void handleMouseMoved(MouseEvent e) {
+
+            NetworkDesigner.this.repaint();
+            
+        }
+
+        @Override
+        protected void handleMousePressed(MouseEvent e) {
+
+            handleMouseClicked(e);
+            
+        }
 
     }
 
