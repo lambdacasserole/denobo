@@ -256,7 +256,7 @@ public class AgentPropertiesDialog {
 
         // Select the correct radio button on whether this agent is cloneable
         // or not
-        if (agent.getCloneable()) {
+        if (agent.isCloneable()) {
             agentCloneableRadioButton.setSelected(true);
         } else {
             agentNonCloneableRadioButton.setSelected(true);

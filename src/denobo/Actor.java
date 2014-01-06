@@ -18,38 +18,43 @@ import java.util.concurrent.TimeUnit;
 public abstract class Actor {
 
     /**
-     * Holds a list of connected actors.
+     * Holds a list of connected {@link Actor} instances.
      */
     private final List<Actor> connectedActors;
 
     /**
-     * The {@link BlockingQueue} that underlies the actor.
+     * The {@link BlockingQueue} that underlies this Actor.
      */
     private final BlockingQueue<Message> messageQueue;
 
     /**
-     * The message processing thread that underlies the actor.
+     * The message processing thread that underlies this Actor.
      */
-    private final Thread underlyingThread;
+    private Thread underlyingThread;
 
     /**
-     * The name of the actor.
+     * The name of this Actor.
      */
     private final String name;
 
     /**
-     * Whether or not the actor is cloneable.
+     * Whether or not this Actor is cloneable.
      */
     private final boolean cloneable;
 
     /**
-     * The thread pool service for handling cloneable actors.
+     * The thread pool service for handling cloneable Actor instances. 
+     * <p>
+     * This variable is only initialised if this Actor is cloneable.
      */
     private final ExecutorService executorService;
 
     /**
-     * Holds the status on whether this Actor has been shutdown and also signals
-     * to the underlyingThread to stop processing.
+     * Whether or not this Actor has been shut down. 
+     * <p>
+     * Signals underlyingThread to stop processing when set to true.
+     * 
+     * @see #underlyingThread
      */
     private volatile boolean shutdown;
     
@@ -58,13 +63,17 @@ public abstract class Actor {
      */
     private final Object shutdownLock;
     
-
+    
+    
+    /* ---------- */
+    
+    
     
     /**
-     * Abstract constructor to initialise a new instance of an actor.
+     * Abstract constructor to initialise a new instance of an Actor.
      *
-     * @param name the name of the actor
-     * @param cloneable whether or not the actor is cloneable
+     * @param name      the name of the Actor
+     * @param cloneable whether or not the Actor is cloneable
      */
     public Actor(String name, boolean cloneable) {
 
@@ -79,76 +88,84 @@ public abstract class Actor {
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
 
         // Start message processing.
-        underlyingThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                queueProcessLoop();
-            }
-        });
-        underlyingThread.start();
+        queueProcessLoop();
 
     }
 
     /**
      * Abstract constructor to initialise a new instance of a non-cloneable
-     * actor.
+     * Actor.
      *
-     * @param name the name of the actor
+     * @param name  the name of the Actor
      */
     public Actor(String name) {
         this(name, false);
     }
 
+    
+    
+    /* ---------- */
+    
+    
+    
     /**
-     * Gets the name of the actor.
+     * Gets the name of this Actor.
      *
-     * @return the name of the actor
+     * @return the name of this Actor
      */
     public final String getName() {
         return name;
     }
 
     /**
-     * Gets whether or not the actor is cloneable.
+     * Gets whether or not this Actor is cloneable.
      *
-     * @return true if the actor is cloneable, otherwise false
+     * @return  true if this Actor is cloneable, otherwise false
      */
-    public final boolean getCloneable() {
+    public final boolean isCloneable() {
         return cloneable;
     }
     
     /**
-     * Gets whether or not the actor has shutdown or is currently in the process
-     * of shutting down.
+     * Gets whether or not this Actor has shut down or is currently in the 
+     * process of shutting down.
      * 
-     * @return true if the actor has shutdown, otherwise false
+     * @return  true if this Actor has shut down, otherwise false
      */
     public final boolean hasShutdown() {
         return shutdown;
     }
 
     /**
-     * Connects the actor to another.
+     * Connects this Actor to another.
      *
-     * @param actor the actor to connect to
-     * @return true if the specified actor was successfully connected to this
-     * actor, otherwise false is returned if this Actor has shutdown or is in
-     * the process of shutting down.
+     * @param actor the Actor to connect to
+     * @return      true if the specified Actor was successfully connected to 
+     *              this Actor, otherwise false
      */
     public boolean connectActor(Actor actor) {
 
-        Objects.requireNonNull(actor, "Actor to connect is null");
+        Objects.requireNonNull(actor, "Actor to connect cannot be null.");
         
-        // We don't want to connect any Actor's if we are shutting down or are 
-        // in the process of shutting down.
+        /* 
+         * We don't want to connect any Actors if we are shutting down or are in
+         * the process of shutting down.
+         */
         synchronized (shutdownLock) {
             
+            /* 
+             * If the Actor is shut down, don't connect. Don't allow connection
+             * of an Actor to itself.
+             */
             if (shutdown || actor == this) { return false; }
             
-            // Don't allow duplicates into the list
+            // Don't allow duplicates into the list.
             if (!connectedActors.contains(actor)) {
-                connectedActors.add(actor);
+                
+                // Bidirectional registration.
+                registerConnectedActor(actor);
                 actor.registerConnectedActor(this);
+                
             }
             
             return true;
@@ -157,45 +174,47 @@ public abstract class Actor {
     }
 
     /**
-     * Disconnects the actor from another.
+     * Disconnects this Actor from another.
      *
-     * @param actor the actor to disconnect from
-     * @return true if the specified actor was connected and then was successfully
-     * disconnected, otherwise, false is returned if the specified actor wasn't
-     * connected to this actor.
+     * @param actor the Actor to disconnect from
+     * @return      true if the specified Actor was successfully disconnected
+     *              from this Actor, otherwise false
      */
     public boolean disconnectActor(Actor actor) {
 
-        Objects.requireNonNull(actor, "Actor to disconnect from is null");
+        Objects.requireNonNull(actor, "Actor to disconnect cannot be null.");
         
-        actor.unregisterConnectedActor(this);
-        return connectedActors.remove(actor);
+        final boolean wasRemoved = connectedActors.remove(actor);
+        if (wasRemoved) {
+            actor.unregisterConnectedActor(this);
+        }
+        return wasRemoved;
         
     }
     
     /**
-     * Returns a read-only snapshot of the instances of Actors that are connected
-     * to this Actor.
+     * Returns a read-only snapshot of the Actor instances that are connected to
+     * this one as an unmodifiable list.
      * 
-     * @return The unmodifiable list of Actors.
+     * @return  the unmodifiable list of connected Actor instances
      */
     public List<Actor> getConnectedActors() {
         return Collections.unmodifiableList(connectedActors);
     }
     
     /**
-     * Registers the actor as connected to another.
+     * Registers another Actor as connected to this one.
      *
-     * @param actor the actor to register
+     * @param actor the Actor to register
      */
     protected void registerConnectedActor(Actor actor) {
         connectedActors.add(actor);
     }
 
     /**
-     * Unregisters the as being a connected to another.
+     * Unregisters another Actor as connected to this one.
      *
-     * @param actor the actor to unregister
+     * @param actor the Actor to unregister
      */
     protected void unregisterConnectedActor(Actor actor) {
         connectedActors.remove(actor);
@@ -203,118 +222,161 @@ public abstract class Actor {
 
     
     /**
-     * Adds a message to the actor's message queue.
+     * Adds a {@link Message} to this Actor's message queue.
      *
-     * @param message the message to add
-     * @return true if the message was successfully submitted into the message
-     * queue, otherwise, false is returned if the queue has shutdown or is in
-     * the process of shutting down which means the message can't be delivered.
+     * @param message   the message to add
+     * @return          true if the message was successfully submitted into the 
+     *                  message queue, otherwise false
      */
     public boolean queueMessage(Message message) {
         
-        // We need to make sure the thread won't be shutdown between checking
-        // if it has shutdown and adding the message to the queue - we want to
-        // guarantee that if our message is added, that it will be processed.
+        /* 
+         * We need to make sure the thread won't be shut down between checking
+         * if it has shutdown and adding the message to the queue - we want to
+         * guarantee that if our message is added, that it will be processed.
+         */
         synchronized (shutdownLock) {
-            // Don't queue the message if we have shutdown or we are in the process
-            // of shutting down.
+            
+            /* 
+             * Don't queue the message if we have shut down or we are in the 
+             * process of shutting down.
+             */
             if (shutdown) { return false; }
-
-            // Make sure our message gets added to the queue as something interrupting
-            // our thread could cause our message to be lost.
-            boolean added = false, interuppted = false;
+            
+            /* 
+             * Make sure our message gets added to the queue as something 
+             * interrupting our thread could cause our message to be lost.
+             */
+            boolean added = false, interrupted = false;
             do {
                 try {
+                    
                     // Queue message for processing.
                     messageQueue.put(message);
                     added = true; 
+                    
                 } catch (InterruptedException ex) {
-                    interuppted = true;
+                    
+                    interrupted = true;
+                    
                 }
             } while (!added);
-            // Remember to reset the interrupt flag for this thread for any 
-            // higher up the chain caller if we were interuppted.
-            if (interuppted) { Thread.currentThread().interrupt(); }
+            
+            /* 
+             * Remember to reset the interrupt flag for this thread for any 
+             * higher up the chain caller if we were interuppted.
+             */
+            if (interrupted) { Thread.currentThread().interrupt(); }
             return added;
+            
         }
+        
     }
 
     /**
-     * The loop that processes this Actor's message queue.
+     * Starts the message processing loop on a new thread and places the handle 
+     * into the underlyingThread field.
+     * 
+     * @see #underlyingThread
      */
     private void queueProcessLoop() {
 
-        // Keep processing till we are given the signal to stop then process
-        // everything until the queue is empty.
-        while (!shutdown || !messageQueue.isEmpty()) {
-            try {
-                final Message message = messageQueue.take();
-                //System.out.println("[" + this.getName() + " takes a message from its queue]");
-                // Check if we should bother handling this message
-                if (!shouldHandleMessage(message)) { continue; }
+        // Process queued messages on another thread.
+        underlyingThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                
+                /* 
+                 * Keep processing till we are given the signal to stop then 
+                 * process everything until the queue is empty.
+                 */
+                while (!shutdown || !messageQueue.isEmpty()) {
+                    try {
+                        final Message message = messageQueue.take();
 
-                if (!cloneable) {
-                    // Handle message in this thread.
-                    handleMessage(message);
-                } else {
-                    // Execute handleMessage on a seperate thread
-                    executorService.execute(new Runnable() {
-                        @Override
-                        public void run() {
+                        // Check if we should bother handling this message.
+                        if (!shouldHandleMessage(message)) { continue; }
+
+                        if (!cloneable) {
+
+                            // Handle message in this thread.
                             handleMessage(message);
+
+                        } else {
+
+                            // Execute handleMessage on a seperate thread.
+                            executorService.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    handleMessage(message);
+                                }
+                            });
+
                         }
-                    });
+                    } catch (InterruptedException ex) {
+
+                        /* 
+                         * Swallow the exception as a chance for us to unblock 
+                         * from the take() call and check whether we need to 
+                         * begin shutting down.
+                         */
+                        System.out.println("Thread interupted, shutting down when finished: " + name);
+
+                    }
                 }
-            } catch (InterruptedException ex) {
-                // Swallow the exception as a chance for us to unblock from the
-                // take() call and check whether we need to begin shutting down.
-                //System.out.println("Thread interupted, shutting down when finished: " + name);
             }
-        }
+        });
+        underlyingThread.start();
         
     }
         
     /**
-     * Prevents any more messages from being added to the queue and processes
-     * any remaining in the queue. The queue is then shutdown and all links to
-     * other agents are removed.
+     * Prevents any more messages from being added to this Actor's message queue
+     * and processes any that remain. 
+     * <p>
+     * The queue is then shut down and all links to other agents are removed.
      */
     public void shutdown() {
         
-        // Set the signal to not accept anymore messages into the queue and for
-        // the queue to finish processing any remaining messages. We need the
-        // lock in so we can guarantee that everything added to the queue before
-        // this point will certainly be processed.
+        /* 
+         * Set the signal to not accept any more messages into the queue and for
+         * the queue to finish processing any remaining messages. We need the
+         * lock in so we can guarantee that everything added to the queue before
+         * this point will be processed. 
+         */
         synchronized (shutdownLock) {
             shutdown = true;
             underlyingThread.interrupt();
         }
         
+        // Wait for the queue thread to finish.
         try {
-            // Wait for the queue thread to finish
             underlyingThread.join();
         } catch (InterruptedException ex) {
+            // TODO: Handle exception.
             System.out.println(ex.getMessage());
         }
         
-        // Shutdown the the thread pool if we are cloneable and wait till
-        // all the threads are finished.
+        /* 
+         * Shutdown the the thread pool if we are cloneable and wait till all 
+         * the threads are finished. 
+         */
         if (executorService != null) {
             try {
                 executorService.shutdown();
                 executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             } catch (InterruptedException ex) {
-                // TODO: Handle this
+                // TODO: Handle exception.
                 System.out.println(ex.getMessage());
             }
         }    
 
-        // Remove all links to other Actor's
+        // Remove all links to other Actors.
         for (Actor actor : connectedActors) {
             actor.unregisterConnectedActor(this);
         }
-        
         connectedActors.clear();
+        
     }
     
     /**
@@ -324,20 +386,28 @@ public abstract class Actor {
      */
     protected void broadcastMessage(Message message) {
         
-        // Check if the Message is wrapped in an ActorMessage wrapper. This wrapper
-        // holds which agent we received the message from originally so we can
-        // avoid broadcasting it back to them.
+        /*
+         * Check if the Message is wrapped in an ActorMessage wrapper. This 
+         * wrapper holds which agent we received the Message from originally so 
+         * we can avoid broadcasting it back to them. 
+         */
+        // TODO: We have an instanceof operator here. We should use a value.
         if (message instanceof ActorMessage) {
             
             final ActorMessage actorMessage = (ActorMessage) message;
             
-            // Unwrap the wrapper to get to the raw Message instance then create
-            // a wrapper with us set as the sender. This is more efficent than
-            // wrapping another wrapper around a wrapper haha.
+            /*
+             * Unwrap the wrapper to get to the raw Message instance then create
+             * a wrapper with us set as the sender. This is more efficent than
+             * wrapping another wrapper around a wrapper haha.
+             */
             message = new ActorMessage(this, actorMessage.getRawMessage());
             
+            /*
+             * Broadcast message to all peers except the peer we received it 
+             * from.
+             */
             for (Actor actor : connectedActors) {
-                // Don't send it back to who we received it from
                 if (actor != actorMessage.getReceivedFrom()) {
                     actor.queueMessage(message);
                 }
@@ -345,34 +415,38 @@ public abstract class Actor {
             
         } else {
             
-            // The message probably originated from this Actor so we'll wrap it
-            // in a ActorMessage with us set as the sender
+            /*
+             * The message is unwrapped and so originated from this Actor. We'll 
+             * wrap it in a ActorMessage with us set as the sender and broadcast
+             * to all peers.
+             */
             message = new ActorMessage(this, message);
-            
             for (Actor actor : connectedActors) {
                 actor.queueMessage(message);
             }
+            
         }
         
     }
 
     /**
-     * Determines whether handleMessage should be invoked. This method will
-     * always be executed in a single thread.
-     *
-     * @param message the message to handle
-     * @return true if handleMessage should be invoked, otherwise false if the
-     * message does not need handling - thus preventing handleMessage being
-     * invoked.
+     * Determines whether handleMessage should be invoked. 
+     * <p>
+     * This method will always be executed in a single thread.
+     * 
+     * @param message   the message to handle
+     * @return          true if handleMessage should be invoked, otherwise false
+     * @see             #handleMessage
      */
     protected abstract boolean shouldHandleMessage(Message message);
 
     /**
-     * Handles messages passed to this actor through its message queue. Any
-     * implementation of this should be thread-safe as multiple threads could be
-     * running this method if this Actor is cloneable.
+     * Handles messages passed to this Actor through its message queue.
+     * <p>
+     * Any implementation of this should be thread-safe as multiple threads 
+     * could be running this method if this Actor is cloneable.
      *
-     * @param message the message to handle
+     * @param message   the message to handle
      */
     protected abstract void handleMessage(Message message);
 
