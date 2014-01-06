@@ -4,7 +4,6 @@ import denobo.Agent;
 import denobo.Message;
 import denobo.MessageHandler;
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dialog.ModalityType;
 import java.awt.FlowLayout;
 import java.awt.Point;
@@ -36,8 +35,11 @@ public class AgentMonitorDialog {
     private final MessageTableModel messagesReceivedTableModel;
     private final MessageTableModel messagesInterceptedTableModel;
     private final JTable messageTable;
-    private final JComboBox messagesFilterComboBox;
+    private final JComboBox<String> messagesFilterComboBox;
     private final JButton clearMessageTableButton;
+    
+    // Controls for "Connections" tab
+
     
     // The filter options for the filter combo box
     private static final String receivedFilterOptionName = "Received";
@@ -64,7 +66,7 @@ public class AgentMonitorDialog {
         
         
         // Instantiate "Messages" tab controls
-        messagesFilterComboBox = new JComboBox(new Object[] {receivedFilterOptionName, interceptedFilterOptionName});
+        messagesFilterComboBox = new JComboBox<>(new String[] {receivedFilterOptionName, interceptedFilterOptionName});
         
         clearMessageTableButton = new JButton("Clear");
         
@@ -129,6 +131,7 @@ public class AgentMonitorDialog {
         
         ////////////////////////////////////////////////////////////////////////
         
+        // Create and add the "Connections" tab
         
         
         

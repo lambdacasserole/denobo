@@ -16,7 +16,6 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
@@ -47,16 +46,16 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
     private final JPanel remoteTab;
     
     // Controls for local tab
-    private final DefaultListModel localListModel;
-    private final DefaultComboBoxModel localAgentsComboModel;
-    private final JList localConnectionList;
+    private final DefaultListModel<AgentDisplayable> localListModel;
+    private final DefaultComboBoxModel<AgentDisplayable> localAgentsComboModel;
+    private final JList<AgentDisplayable> localConnectionList;
     private final JButton addLocalConnectionButton;
     private final JButton removeLocalConnectionButton;
-    private final JComboBox locaAgentsCanAddCombo;
+    private final JComboBox localAgentsCanAddCombo;
     
     // Controls for Remote tab
-    private final DefaultListModel remoteConnectionModel;
-    private final JList remoteConnectionList;
+    private final DefaultListModel<DenoboConnection> remoteConnectionModel;
+    private final JList<DenoboConnection> remoteConnectionList;
     private final JButton disconnectRemoteConnectionButton;
     private final JButton connectButton;
     private final JTextField ipField;
@@ -85,25 +84,31 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         
 
         // Instantiate "Local" tab controls
-        localListModel = new DefaultListModel();
-        localAgentsComboModel = new DefaultComboBoxModel();
+        localListModel = new DefaultListModel<>();
+        localAgentsComboModel = new DefaultComboBoxModel<>();
         
-        localConnectionList = new JList(localListModel);
+        localConnectionList = new JList<>(localListModel);
         localConnectionList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         localConnectionList.setLayoutOrientation(JList.VERTICAL);
         localConnectionList.setVisibleRowCount(10);
+        //localConnectionList.setCellRenderer(new AgentDisplayableListCellRenderer());
+        
 
         removeLocalConnectionButton = new JButton("Remove");
         addLocalConnectionButton = new JButton("Add");
         
-        locaAgentsCanAddCombo = new JComboBox(localAgentsComboModel);
-        locaAgentsCanAddCombo.setPrototypeDisplayValue("example-socket-agent123");
-        
+        localAgentsCanAddCombo = new JComboBox(localAgentsComboModel);
+        // TODO: This generates a warning because localAgentsCanAddCombo isn't
+        // a generic type, but I need this to set the preferred width
+        // of this combo box without resorting to creating an agent with a long
+        // name.
+        localAgentsCanAddCombo.setPrototypeDisplayValue("example-socket-agent123");
+        //localAgentsCanAddCombo.setRenderer(new AgentDisplayableListCellRenderer());
         
         // Instantiate "Remote" tab controls
-        remoteConnectionModel = new DefaultListModel();
+        remoteConnectionModel = new DefaultListModel<>();
         
-        remoteConnectionList = new JList(remoteConnectionModel);
+        remoteConnectionList = new JList<>(remoteConnectionModel);
         remoteConnectionList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         remoteConnectionList.setLayoutOrientation(JList.VERTICAL);
         remoteConnectionList.setVisibleRowCount(10);
@@ -153,7 +158,7 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         final JPanel addLocalConnectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         addLocalConnectionPanel.setBorder(new TitledBorder("Add Connection to"));
         addLocalConnectionPanel.add(new JLabel("Agent:"));
-        addLocalConnectionPanel.add(locaAgentsCanAddCombo);
+        addLocalConnectionPanel.add(localAgentsCanAddCombo);
         addLocalConnectionPanel.add(addLocalConnectionButton);
         c = new GridBagConstraints();
         c.anchor = GridBagConstraints.WEST;
@@ -347,9 +352,9 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
             final AgentDisplayable currentAgent = (AgentDisplayable) currentObject;
 
             localListModel.removeElement(currentObject);
-            localAgentsComboModel.addElement(currentObject);
+            localAgentsComboModel.addElement(currentAgent);
 
-            networkDesigner.removeAnyAgentLinksContaining(agentModel, currentAgent);
+            networkDesigner.removeAnyLinksContaining(agentModel, currentAgent);
 
         }
         

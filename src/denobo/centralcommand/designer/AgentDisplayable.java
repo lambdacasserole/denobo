@@ -52,10 +52,9 @@ public class AgentDisplayable {
         g.setColor(Color.BLACK);
         g.drawOval(bounds.x, bounds.y, height, width);
     }
-    
+
     @Override
     public String toString() {
         return agent.getName();
     }
-    
 }

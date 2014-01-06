@@ -39,6 +39,7 @@ public class AgentDebugWindow implements ActionListener, MessageHandler {
         
         
         frame.setLayout(new BorderLayout());
+        frame.setTitle(agentModel.getName() + " Debug Window");
 
         JPanel northPanel = new JPanel();
         JPanel centerPanel = new JPanel();
@@ -106,7 +107,7 @@ public class AgentDebugWindow implements ActionListener, MessageHandler {
             
             agentRecieveArea.append("To: " + agentSendArea.getText() + "\n");
             messageRecieveArea.append("mgs: " + messageSendArea.getText() + "\n");
-            agentModel.sendMessage(agentSendArea.getText(), agentSendArea.getText());
+            agentModel.sendMessage(agentSendArea.getText(), messageSendArea.getText());
             
         } else if (e.getSource() == clearButton) {
             

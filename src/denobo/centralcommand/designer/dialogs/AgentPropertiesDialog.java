@@ -50,8 +50,8 @@ public class AgentPropertiesDialog {
     private final JButton stopAdvertisingButton;
     private final JButton startAdvertisingButton;
     private final JTextField advertisePortField;
-    private final JComboBox encryptionComboBox;
-    private final JComboBox compressionComboBox;
+    private final JComboBox<String> encryptionComboBox;
+    private final JComboBox<String> compressionComboBox;
     
     // Controls for the dialog
     private final JButton okButton;
@@ -87,8 +87,8 @@ public class AgentPropertiesDialog {
         stopAdvertisingButton = new JButton("Stop Advertising");
         startAdvertisingButton = new JButton("Start Advertising");
         advertisePortField = new JTextField("4757", 5);
-        encryptionComboBox = new JComboBox(new String[] {"None", "RC4"});
-        compressionComboBox = new JComboBox(new String[] {"None", "LZW"});
+        encryptionComboBox = new JComboBox<>(new String[] {"None", "RC4"});
+        compressionComboBox = new JComboBox<>(new String[] {"None", "LZW"});
         
         okButton = new JButton("OK");
         applyButton = new JButton("Apply");

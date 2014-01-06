@@ -21,8 +21,8 @@ public class NetworkDesignTab extends JPanel {
 
         this.setLayout(new BorderLayout());
 
-        final NetworkDesigner centerComponent = new NetworkDesigner();
-        this.add(centerComponent, BorderLayout.CENTER);
+        final NetworkDesigner designer = new NetworkDesigner();
+        this.add(designer, BorderLayout.CENTER);
 
         //this.add(new AgentPropertiesDialog().tabHolder, BorderLayout.EAST);
     }

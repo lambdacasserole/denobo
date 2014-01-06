@@ -1,5 +1,7 @@
 package denobo.centralcommand.designer;
 
+import java.awt.Point;
+
 /**
  * A specialised event listener designed to listen for events raised by a NetworkDesigner control.
  * 
@@ -10,52 +12,52 @@ package denobo.centralcommand.designer;
 public interface DesignerEventListener {
 
     /**
-     * Raised when a component is added to the designer.
-     *
-     * @param e Event arguments containing information about the triggering component.
+     * Raised when an agent is added into the designer.
+     * 
+     * @param agent The agent that was added.
      */
-    public void componentAdded(DesignerEvent e);
+    public void agentAdded(AgentDisplayable agent);
+    
+    /**
+     * Raised when an agent is deleted from the designer.
+     * 
+     * @param agent The agent that was deleted.
+     */
+    public void agentDeleted(AgentDisplayable agent);
+    
+    /**
+     * Raised when an agent is selected in the designer.
+     * 
+     * @param agent The agent that was selected.
+     */
+    public void agentSelected(AgentDisplayable agent);
+    
+    /**
+     * Raised when an agent has been repositioned in the designer.
+     * 
+     * @param agent The agent that has been repositioned/moved.
+     */
+    public void agentMoved(AgentDisplayable agent);
 
     /**
-     * Raised when a component is selected in the designer.
-     *
-     * @param e Event arguments containing information about the triggering component.
+     * Raised when a previously selected agent is now not selected and nothing
+     * else is currently selected.
+     * 
      */
-    public void componentSelected(DesignerEvent e);
+    public void selectionCleared();
     
     /**
-     * Raised when a component is deleted from the designer.
-     *
-     * @param e Event arguments containing information about the triggering component.
+     * Raised when an agent is linked with another agent in the designer.
+     * 
+     * @param link The link that was created.
      */
-    public void componentDeleted(DesignerEvent e);
+    public void linkCreated(AgentLink link);
     
     /**
-     * Raised when a component is repositioned in the designer.
-     *
-     * @param e Event arguments containing information about the triggering component.
+     * Raised when an agent link is broken then deleted in the designer.
+     * 
+     * @param link The link that is and has been deleted.
      */
-    public void componentMoved(DesignerEvent e);
-    
-    /**
-     * Raised when a component is right-clicked in the designer.
-     *
-     * @param e Event arguments containing information about the triggering component.
-     */
-    public void componentRightClicked(DesignerEvent e);
-    
-    /**
-     * Raised when all components have been deselected in the designer.
-     *
-     * @param e Event arguments containing information about the triggering component.
-     */
-    public void selectionCleared(DesignerEvent e);
-    
-    /**
-     * Raised when a component is about to be deleted in the designer. Returning false will cancel the deletion.
-     *
-     * @param e Event arguments containing information about the triggering component.
-     */
-    public boolean componentDeleting(DesignerEvent e);
+    public void linkDeleted(AgentLink link);
     
 }

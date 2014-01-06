@@ -39,6 +39,13 @@ public class SocketAgent extends Agent {
     private final DenoboConnectionObserver connectionObserver;
     
     /**
+     * For saving the maximum number of connections this SocketAgent is allowed.
+     * Don't use this for limiting any connections. This is simply for retrieval
+     * purposes only.
+     */
+    private final int maxConnections;
+    
+    /**
      * The maximum number of connections permitted to be connected.
      */
     private final Semaphore connectionsPermits;
@@ -84,6 +91,7 @@ public class SocketAgent extends Agent {
             throw new IllegalArgumentException("Maximum number of connections is less than 1: " + maxConnections);
         }
         
+        this.maxConnections = maxConnections;
         connectionsPermits = new Semaphore(maxConnections, false);
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>(maxConnections));
         observers = new CopyOnWriteArrayList<>();
@@ -102,6 +110,14 @@ public class SocketAgent extends Agent {
         this(name, false, maxConnections);
     }
 
+    /**
+     * Returns the maximum number of connections this SocketAgent is allowed to have.
+     * 
+     * @return The maximum number of connections allowed.
+     */
+    public int getMaxConnections() {
+        return maxConnections;
+    }
 
     /**
      * Adds an observer to the list of observers to be notified of events.
@@ -333,21 +349,6 @@ public class SocketAgent extends Agent {
     }
 
     /**
-     * Initializes a DenoboConnection. We attach ourselves as an observer to it,
-     * add it into our collection of connections then starts up it's receive
-     * thread so we can begin receiving data from it.
-     *
-     * @param newConnection The DenoboConnection to initialize.
-     */
-    private void addRunningConnection(DenoboConnection newConnection) {
-
-        newConnection.addObserver(connectionObserver);  
-        connections.add(newConnection);
-        newConnection.startRecieveThread();
-        
-    }
-
-    /**
      * Closes and removes any DenoboConnection objects we have attached.
      */
     public void removeConnections() {
@@ -368,26 +369,14 @@ public class SocketAgent extends Agent {
             // copied it and it's much faster clearing it than removing each one
             // individually - especially if the List implementation is a
             // CopyOnWriteArrayList.
-            connections.clear();                    
+            connections.clear();    
+            
         }
             
         for (DenoboConnection currentConnection : connectionsListCopy) {
             currentConnection.disconnect();
         }
         
-    }
-    
-    /**
-     * Shuts down this SocketAgent. No more incoming connection requests will
-     * be accepted and any current connections are terminated and removed. This
-     * only shuts down the socket parts and the base class isn't shutdown.
-     */
-    private void socketAgentShutdown() {
-        
-        stopAdvertising();
-
-        removeConnections();
-
     }
 
     /**
@@ -400,7 +389,13 @@ public class SocketAgent extends Agent {
 
         // Shutdown our layer first to prevent any more connections or messages
         // coming through.
-        socketAgentShutdown();
+        
+        // Stop anyone else from connecting
+        stopAdvertising();
+
+        // Remove any current connections so we don't receive anymore messages
+        // from any connections.
+        removeConnections();
         
         // Super class can perform a shutdown now
         super.shutdown();

@@ -1,7 +1,7 @@
 package denobo.centralcommand.designer;
 
 import denobo.centralcommand.designer.dialogs.AgentPropertiesDialog;
-import denobo.centralcommand.designer.dialogs.AddAgentDialog;
+import denobo.centralcommand.designer.dialogs.CreateAgentDialog;
 import denobo.Agent;
 import denobo.centralcommand.designer.dialogs.AgentConnectionsDialog;
 import denobo.socket.SocketAgent;
@@ -16,6 +16,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -40,8 +41,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
    
     // Menu for right-clicking on empty space
     private final JPopupMenu emptySpacePopup;
-    private final JMenuItem menuOptionAddAgent;
-    private final JMenuItem menuOptionAddSocketAgent;
+    private final JMenuItem menuOptionCreateAgent;
     
     // Menu for right-clicking on a agent
     private final JPopupMenu agentSelectedPopup;
@@ -53,7 +53,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
     private final JMenuItem menuOptionDelete;
     
     // Dialogs
-    private final AddAgentDialog addAgentDialog;
+    private final CreateAgentDialog createAgentDialog;
     private final AgentPropertiesDialog agentPropertiesDialog;
     private final AgentConnectionsDialog agentConnectionsDialog;
     
@@ -82,6 +82,18 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         agents = new ArrayList<>();
         agentLinks = new ArrayList<>();
         designerEventListeners = new ArrayList<>();
+        
+        
+//        this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteSelectedAgent");
+//        this.getActionMap().put("deleteSelectedAgent", new AbstractAction() {
+//
+//            @Override
+//            public void actionPerformed(ActionEvent ae) {
+//                removeSelectedAgent();
+//            }
+//            
+//        });
+//        
         
         
         agentSelectedPopup = new JPopupMenu();
@@ -120,18 +132,14 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         
         emptySpacePopup = new JPopupMenu();
         
-        menuOptionAddAgent = new JMenuItem("Add Agent");
-        menuOptionAddAgent.addActionListener(this);
-        emptySpacePopup.add(menuOptionAddAgent);
-        
-        menuOptionAddSocketAgent = new JMenuItem("Add Socket Agent");
-        menuOptionAddSocketAgent.addActionListener(this);
-        emptySpacePopup.add(menuOptionAddSocketAgent);
+        menuOptionCreateAgent = new JMenuItem("Create Agent");
+        menuOptionCreateAgent.addActionListener(this);
+        emptySpacePopup.add(menuOptionCreateAgent);
         
         
         
         
-        addAgentDialog = new AddAgentDialog();
+        createAgentDialog = new CreateAgentDialog();
         agentPropertiesDialog = new AgentPropertiesDialog();
         agentConnectionsDialog = new AgentConnectionsDialog(this);
         
@@ -197,7 +205,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         });
         
     }
-    
+
     /**
      * Sets whether or not the grid (and snap-to-grid features) are currently enabled in the designer.
      *
@@ -238,7 +246,9 @@ public class NetworkDesigner extends JComponent implements ActionListener {
      * @return The list of AgentLink objects in this designer.
      */
     public List<AgentLink> getAgentLinks() {
+        
         return agentLinks;
+        
     }
     
     /**
@@ -248,7 +258,9 @@ public class NetworkDesigner extends JComponent implements ActionListener {
      * @return The list of AgentDisplayable objects in this designer.
      */
     public List<AgentDisplayable> getAgentDisplayables() {
+        
         return agents;
+        
     }
     
     /**
@@ -273,11 +285,11 @@ public class NetworkDesigner extends JComponent implements ActionListener {
     }
     
     /**
-     * Shutdowns and removes the specified AgentDisplayable from the network.
+     * Shutdown and removes the specified AgentDisplayable from the network.
      * 
      * @param agent The agent to shutdown and remove.
      */
-    public void removeAgentDisplayable(AgentDisplayable agent) {
+    public void removeAgent(AgentDisplayable agent) {
         
         agent.getDebugWindow().hide();
         agent.getMonitorDialog().hide();
@@ -285,14 +297,28 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         agent.getAgent().shutdown();
         
         agents.remove(agent);
-        removeAnyAgentLinksContaining(agent);
+        removeAnyLinksContaining(agent);
         
         if (agentSelected == agent) {
-            agentSelected = null;
-            state = new DefaultState();
+            clearSelection();
         }
         
         this.repaint();
+        
+        for (DesignerEventListener currentListener : designerEventListeners) {
+            currentListener.agentDeleted(agent);
+        }
+        
+    }
+    
+    /**
+     * Shutdown and removes the current selected agent if one is selected.
+     */
+    public void removeSelectedAgent() {
+        
+        if (agentSelected != null) {
+            removeAgent(agentSelected);
+        }
         
     }
     
@@ -301,20 +327,27 @@ public class NetworkDesigner extends JComponent implements ActionListener {
      * 
      * @param agent The agent to remove any links to.
      */
-    public void removeAnyAgentLinksContaining(AgentDisplayable agent) {
-        
-        final List<AgentLink> linksToRemove = new ArrayList<>();
-        
-        for (AgentLink currentAgentLink : agentLinks) {
+    public void removeAnyLinksContaining(AgentDisplayable agent) {
+
+        final Iterator<AgentLink> iter = agentLinks.iterator();
+        while (iter.hasNext()) {
+            
+            final AgentLink currentAgentLink = iter.next();
             if (currentAgentLink.contains(agent)) {
+                
                 currentAgentLink.breakLink();
-                linksToRemove.add(currentAgentLink);
+                iter.remove();
+                
+                for (DesignerEventListener currentListener : designerEventListeners) {
+                    currentListener.linkDeleted(currentAgentLink);
+                }
+                
             }
+            
         }
-        
-        agentLinks.removeAll(linksToRemove);
+
         this.repaint();
-        
+
     }
     
     /**
@@ -323,19 +356,58 @@ public class NetworkDesigner extends JComponent implements ActionListener {
      * @param agent1 The first agent.
      * @param agent2 The second agent.
      */
-    public void removeAnyAgentLinksContaining(AgentDisplayable agent1, AgentDisplayable agent2) {
+    public void removeAnyLinksContaining(AgentDisplayable agent1, AgentDisplayable agent2) {
         
-        final List<AgentLink> linksToRemove = new ArrayList<>();
-        
-        for (AgentLink currentAgentLink : agentLinks) {
+        final Iterator<AgentLink> iter = agentLinks.iterator();
+        while (iter.hasNext()) {
+            
+            final AgentLink currentAgentLink = iter.next();
             if (currentAgentLink.contains(agent1, agent2)) {
+                
                 currentAgentLink.breakLink();
-                linksToRemove.add(currentAgentLink);
+                iter.remove();
+                
+                for (DesignerEventListener currentListener : designerEventListeners) {
+                    currentListener.linkDeleted(currentAgentLink);
+                }
+                
             }
+            
+        }
+
+        this.repaint();
+
+    }
+    
+    /**
+     * Set's the specified agent as the one selected.
+     * 
+     * @param agent The agent to set as the selected agent.
+     */
+    public void selectAgent(AgentDisplayable agent) {
+        
+        agentSelected = agent;
+        state = new AgentSelectedState();
+        this.repaint();
+        
+        for (DesignerEventListener currentListener : designerEventListeners) {
+            currentListener.agentSelected(agent);
         }
         
-        agentLinks.removeAll(linksToRemove);
+    }
+    
+    /** 
+     * Clears the current selected agent so that nothing is selected.
+     */
+    public void clearSelection() {
+
+        agentSelected = null;
+        state = new DefaultState();
         this.repaint();
+        
+        for (DesignerEventListener currentListener : designerEventListeners) {
+            currentListener.selectionCleared();
+        }
         
     }
     
@@ -376,14 +448,25 @@ public class NetworkDesigner extends JComponent implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         
-        if (e.getSource() == menuOptionAddAgent) {
+        if (e.getSource() == menuOptionCreateAgent) {
             
-            final Agent agentToAdd = addAgentDialog.showDialog(lastMenuClickPosition);
+            final Agent agentToAdd = createAgentDialog.showDialog(lastMenuClickPosition);
             if (agentToAdd != null) {
 
-                agents.add(new AgentDisplayable(agentToAdd, 
+                if (agentToAdd instanceof SocketAgent) {
+                          
+                    agents.add(new SocketAgentDisplayable(agentToAdd, 
                                 lastMenuClickPosition.x - (AgentDisplayable.width / 2), 
                                 lastMenuClickPosition.y - (AgentDisplayable.height / 2)));
+                
+                } else {
+                    
+                    agents.add(new AgentDisplayable(agentToAdd, 
+                                lastMenuClickPosition.x - (AgentDisplayable.width / 2), 
+                                lastMenuClickPosition.y - (AgentDisplayable.height / 2)));
+
+                }
+
                 this.repaint();
 
             }
@@ -402,18 +485,11 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             
         } else if (e.getSource() == menuOptionDelete) {
             
-            removeAgentDisplayable(agentSelected);
+            removeAgent(agentSelected);
             
         } else if (e.getSource() == menuOptionProperties) {
             
             agentPropertiesDialog.showDialog(agentSelected.getBounds().getLocation(), agentSelected.getAgent());
-
-        } else if (e.getSource() == menuOptionAddSocketAgent) { 
-
-            agents.add(new SocketAgentDisplayable(new SocketAgent("test-socket-agent", 32), 
-                            lastMenuClickPosition.x - (AgentDisplayable.width / 2), 
-                            lastMenuClickPosition.y - (AgentDisplayable.height / 2)));
-            this.repaint();
 
         } else if (e.getSource() == menuOptionLink) {
 
@@ -523,11 +599,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
                 final AgentDisplayable agentClicked = getAgentAt(e.getPoint());
                 
                 if (agentClicked != null) {
-                    
-                    agentSelected = agentClicked;
-                    state = new AgentSelectedState();
-                    NetworkDesigner.this.repaint();
-
+                    selectAgent(agentClicked);
                 }
                 
             } else if (SwingUtilities.isRightMouseButton(e)) {
@@ -568,10 +640,8 @@ public class NetworkDesigner extends JComponent implements ActionListener {
                 
                 if (agentClicked != null) {
                     
-                    agentSelected = agentClicked;
-                    state = new AgentSelectedState();
-                    NetworkDesigner.this.repaint();
-                    
+                    selectAgent(agentClicked);
+
                     lastMenuClickPosition = e.getPoint();
                     agentSelectedPopup.show(e.getComponent(), e.getX(), e.getY());
                     
@@ -603,35 +673,23 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             if (SwingUtilities.isLeftMouseButton(e)) {
                 
                 if (agentClicked != null) {
-                    
-                    agentSelected = agentClicked;
-                    // We are already in the selected state so no need to change
-                    NetworkDesigner.this.repaint();
-                    
+                    selectAgent(agentClicked);
                 } else {
-                    
-                    agentSelected = null;
-                    state = new DefaultState();
-                    NetworkDesigner.this.repaint();
-                    
+                    clearSelection();
                 }
                 
             } else if (SwingUtilities.isRightMouseButton(e)) {
                 
                 if (agentClicked != null) {
                     
-                    agentSelected = agentClicked;
-                    // We are already in the selected state so no need to change
-                    NetworkDesigner.this.repaint();
+                    selectAgent(agentClicked);
                     
                     lastMenuClickPosition = e.getPoint();
                     agentSelectedPopup.show(e.getComponent(), e.getX(), e.getY());
                     
                 } else {
                     
-                    agentSelected = null;
-                    state = new DefaultState();
-                    NetworkDesigner.this.repaint();
+                    clearSelection();
                     
                     lastMenuClickPosition = e.getPoint();
                     emptySpacePopup.show(e.getComponent(), e.getX(), e.getY());
@@ -693,6 +751,10 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             agentSelected.getBounds().x = newX;
             agentSelected.getBounds().y = newY;
             NetworkDesigner.this.repaint();
+            
+            for (DesignerEventListener currentListener : designerEventListeners) {
+                currentListener.agentMoved(agentSelected);
+            }
 
         }
         
@@ -722,18 +784,19 @@ public class NetworkDesigner extends JComponent implements ActionListener {
                 
                 if (agentClicked != null) {
                     
-                    agentLinks.add(new AgentLink(agentSelected, agentClicked));
+                    final AgentLink link = new AgentLink(agentSelected, agentClicked);
+                    agentLinks.add(link);
                     isSelectedAgentTryingToLink = false;
-                    agentSelected = agentClicked;
-                    state = new AgentSelectedState();
-                    NetworkDesigner.this.repaint();
+                    for (DesignerEventListener currentListener : designerEventListeners) {
+                        currentListener.linkCreated(link);
+                    }
+                    
+                    selectAgent(agentClicked);
 
                 } else {
                     
-                    agentSelected = null;
                     isSelectedAgentTryingToLink = false;
-                    state = new AgentSelectedState();
-                    NetworkDesigner.this.repaint();
+                    clearSelection();
                     
                 }
                 

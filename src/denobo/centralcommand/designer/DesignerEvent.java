@@ -10,6 +10,12 @@ package denobo.centralcommand.designer;
 public class DesignerEvent {
 
     /**
+     * The AgentDisplayable that triggered the event.
+     */
+    private final AgentDisplayable source;
+    
+    
+    /**
      * Initialises a new instance of a designer event.
      * 
      * @param source The AgentDisplayable that triggered the event.
@@ -19,11 +25,11 @@ public class DesignerEvent {
         this.source = source;
     
     }
-    
-    private AgentDisplayable source;
-    
+        
     /**
      * Gets the AgentDisplayable that triggered the event in the designer.
+     * 
+     * @return The AgentDisplayable that triggered the event.
      */
     public AgentDisplayable getSource() {
         
@@ -31,5 +37,4 @@ public class DesignerEvent {
         
     }
 
-    
 }

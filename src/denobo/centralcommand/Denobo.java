@@ -1,5 +1,7 @@
 package denobo.centralcommand;
 
+import javax.swing.SwingUtilities;
+
 /**
  * The main class for the Denobo Central Command software.
  * 
@@ -14,10 +16,18 @@ public class Denobo {
      */
     public static void main(String[] args) {
        
-        // Splash screen handles it from here.
-        final SplashScreen splash = new SplashScreen();
-        splash.setVisible(true);
-        
+        // Start up the GUI from within the EDT thread.
+        SwingUtilities.invokeLater(new Runnable() {
+            
+            @Override
+            public void run() {
+                // Splash screen handles it from here.
+                final SplashScreen splash = new SplashScreen();
+                splash.setVisible(true);                
+            }
+            
+        });
+
     }
     
 }
