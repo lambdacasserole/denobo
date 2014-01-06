@@ -13,14 +13,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Agent extends Actor {
 
     /**
-     * Holds a list of {@link MessageHandler} objects observing messages passed
-     * to the agent.
+     * A list of {@link MessageHandler} objects observing Messages passed to the 
+     * agent.
      */
     private final List<MessageHandler> handlers;
 
     /**
-     * Holds a message history logger used to prevent backwards message
-     * propagation.
+     * A message history logger used to prevent backwards Message propagation.
      */
     private final MessageHistory messageHistory;
 

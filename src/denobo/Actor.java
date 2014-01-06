@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class Actor {
 
     /**
-     * Holds a list of Actor instances connected to this one.
+     * A list of Actor instances connected to this one.
      */
     private final List<Actor> connectedActors;
 

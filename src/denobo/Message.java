@@ -1,7 +1,7 @@
 package denobo;
 
 /**
- * Represents an object passed between actors in a multi-agent system in order
+ * Represents a message passed between Actors in a multi-agent system in order
  * to communicate with one another.
  * 
  * @author Saul Johnson, Lee Oliver, Alex Mullen
@@ -9,37 +9,37 @@ package denobo;
 public class Message {
 
     /**
-     * The unique identifier for the message.
+     * The unique identifier for the Message.
      */
     private final String id;
 
     /**
-     * The names of the recipient actors.
+     * The names of the recipient Actors.
      */
     private final String[] recipients;
     
     /**
-     * The name of the originating actor.
+     * The name of the originating Actor.
      */
     private final String from;
     
     /**
-     * The message data.
+     * The Message data.
      */
     private final String data;
     
     /**
-     * The type of message wrapper this instance represents, if any.
+     * The type of Message wrapper this instance represents, if any.
      */
     protected MessageWrapperType wrapperType;
     
     /**
-     * Initialises a new instance of a message.
+     * Initialises a new instance of a Message.
      * 
-     * @param id            the unique identifier for the new message
-     * @param from          the name of the originating actor
-     * @param recipients    the names of the recipient actors
-     * @param data          the message data
+     * @param id            the unique identifier for the new Message
+     * @param from          the name of the originating Actor
+     * @param recipients    the names of the recipient Actors
+     * @param data          the Message data
      */
     public Message(String id, String from, String[] recipients, String data) {
         this.id = id;
@@ -50,22 +50,22 @@ public class Message {
     }
      
     /**
-     * Initialises a new instance of a message.
+     * Initialises a new instance of a Message.
      * 
-     * @param from          the name of the originating actor
-     * @param recipients    the names of the recipient actors
-     * @param data          the message data
+     * @param from          the name of the originating Actor
+     * @param recipients    the names of the recipient Actors
+     * @param data          the Message data
      */
     public Message(String from, String[] recipients, String data) {
         this(UniqueIdFactory.getId(), from, recipients, data);
     }
     
     /**
-     * Initialises a new instance of a message.
+     * Initialises a new instance of a Message.
      * 
-     * @param id            the unique identifier for the new message
-     * @param from          the name of the originating actor
-     * @param recipient     the name of the recipient actor
+     * @param id            the unique identifier for the new Message
+     * @param from          the name of the originating Actor
+     * @param recipient     the name of the recipient Actor
      * @param data          the message data
      */
     public Message(String id, String from, String recipient, String data) {
@@ -73,70 +73,70 @@ public class Message {
     }
     
     /**
-     * Initialises a new instance of a message.
+     * Initialises a new instance of a Message.
      * 
-     * @param from          the name of the originating actor
-     * @param recipient     the name of the recipient actor
-     * @param data          the message data
+     * @param from          the name of the originating Actor
+     * @param recipient     the name of the recipient Actor
+     * @param data          the Message data
      */
     public Message(String from, String recipient, String data) {
         this(from, new String[] {recipient}, data);
     }
 
     /**
-     * Gets the unique identifier for this message.
+     * Gets the unique identifier for this Message.
      * 
-     * @return  the unique identifier for this message
+     * @return  the unique identifier for this Message
      */
     public final String getId() {
         return id;
     }
 
     /**
-     * Gets the names of the recipient actors.
+     * Gets the names of the recipient Actors.
      * 
-     * @return  the names of the recipient actors
+     * @return  the names of the recipient Actors
      */
     public final String[] getRecipients() {
         return recipients;
     }
     
     /**
-     * Gets whether or not the given actor is listed as a recipient for this message.
+     * Gets whether or not the given Actor is listed as a recipient for this 
+     * Message.
      * 
-     * @param actor the actor to check
-     * @return      true if the specified actor is a recipient, otherwise false
+     * @param actor the Actor to check
+     * @return      true if the specified Actor is a recipient, otherwise false
      */
     public final boolean hasRecipient(Actor actor) {
         for (String currentRecipient : recipients) {
-            // TODO: Decide on whether Actors can have null for a name.
             if (actor.getName().equals(currentRecipient)) { return true; }
         }
         return false;
     }
     
     /**
-     * Gets the name of the originating actor.
+     * Gets the name of the originating Actor.
      * 
-     * @return  the name of the originating actor
+     * @return  the name of the originating Actor
      */
     public final String getFrom() {
         return from;
     }
 
     /**
-     * Gets the message data or payload.
+     * Gets the Message data or payload.
      * 
-     * @return  the message data or payload
+     * @return  the Message data or payload
      */
     public final String getData() {
         return data;
     }
     
     /**
-     * Gets the type of message wrapper this instance represents, if any.
+     * Gets the type of Message wrapper this instance represents, if any.
      * 
-     * @return  the type of message wrapper this instance represents, if any
+     * @return  the type of Message wrapper this instance represents, if any
      */
     public final MessageWrapperType getWrapperType() {
         return wrapperType;
