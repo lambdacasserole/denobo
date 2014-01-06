@@ -82,13 +82,15 @@ public class Agent extends Actor {
         
         final Message propagatingMessage = new Message(getName(), to, message);
 
+        // Put message into history to prevent backwards propagation.
         messageHistory.update(propagatingMessage.getId());
  
-        // We could put the message in the message queue but if the queue is
-        // busy, it could be a while before the message gets propogated so we
-        // just deal with it now.
+        /* 
+         * We could put the message in the message queue but if the queue is
+         * busy, it could be a while before the message gets propogated so we
+         * just deal with it now. 
+         */
         handleMessage(propagatingMessage);
-        //queueMessage(propagatingMessage);
         
     }
 
@@ -97,15 +99,22 @@ public class Agent extends Actor {
 
         // Remember, this method will always be executed in a single thread.
         
-        // Reject messages that have previously passed through this node previously.
+        /* 
+         * Reject messages that have previously passed through this node 
+         * previously. 
+         */
         if (messageHistory.hasMessage(message)) {
-            // We have already handled this message previously so let the caller 
-            // know we don't need to handle the message.
+
+            /* 
+             * We have already handled this message previously so let the caller 
+             * know we don't need to handle the message. 
+             */
             return false;
+            
         }
 
-        // Record the ID of this message in the history.
-        messageHistory.update(message.getId());
+        // Record this message in the history.
+        messageHistory.update(message);
         return true;
         
     }
@@ -113,17 +122,23 @@ public class Agent extends Actor {
     @Override
     protected void handleMessage(Message message) {
 
-        // If we are cloneable, this method will possibly be executing in
-        // multiple threads.
+        /* 
+         * If we are cloneable, this method will possibly be executing in
+         * multiple threads.
+         */
         
-        // Let any handlers know of the message received even though it may
-        // not be intended for us.
+        /* 
+         * Let any handlers know of the message received even though it may
+         * not be intended for us.
+         */
         for (MessageHandler handler : handlers) {
             handler.messageIntercepted(this, message);
         }
         
-        // Pass message to each handler if the message has this Agent in the
-        // receipients.
+        /* 
+         * Pass message to each handler if the message has this Agent in the
+         * receipients. 
+         */
         if (message.hasRecipient(this)) {
             for (MessageHandler handler : handlers) {
                 handler.messageRecieved(this, message);
