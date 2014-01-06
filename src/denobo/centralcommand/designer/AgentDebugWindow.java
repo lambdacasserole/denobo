@@ -3,6 +3,7 @@ package denobo.centralcommand.designer;
 import denobo.Agent;
 import denobo.Message;
 import denobo.MessageHandler;
+import denobo.centralcommand.DenoboWindow;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -20,35 +21,33 @@ import javax.swing.JTextArea;
  *
  * @author Lee Oliver
  */
-public class AgentDebugWindow implements ActionListener, MessageHandler {
+public class AgentDebugWindow extends DenoboWindow implements ActionListener, MessageHandler {
     
     private final Agent agentModel;
-    
-    private JFrame frame = new JFrame();
-    
+        
     private JButton sendButton, clearButton;
     private JTextArea agentRecieveArea, messageRecieveArea, agentSendArea, messageSendArea;
     
 
     public AgentDebugWindow(Agent agentModel) {
-        
+        super();
         this.agentModel = agentModel;
 
         agentModel.addMessageHandler(this);
         
         
         
-        frame.setLayout(new BorderLayout());
-        frame.setTitle(agentModel.getName() + " Debug Window");
+        this.setLayout(new BorderLayout());
+        this.setTitle(agentModel.getName() + " Debug Window");
 
         JPanel northPanel = new JPanel();
         JPanel centerPanel = new JPanel();
         JPanel southPanel = new JPanel();
         
-        frame.setAlwaysOnTop(true);
-        frame.add(northPanel, BorderLayout.NORTH);
-        frame.add(centerPanel, BorderLayout.CENTER);
-        frame.add(southPanel, BorderLayout.SOUTH);
+        this.setAlwaysOnTop(true);
+        this.add(northPanel, BorderLayout.NORTH);
+        this.add(centerPanel, BorderLayout.CENTER);
+        this.add(southPanel, BorderLayout.SOUTH);
         
         northPanel.setLayout(new GridLayout(1, 2));
         northPanel.add(new JLabel("Agent"));
@@ -82,21 +81,15 @@ public class AgentDebugWindow implements ActionListener, MessageHandler {
         clearButton.addActionListener(this);
         southPanel.add(clearButton);
         
-        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        frame.pack();
+        this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        this.pack();
         
     }
     
-    public void show(Point position) {
+    public void showAt(Point position) {
         
-        frame.setLocation(position);
-        frame.setVisible(true);
-        
-    }
-    
-    public void hide() {
-        
-        frame.setVisible(false);
+        this.setLocation(position);
+        this.setVisible(true);
         
     }
 

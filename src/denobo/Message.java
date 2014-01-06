@@ -29,6 +29,11 @@ public class Message {
     private final String data;
     
     /**
+     * The type of message wrapper this instance represents, if any.
+     */
+    protected MessageWrapperType wrapperType;
+    
+    /**
      * Initialises a new instance of a message.
      * 
      * @param id            the unique identifier for the new message
@@ -41,6 +46,7 @@ public class Message {
         this.recipients = recipients;
         this.from = from;
         this.data = data;
+        this.wrapperType = MessageWrapperType.RAW;
     }
      
     /**
@@ -125,6 +131,15 @@ public class Message {
      */
     public final String getData() {
         return data;
+    }
+    
+    /**
+     * Gets the type of message wrapper this instance represents, if any.
+     * 
+     * @return  the type of message wrapper this instance represents, if any
+     */
+    public final MessageWrapperType getWrapperType() {
+        return wrapperType;
     }
     
 }

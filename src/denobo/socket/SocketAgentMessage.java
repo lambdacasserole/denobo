@@ -2,6 +2,7 @@ package denobo.socket;
 
 import denobo.socket.connection.DenoboConnection;
 import denobo.Message;
+import denobo.MessageWrapperType;
 
 /**
  * A wrapper class for a Message that we received from a DenoboConnection instance.
@@ -26,6 +27,7 @@ public class SocketAgentMessage extends Message {
     public SocketAgentMessage(DenoboConnection receivedFrom, Message message) {
         super(message.getId(), message.getFrom(), message.getRecipients(), message.getData());
         this.receivedFrom = receivedFrom;
+        this.wrapperType = MessageWrapperType.SOCKET_MESSAGE;
     }
     
     /**

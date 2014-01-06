@@ -23,7 +23,7 @@ public class DenoboWindow extends JFrame {
         final ArrayList<Image> wndIcons = new ArrayList<>();
         final int[] iconSizes = new int[] {16, 24, 32, 48, 64, 96, 128, 256, 512 };
         for (int i : iconSizes) {
-            wndIcons.add(new ImageIcon(getClass().getResource("resources/icon/icon_" + i + ".png")).getImage());
+            wndIcons.add(new ImageIcon(getClass().getResource("/denobo/centralcommand/resources/icon/icon_" + i + ".png")).getImage());
         }
         this.setIconImages(wndIcons);
         

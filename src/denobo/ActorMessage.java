@@ -1,11 +1,13 @@
 package denobo;
 
 /**
- * A wrapper class for a Message that we received from a Actor instance.
- * This will be used to hold the Actor we received the message from
- * so we know who not to broadcast it to.
+ * A wrapper class for a {@link Message} that we received from an {@link Actor}
+ * instance.
+ * <p>
+ * This will be used to hold the Actor we received the message from so we know
+ * who not to broadcast it to.
  * 
- * @author Alex Mullen
+ * @author Alex Mullen, Saul Johnson
  */
 public class ActorMessage extends Message {
 
@@ -20,21 +22,22 @@ public class ActorMessage extends Message {
     private final Message rawMessage;
     
     /**
-     * Creates an ActorMessage.
+     * Initialises a new instance of an ActorMessage.
      * 
-     * @param receivedFrom  The Actor we received the Message from.
-     * @param message       The Message we received.
+     * @param receivedFrom  the Actor we received the Message from
+     * @param message       the Message we received
      */
     public ActorMessage(Actor receivedFrom, Message message) {
         super(message.getId(), message.getFrom(), message.getRecipients(), message.getData());
         this.receivedFrom = receivedFrom;
         this.rawMessage = message;
+        this.wrapperType = MessageWrapperType.ACTOR_MESSAGE;
     }
     
     /**
-     * Returns the Actor instance we received this Message from.
+     * Returns the {@link Actor} instance we received this {@link Message} from.
      * 
-     * @return The Actor instance
+     * @return  the Actor instance
      */
     public Actor getReceivedFrom() {
         return receivedFrom;
@@ -43,9 +46,10 @@ public class ActorMessage extends Message {
     /**
      * Returns the raw un-wrapped Message instance.
      * 
-     * @return The un-wrapped Message instance.
+     * @return  the un-wrapped Message instance
      */
     public Message getRawMessage() {
         return rawMessage;
     }
+    
 }

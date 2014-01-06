@@ -10,6 +10,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -481,7 +482,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             
         } else if (e.getSource() == menuOptionDebugWindow) {
                     
-            agentSelected.getDebugWindow().show(lastMenuClickPosition);
+            agentSelected.getDebugWindow().showAt(lastMenuClickPosition);
             
         } else if (e.getSource() == menuOptionDelete) {
             
@@ -542,7 +543,9 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         }
         
         for (AgentDisplayable currentAgent : agents) {
-            currentAgent.draw(g);
+            if(currentAgent != agentSelected) {
+                currentAgent.draw(g);
+            }
         }
         
         if (agentSelected != null) { 
@@ -550,9 +553,14 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             agentSelected.draw(g);
             
             // Dotted bounding box on selected agent.
+            Rectangle agentBounds = agentSelected.getBounds();
+            g.setColor(Color.WHITE);
+            g.fillRect((int) agentBounds.getX() - 10, (int) agentBounds.getY() - 10, 10, 10);
+            g.setColor(Color.BLACK);
+            g.drawRect((int) agentBounds.getX() - 10, (int) agentBounds.getY() - 10, 10, 10);
             g.setColor(selectionBoundingBoxColor);
             g.setStroke(selectionBoundingBoxStroke);
-            g.draw(agentSelected.getBounds());
+            g.draw(agentBounds);
 
         }
         

@@ -16,12 +16,18 @@ public class RC4CryptoAlgorithm implements CryptoAlgorithm {
      * Holds the key used to initialise the state.
      */
     private int[] key;
+
+    /**
+     * Holds the number of bytes to drop from the beginning of the key stream.
+     */
+    protected int drop;
     
     /**
      * Initialises a new instance of an RC4 encryption algorithm.
      */
     public RC4CryptoAlgorithm() {
         state = new int[256];
+        drop = 0;
     }
     
     /**
@@ -98,6 +104,10 @@ public class RC4CryptoAlgorithm implements CryptoAlgorithm {
 
         // Key scheduling algorithm
         ksa();
+        
+        // Drop bytes.
+        final int[] dropArr = new int[drop];
+        prga(dropArr);
         
         // Get key stream.
         final int[] keystream = new int[plaintext.length];

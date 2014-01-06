@@ -5,10 +5,10 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * An Agent that provides a basic concrete implementation of an Actor as part of
+ * An agent that provides a basic concrete implementation of an Actor as part of
  * a multi-agent system.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Agent extends Actor {
 
@@ -25,11 +25,13 @@ public class Agent extends Actor {
     private final MessageHistory messageHistory;
 
     
+    /* ---------- */
+    
     
     /**
-     * Initialises a new instance of a portal.
+     * Initialises a new instance of an agent.
      *
-     * @param name      the name of the portal
+     * @param name      the name of the agent
      * @param cloneable whether or not the agent is cloneable
      */
     public Agent(String name, boolean cloneable) {
@@ -41,9 +43,9 @@ public class Agent extends Actor {
     }
 
     /**
-     * Initialises a new instance of a portal that isn't cloneable.
+     * Initialises a new instance of a non-cloneable agent.
      *
-     * @param name the name of the portal
+     * @param name the name of the agent
      */
     public Agent(String name) {
         this(name, false);

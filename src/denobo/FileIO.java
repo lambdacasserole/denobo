@@ -9,7 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Offers basic helper methods for reading and writing bytes to and from files.
+ * Offers basic helper methods for reading and writing bytes and text to and 
+ * from files.
  * 
  * @author Saul Johnson
  */

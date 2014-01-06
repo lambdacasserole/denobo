@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class Actor {
 
     /**
-     * Holds a list of connected {@link Actor} instances.
+     * Holds a list of Actor instances connected to this one.
      */
     private final List<Actor> connectedActors;
 
@@ -64,9 +64,7 @@ public abstract class Actor {
     private final Object shutdownLock;
     
     
-    
     /* ---------- */
-    
     
     
     /**
@@ -101,17 +99,15 @@ public abstract class Actor {
     public Actor(String name) {
         this(name, false);
     }
-
     
     
     /* ---------- */
     
     
-    
     /**
      * Gets the name of this Actor.
      *
-     * @return the name of this Actor
+     * @return  the name of this Actor
      */
     public final String getName() {
         return name;
@@ -391,8 +387,7 @@ public abstract class Actor {
          * wrapper holds which agent we received the Message from originally so 
          * we can avoid broadcasting it back to them. 
          */
-        // TODO: We have an instanceof operator here. We should use a value.
-        if (message instanceof ActorMessage) {
+        if (message.getWrapperType() == MessageWrapperType.ACTOR_MESSAGE) {
             
             final ActorMessage actorMessage = (ActorMessage) message;
             
