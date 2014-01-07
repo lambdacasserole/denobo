@@ -7,7 +7,7 @@ import denobo.MessageWrapperType;
 /**
  * A wrapper class for a Message that we received from a DenoboConnection instance.
  * This will be used to hold the DenoboConnection we received the message from
- so we know who not to broadcast it to.
+ * so we know who not to broadcast it to.
  * 
  * @author Alex Mullen
  */
@@ -21,11 +21,11 @@ public class SocketAgentMessage extends Message {
     /**
      * Creates a SocketAgentMessage.
      * 
-     * @param receivedFrom  The DenoboConnection we received the Message from.
-     * @param message       The Message we received.
+     * @param receivedFrom  the DenoboConnection we received the Message from
+     * @param message       the Message we received
      */
     public SocketAgentMessage(DenoboConnection receivedFrom, Message message) {
-        super(message.getId(), message.getFrom(), message.getRecipients(), message.getData());
+        super(message);
         this.receivedFrom = receivedFrom;
         this.wrapperType = MessageWrapperType.SOCKET_MESSAGE;
     }
@@ -33,7 +33,7 @@ public class SocketAgentMessage extends Message {
     /**
      * Returns the DenoboConnection instance we received this Message from.
      * 
-     * @return The DenoboConnection instance
+     * @return the DenoboConnection instance
      */
     public DenoboConnection getReceivedFrom() {
         return receivedFrom;

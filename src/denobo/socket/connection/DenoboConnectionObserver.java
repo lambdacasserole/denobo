@@ -3,7 +3,7 @@ package denobo.socket.connection;
 import denobo.Message;
 
 /**
- * Implemented by entities that wish to observe a {@link DenoboConnection} for incoming data.
+ * Implemented by entities that wish to observe a {@link DenoboConnection}.
  * 
  * @author Alex Mullen, Saul Johnson
  */
@@ -18,7 +18,7 @@ public interface DenoboConnectionObserver {
     
     /**
      * Invoked when a {@link DenoboConnection} has been disconnected or connection
-     * was lost.
+     * was lost to it.
      * 
      * @param connection    the {@link DenoboConnection} that connection was lost to
      */

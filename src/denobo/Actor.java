@@ -86,7 +86,7 @@ public abstract class Actor {
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
 
         // Start message processing.
-        queueProcessLoop();
+        queueProcessThread();
 
     }
 
@@ -270,12 +270,12 @@ public abstract class Actor {
     }
 
     /**
-     * Starts the message processing loop on a new thread and places the handle 
+     * Starts the message processing on a new thread and places the handle 
      * into the underlyingThread field.
      * 
      * @see #underlyingThread
      */
-    private void queueProcessLoop() {
+    private void queueProcessThread() {
 
         // Process queued messages on another thread.
         underlyingThread = new Thread(new Runnable() {

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 
 /**
+ * Represents a visual link between two AgentDisplayable instances.
  *
  * @author Alex Mullen
  */

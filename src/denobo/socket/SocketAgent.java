@@ -23,41 +23,47 @@ import java.util.concurrent.Semaphore;
 public class SocketAgent extends Agent {
 
     /**
-     * The list of connections that we have connected to us.
+     * A list of DenoboConnection instances that we have connected to this
+     * SocketAgent.
      */
     private final List<DenoboConnection> connections;
 
     /**
-     * The list of observers we need to notify on certain events.
+     * A list of {@link SocketAgentObserver} objects observing events occurring
+     * for this SocketAgent.
      */
     private final List<SocketAgentObserver> observers;
 
     /**
-     * The DenoboConnectionObserver that will observer each DenoboConnection that
+     * The DenoboConnectionObserver that will observe each DenoboConnection that
      * is connected to this SocketAgent.
      */
     private final DenoboConnectionObserver connectionObserver;
     
     /**
      * For saving the maximum number of connections this SocketAgent is allowed.
+     * <p>
      * Don't use this for limiting any connections. This is simply for retrieval
      * purposes only.
      */
     private final int maxConnections;
     
     /**
-     * The maximum number of connections permitted to be connected.
+     * A Semaphore for limiting the number of connections permitted to be 
+     * connected to this SocketAgent.
+     * <p>
+     * This limit includes incoming and outgoing connections.
      */
     private final Semaphore connectionsPermits;
     
     /**
-     * The socket we listen and accept connection requests on.
+     * The ServerSocket instance we listen and accept connection requests on.
      */
     private ServerSocket serverSocket;
 
     /**
-     * The thread that simply sits and waits for connection requests for it to
-     * accept and add to our connection list.
+     * The Thread that simply sits and waits for connection requests for it to
+     * accept and add to {@link SocketAgent#connections}.
      */
     private Thread acceptThread;
 
@@ -70,18 +76,18 @@ public class SocketAgent extends Agent {
     /**
      * A status variable we use to indicate that this SocketAgent is advertising.
      */
-    private boolean advertising;
+    private volatile boolean advertising;
     
 
     
     /**
-     * Creates a {@link SocketAgent} with the specified name and cloneable
+     * Instantiates a {@link SocketAgent} with the specified name and cloneable
      * option.
      *
-     * @param name          The name assigned to the SocketAgent
-     * @param cloneable     Whether or not the agent is cloneable
-     * @param maxConnections    The maximum number of connections from this Agent
-     *                          permitted.
+     * @param name              the name to be assigned to the SocketAgent
+     * @param cloneable         whether or not the agent is cloneable
+     * @param maxConnections    the maximum number of connections from that this
+     *                          SocketAgent should permit
      */
     public SocketAgent(String name, boolean cloneable, int maxConnections) {
         
@@ -100,29 +106,31 @@ public class SocketAgent extends Agent {
     }
     
     /**
-     * Creates a non-cloneable {@link SocketAgent} with the specified name.
+     * Instantiates a non-cloneable {@link SocketAgent} with the specified name.
      *
-     * @param name          The name assigned to the SocketAgent
-     * @param maxConnections    The maximum number of connections from this Agent
-     *                          permitted.
+     * @param name              the name to be assigned to the SocketAgent
+     * @param maxConnections    the maximum number of connections from that this
+     *                          SocketAgent should permit
      */
     public SocketAgent(String name, int maxConnections) {
         this(name, false, maxConnections);
     }
 
     /**
-     * Returns the maximum number of connections this SocketAgent is allowed to have.
+     * Returns the maximum number of connections this SocketAgent is permitted 
+     * to have.
      * 
-     * @return The maximum number of connections allowed.
+     * @return the maximum number of connections permitted
      */
     public int getMaxConnections() {
         return maxConnections;
     }
 
     /**
-     * Adds an observer to the list of observers to be notified of events.
+     * Adds a {@link SocketAgentObserver} to the list of observers to be 
+     * notified of events from this SocketAgent.
      *
-     * @param observer The observer to add
+     * @param observer the observer object to add
      * @return true if it was successfully added to he list of observers,
      * otherwise false is returned
      */
@@ -131,11 +139,12 @@ public class SocketAgent extends Agent {
     }
 
     /**
-     * Removes an observer from the list of observers for this SocketAgent.
+     * Removes a {@link SocketAgentObserver} from the list of observers for this 
+     * SocketAgent.
      *
      * @param observer the observer to remove
      * @return true if the observer to remove was found and removed, otherwise
-     * false
+     * false is returned
      */
     public boolean removeObserver(SocketAgentObserver observer) {
         return observers.remove(Objects.requireNonNull(observer, "The observer to remove is null"));
@@ -151,8 +160,8 @@ public class SocketAgent extends Agent {
     /**
      * Sets up allowing incoming connection requests to be accepted.
      *
-     * @param portNumber    The port number to listen for connection requests on
-     * @throws IOException  If an I/O error occurred whilst creating the socket to
+     * @param portNumber    the port number to listen for connection requests on
+     * @throws IOException  if an I/O error occurred whilst creating the socket to
      *                      listen for connections on.
      */
     public void startAdvertising(int portNumber) throws IOException {
@@ -169,7 +178,7 @@ public class SocketAgent extends Agent {
 
         advertising = true;
         
-        // notify any observers
+        // Notify any observers that this SocketAgent has started advertising
         for (SocketAgentObserver currentObserver : observers) {
             currentObserver.advertisingStarted(this, portNumber);
         }          
@@ -189,7 +198,7 @@ public class SocketAgent extends Agent {
      * Returns whether this SocketAgent is currently advertising at the time this
      * method was called.
      * 
-     * @return true if this SocketAgent is advertising, otherwise false.
+     * @return true if this SocketAgent is advertising, otherwise false
      */
     public boolean isAdvertising() {
         return advertising;
@@ -197,8 +206,9 @@ public class SocketAgent extends Agent {
     
     /**
      * Returns the local port this SocketAgent is advertising on or the last port
-     * it was advertising on if it is now not advertising. If it has never advertised,
-     * -1 is returned.
+     * it was advertising on if it is now not advertising. 
+     * <p>
+     * If it has never advertised, -1 is returned.
      * 
      * @return  The port currently advertising on or the last port advertised on. -1
      *          if it has never advertised yet.
@@ -218,21 +228,28 @@ public class SocketAgent extends Agent {
         if (serverSocket != null) {
             try {
                 serverSocket.close();
-            } catch (IOException ex) { System.out.println(ex.getMessage()); }
+            } catch (IOException ex) { 
+                System.out.println(ex.getMessage());
+            }
         }
  
         // Wait for the connection accepting thread to terminate.
         if (acceptThread != null) {
             try {
                 acceptThread.join();
-            } catch (InterruptedException ex) { System.out.println(ex.getMessage()); }
+            } catch (InterruptedException ex) { 
+                System.out.println(ex.getMessage());
+            }
         }
        
         shutdownAcceptThread = false;
-       
         advertising = false;
        
-        // notify any observers if this was previously advertising
+        /*
+         * Notify any observers that this SocketAgent has stopped advertising
+         * if it was previously advertising
+         */
+        
         if (serverSocket != null) {
             for (SocketAgentObserver currentObserver : observers) {
                 currentObserver.advertisingStopped(this, serverSocket.getLocalPort());
@@ -242,8 +259,8 @@ public class SocketAgent extends Agent {
     }
 
     /**
-     * Listens for connections on the server port and adds connections to a list
-     * when they are requested by connection clients.
+     * Listens for connections on the server port and accepts incoming connection
+     * requests.
      */
     private void acceptConnectionsLoop() {
 
@@ -270,7 +287,7 @@ public class SocketAgent extends Agent {
                 } else {
                     
                     // Tell them there we cannot accept them because we have too
-                    // many peers already connected.
+                    // many peers already connected
                     new DenoboConnection(acceptedSocket, DenoboConnection.InitialState.TOO_MANY_PEERS);
                     
                 }
@@ -290,10 +307,10 @@ public class SocketAgent extends Agent {
      * Connects this {@link SocketAgent} to a another SocketAgent through a
      * socket.
      *
-     * @param hostName the host name of the machine hosting the remote agent
-     * @param portNumber the port number the remote agent is listening on
+     * @param hostname      the host name of the machine hosting the remote agent
+     * @param portNumber    the port number the remote agent is listening on
      */
-    public void addConnection(String hostName, int portNumber) {
+    public void addConnection(String hostname, int portNumber) {
         
         if (!connectionsPermits.tryAcquire()) {
             // Reached connection limit
@@ -306,7 +323,7 @@ public class SocketAgent extends Agent {
             final Socket newSocket = new Socket();
 
             // attempt to connect
-            newSocket.connect(new InetSocketAddress(hostName, portNumber));
+            newSocket.connect(new InetSocketAddress(hostname, portNumber));
 
             final DenoboConnection addedConnection = new DenoboConnection(newSocket, DenoboConnection.InitialState.INITIATE_GREETING);
             addedConnection.addObserver(connectionObserver);
@@ -314,7 +331,7 @@ public class SocketAgent extends Agent {
 
             // notify any observers that we have connected
             for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionAddSucceeded(this, addedConnection, hostName, portNumber);
+                currentObserver.connectionAddSucceeded(this, addedConnection, hostname, portNumber);
             }
             
             addedConnection.startRecieveThread();
@@ -322,12 +339,12 @@ public class SocketAgent extends Agent {
         } catch (IOException ex) {
 
             // Release the permit we acquired for this connection since we failed
-            // to connect.
+            // to connect
             connectionsPermits.release();
             
             // notify any observers that we failed to connect
             for (SocketAgentObserver currentObserver : observers) {
-                currentObserver.connectionAddFailed(this, hostName, portNumber);
+                currentObserver.connectionAddFailed(this, hostname, portNumber);
             }
 
         }
@@ -335,21 +352,27 @@ public class SocketAgent extends Agent {
     }
     
     /**
-     * Returns a read-only snapshot of all current connected connections to this
+     * Returns a snapshot copy of all currently connected connections to this
      * SocketAgent.
+     * <p>
+     * This represents a snapshot copy of the all current DenoboConnection objects
+     * that are connected to this SocketAgent at the time of this method being
+     * invoked. Modifications to the returned list do not effect the internal 
+     * list held in this SocketAgent instance and changes to the internal list
+     * after this method call are not reflected in the returned list.
      * 
-     * @return The unmodifiable list of connections.
+     * @return the unmodifiable list of connections.
      */
     public List<DenoboConnection> getConnections() {
         
         synchronized (connections) {
-            return Collections.unmodifiableList(new ArrayList<>(connections));
+            return new ArrayList<>(connections);
         }
         
     }
 
     /**
-     * Closes and removes any DenoboConnection objects we have attached.
+     * Closes and removes any DenoboConnection objects this SocketAgent has attached.
      */
     public void removeConnections() {
 
@@ -380,24 +403,30 @@ public class SocketAgent extends Agent {
     }
 
     /**
-     * Shuts down this SocketAgent. No more incoming connection requests will
+     * Shutdown this SocketAgent. 
+     * <p>
+     * No more incoming connection requests will
      * be accepted and any current connections are terminated and removed. This
-     * is a full shutdown that prevents this Agent being used again.
+     * is a full shutdown that prevents this SocketAgent being used again.
      */
     @Override
     public void shutdown() {
 
-        // Shutdown our layer first to prevent any more connections or messages
-        // coming through.
+        /*
+         * Shutdown our layer first to prevent any more connections or messages
+         * coming through.
+         */ 
         
         // Stop anyone else from connecting
         stopAdvertising();
 
-        // Remove any current connections so we don't receive anymore messages
-        // from any connections.
+        /* 
+         * Remove any current connections so we don't receive anymore messages
+         * from any connections
+         */ 
         removeConnections();
         
-        // Super class can perform a shutdown now
+        // Super class shutdown code can now execute
         super.shutdown();
         
     }
@@ -406,24 +435,31 @@ public class SocketAgent extends Agent {
     @Override
     protected void broadcastMessage(Message message) {
         
-        // Super class behaviour is still required (broadcasting to any locally
-        // connected Actor's)
+        /* 
+         * Super class behaviour is still required (broadcasting to any locally
+         * connected Actor's)
+         */
         super.broadcastMessage(message);
         
         // Now broadcast to any Actor's who are connected to us via a socket.
         
-        // If the Message instance is of type SocketAgentMessage, we can find out
-        // who originally send us the Message so that we know not to pass it back
-        // to them.
+        /* 
+        * If the Message instance is of type SocketAgentMessage, we can find out
+        * who originally send us the Message so that we know not to pass it back
+        * to them.
+        */
         if (message instanceof SocketAgentMessage) {
             
             final DenoboConnection connectionRecievedFrom = ((SocketAgentMessage) message).getReceivedFrom();
             // Broadcast to connected peers.
             synchronized (connections) {
                 for (DenoboConnection connection : connections) {
-                    // Check if we received the message from one of our connections,
-                    // and if it was then we don't need to bother broadcasting it
-                    // back to that connection.
+                    
+                    /*
+                     * Check if we received the message from one of our connections,
+                     * and if it was then we don't need to bother broadcasting it
+                     * back to that connection.
+                     */
                     if (connection != connectionRecievedFrom) {
                         connection.send(message);
                     }
@@ -431,8 +467,10 @@ public class SocketAgent extends Agent {
             }
 
         } else {
-            // The message was probably internal so we need to broadcast it to
-            // everyone connected to us.
+            /*
+             * The message was probably internal so we need to broadcast it to
+             * everyone connected to us.
+             */
             synchronized (connections) {
                 for (DenoboConnection connection : connections) {
                     connection.send(message);
@@ -475,13 +513,14 @@ public class SocketAgent extends Agent {
         @Override
         public void messageReceived(DenoboConnection connection, Message message) {
 
-            // Let our message queue deal with the message. We wrap the messsage in
-            // a SocketAgentMessage so that we know not to broadcast this message
-            // back to the Agent who sent us the message originally.
+            /* 
+             * Let our message queue deal with the message. We wrap the messsage in
+             * a SocketAgentMessage so that we know not to broadcast this message
+             * back to the Agent who sent us the message originally
+             */ 
             queueMessage(new SocketAgentMessage(connection, message));
             
         }
     }
-    
     
 }

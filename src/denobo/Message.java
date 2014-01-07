@@ -82,7 +82,21 @@ public class Message {
     public Message(String from, String recipient, String data) {
         this(from, new String[] {recipient}, data);
     }
+    
+    /**
+     * Initialises a new instance of a Message that is a clone of the given
+     * Message.
+     * 
+     * @param message       the Message instance to clone.
+     */
+    public Message(Message message) {
+        // TODO: This doesn't copy the wrapperType. Every message cloned will be
+        // of type RAW. Decide on if we want this behaviour.
+        this(message.getId(), message.getFrom(), message.getRecipients(), message.getData());
+    }
 
+    /* ---------- */
+    
     /**
      * Gets the unique identifier for this Message.
      * 
