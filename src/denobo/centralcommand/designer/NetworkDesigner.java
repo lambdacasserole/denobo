@@ -286,13 +286,55 @@ public class NetworkDesigner extends JComponent implements ActionListener {
     }
     
     /**
+     * Returns whether two AgentDisplayable's are already linked in the designer.
+     * 
+     * @param agent1    the first agent
+     * @param agent2    the second agent
+     * @return          true if they are already linked, otherwise false
+     */
+    private boolean linkAlreadyExistsBetween(AgentDisplayable agent1, AgentDisplayable agent2) {
+        
+        for (AgentLink currentAgentLink : agentLinks) {
+            if (currentAgentLink.contains(agent1, agent2)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Links two AgentDisplayable instances together in this NetworkDesigner.
+     * <p>
+     * If the two agents are the same or the two agents are already linked, this
+     * method will not link them.
+     * 
+     * @param agent1 the first agent to link
+     * @param agent2 the second agent to link
+     */
+    private void linkAgents(AgentDisplayable agent1, AgentDisplayable agent2) {
+        
+        if ((agent1 == agent2) || (linkAlreadyExistsBetween(agent1, agent2))) {
+            return;
+        }
+        
+        final AgentLink link = new AgentLink(agent1, agent2);
+        agentLinks.add(link);
+        
+        for (DesignerEventListener currentListener : designerEventListeners) {
+            currentListener.linkCreated(link);
+        }
+        
+    }
+    
+    /**
      * Shutdown and removes the specified AgentDisplayable from the network.
      * 
      * @param agent The agent to shutdown and remove.
      */
     public void removeAgent(AgentDisplayable agent) {
         
-        agent.getDebugWindow().hide();
+        agent.getDebugWindow().dispose();
         agent.getMonitorDialog().hide();
         
         agent.getAgent().shutdown();
@@ -543,7 +585,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         }
         
         for (AgentDisplayable currentAgent : agents) {
-            if(currentAgent != agentSelected) {
+            if (currentAgent != agentSelected) {
                 currentAgent.draw(g);
             }
         }
@@ -553,7 +595,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             agentSelected.draw(g);
             
             // Dotted bounding box on selected agent.
-            Rectangle agentBounds = agentSelected.getBounds();
+            final Rectangle agentBounds = agentSelected.getBounds();
             g.setColor(Color.WHITE);
             g.fillRect((int) agentBounds.getX() - 10, (int) agentBounds.getY() - 10, 10, 10);
             g.setColor(Color.BLACK);
@@ -792,13 +834,8 @@ public class NetworkDesigner extends JComponent implements ActionListener {
                 
                 if (agentClicked != null) {
                     
-                    final AgentLink link = new AgentLink(agentSelected, agentClicked);
-                    agentLinks.add(link);
+                    linkAgents(agentSelected, agentClicked);
                     isSelectedAgentTryingToLink = false;
-                    for (DesignerEventListener currentListener : designerEventListeners) {
-                        currentListener.linkCreated(link);
-                    }
-                    
                     selectAgent(agentClicked);
 
                 } else {
