@@ -32,4 +32,5 @@ public interface DenoboConnectionObserver {
      * @param message       the message received
      */
     public void messageReceived(DenoboConnection connection, Message message);
+    
 }

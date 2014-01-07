@@ -13,8 +13,9 @@ import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 
 /**
@@ -23,11 +24,40 @@ import javax.swing.JTextArea;
  */
 public class AgentDebugWindow extends DenoboWindow implements ActionListener, MessageHandler {
     
+    /**
+     * New instances of this agent.
+     */
     private final Agent agentModel;
         
-    private JButton sendButton, clearButton;
-    private JTextArea agentRecieveArea, messageRecieveArea, agentSendArea, messageSendArea;
+    /**
+     * Instances of a send button.
+     */
+    private final JButton sendButton;
     
+    /**
+     * Instances of a clear button.
+     */
+    private final JButton clearButton;
+    
+    /**
+     * Instances of a text area for the agent name.
+     */
+    private final JTextArea agentSendArea;
+    
+    /**
+     * Instances of a text area for the message.
+     */
+    private final JTextArea messageSendArea;
+    
+    /**
+     * Instances of a table that will display the messages that are sent and received.
+     */
+    private final JTable messageTable;
+    
+    /**
+     * Instances of the debug table model.
+     */
+    private final DebugAgentTableModel messageTableModel;
 
     public AgentDebugWindow(Agent agentModel) {
         super();
@@ -39,6 +69,9 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         
         this.setLayout(new BorderLayout());
         this.setTitle(agentModel.getName() + " Debug Window");
+        messageTableModel = new DebugAgentTableModel();
+        messageTable = new JTable(messageTableModel);
+        messageTable.setFillsViewportHeight(false);
 
         JPanel northPanel = new JPanel();
         JPanel centerPanel = new JPanel();
@@ -49,20 +82,9 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         this.add(centerPanel, BorderLayout.CENTER);
         this.add(southPanel, BorderLayout.SOUTH);
         
-        northPanel.setLayout(new GridLayout(1, 2));
-        northPanel.add(new JLabel("Agent"));
-        northPanel.add(new JLabel("Message"));
-        
-        centerPanel.setLayout(new GridLayout(1, 2));
-        agentRecieveArea = new JTextArea(5, 20);
-        agentRecieveArea.setEditable(false);
-        agentRecieveArea.setBorder(BorderFactory.createLineBorder(Color.black));
-        centerPanel.add(agentRecieveArea);
-        
-        messageRecieveArea = new JTextArea(5, 20);
-        messageRecieveArea.setEditable(false);
-        messageRecieveArea.setBorder(BorderFactory.createLineBorder(Color.black));
-        centerPanel.add(messageRecieveArea);
+
+        final JScrollPane messageTableScrollPane = new JScrollPane(messageTable);
+        centerPanel.add(messageTableScrollPane);
         
         southPanel.setLayout(new GridLayout(1, 3));
         agentSendArea = new JTextArea(1, 10);
@@ -98,14 +120,16 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         
         if (e.getSource() == sendButton) {
             
-            agentRecieveArea.append("To: " + agentSendArea.getText() + "\n");
-            messageRecieveArea.append("mgs: " + messageSendArea.getText() + "\n");
+            messageTableModel.addRow(new Object[] {"To: " + agentSendArea.getText(), 
+                "mgs: " + messageSendArea.getText()}
+            );
+//            agentRecieveArea.append("To: " + agentSendArea.getText() + "\n");
+//            messageRecieveArea.append("mgs: " + messageSendArea.getText() + "\n");
             agentModel.sendMessage(agentSendArea.getText(), messageSendArea.getText());
             
         } else if (e.getSource() == clearButton) {
             
-            agentRecieveArea.setText(null);
-            messageRecieveArea.setText(null);
+            messageTableModel.setRowCount(0);
             
         }
         
@@ -114,8 +138,8 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
     @Override
     public void messageRecieved(Agent agent, Message message) {
         
-        agentRecieveArea.append("From: " +  message.getFrom() + ":\n");
-        messageRecieveArea.append("mgs: " + message.getData() + "\n");
+        messageTableModel.addRow(new Object[] {"From: " + agentSendArea.getText(), 
+            "mgs: " + messageSendArea.getText()});
         
     }
 

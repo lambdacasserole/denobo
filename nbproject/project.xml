@@ -14,6 +14,14 @@
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
             <word>cloneable</word>
             <word>Denobo</word>
+            <word>deserialize</word>
+            <word>Deserializes</word>
+            <word>enum</word>
+            <word>hostname</word>
+            <word>serialize</word>
+            <word>serialized</word>
+            <word>Serializes</word>
+            <word>serializing</word>
         </spellchecker-wordlist>
     </configuration>
 </project>
