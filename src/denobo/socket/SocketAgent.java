@@ -454,58 +454,7 @@ public class SocketAgent extends Agent {
         super.shutdown();
         
     }
-    
 
-    @Override
-    protected void broadcastMessage(Message message) {
-        
-        /* 
-         * Super class behaviour is still required (broadcasting to any locally
-         * connected Actor's)
-         */
-        super.broadcastMessage(message);
-        
-        // Now broadcast to any Actor's who are connected to us via a socket.
-        
-        /* 
-        * If the Message instance is of type SocketAgentMessage, we can find out
-        * who originally sent us the Message so that we know not to pass it back
-        * to them.
-        */
-        if (message instanceof SocketAgentMessage) {
-            
-            final DenoboConnection connectionRecievedFrom = ((SocketAgentMessage) message).getReceivedFrom();
-            // Broadcast to connected peers.
-            synchronized (connections) {
-                for (DenoboConnection connection : connections) {
-                    
-                    /*
-                     * Check if we received the message from one of our connections,
-                     * and if it was then we don't need to bother broadcasting it
-                     * back to that connection.
-                     */
-                    if (connection != connectionRecievedFrom) {
-                        connection.send(message);
-                    }
-                }
-            }
-
-        } else {
-            /*
-             * The message was probably internal so we need to broadcast it to
-             * everyone connected to us.
-             */
-            synchronized (connections) {
-                for (DenoboConnection connection : connections) {
-                    connection.send(message);
-                }
-            }
-        }
-        
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    
     /**
      * Anonymous class that a SocketAgent creates to observer all DenoboConnections
      * that are connected.

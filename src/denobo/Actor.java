@@ -311,9 +311,6 @@ public abstract class Actor implements RoutingWorkerListener {
                     try {
                         final Message message = messageQueue.take();
 
-                        // Check if we should bother handling this message.
-                        if (!shouldHandleMessage(message)) { continue; }
-
                         if (!cloneable) {
 
                             // Handle message in this thread.
@@ -472,8 +469,8 @@ public abstract class Actor implements RoutingWorkerListener {
         // The first entry in the routing queue is this agent. Discard this entry.
         message.getNextActorName();
 
-        // Foward the message on.
-        forwardMessage(message);
+        // Queue the message here for processing.
+        messageQueue.add(message);
 
         // Message sent, success.
         return true;
@@ -551,17 +548,6 @@ public abstract class Actor implements RoutingWorkerListener {
         }
         
     }
-    
-    /**
-     * Determines whether handleMessage should be invoked. 
-     * <p>
-     * This method will always be executed in a single thread.
-     * 
-     * @param message   the message to handle
-     * @return          true if handleMessage should be invoked, otherwise false
-     * @see             #handleMessage
-     */
-    protected abstract boolean shouldHandleMessage(Message message);
 
     /**
      * Handles messages passed to this Actor through its message queue.

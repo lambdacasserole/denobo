@@ -18,11 +18,6 @@ public class Agent extends Actor {
      */
     private final List<MessageHandler> handlers;
 
-    /**
-     * A message history logger used to prevent backwards Message propagation.
-     */
-    private final MessageHistory messageHistory;
-
     
     /* ---------- */
     
@@ -36,7 +31,6 @@ public class Agent extends Actor {
     public Agent(String name, boolean cloneable) {
 
         super(name, cloneable);
-        messageHistory = new SynchronizedMessageHistory(new MessageHistory());
         handlers = new CopyOnWriteArrayList<>();
         
     }
@@ -57,7 +51,8 @@ public class Agent extends Actor {
      * @param handler the {@link MessageHandler} to add as an observer
      */
     public void addMessageHandler(MessageHandler handler) {
-        handlers.add(Objects.requireNonNull(handler, "The message handler to add is null"));
+        handlers.add(Objects.requireNonNull(handler, "The message handler " + 
+                "to add cannot be null."));
     }
 
     /**
@@ -67,31 +62,8 @@ public class Agent extends Actor {
      * @param handler the {@link MessageHandler} to remove as an observer
      */
     public void removeMessageHandler(MessageHandler handler) {
-        handlers.remove(Objects.requireNonNull(handler, "The message handler to remove is null"));
-    }
-
-    @Override
-    protected boolean shouldHandleMessage(Message message) {
-
-        // Remember, this method will always be executed in a single thread.
-        
-        /* 
-         * Reject messages that have passed through this node previously. 
-         */
-        if (messageHistory.hasMessage(message)) {
-
-            /* 
-             * We have already handled this message previously so let the caller 
-             * know we don't need to handle the message. 
-             */
-            return false;
-            
-        }
-
-        // Record this message in the history.
-        messageHistory.update(message);
-        return true;
-        
+        handlers.remove(Objects.requireNonNull(handler, "The message handler "
+                + "to  remove cannot be null."));
     }
 
     @Override
@@ -111,17 +83,19 @@ public class Agent extends Actor {
         }
         
         /* 
-         * Pass message to each handler if the message has this Agent in the
-         * receipients. 
+         * If this Agent is the intended recipient of the message, alert each
+         * registered message handler.
          */
         if (message.getRecipient().equals(this.getName())) {
             for (MessageHandler handler : handlers) {
                 handler.messageRecieved(this, message);
             }
+        } else {
+            
+            // Otherwise, forward it on.
+            forwardMessage(message);
+            
         }
-
-        // Broadcast to peers.
-        forwardMessage(message);
         
     }
 }

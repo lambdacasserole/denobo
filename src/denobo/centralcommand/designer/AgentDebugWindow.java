@@ -10,8 +10,6 @@ import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -148,7 +146,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                messageTableModel.addRow(new Object[]{"From: " + message.getFrom(),
+                messageTableModel.addRow(new Object[]{"From: " + message.getOriginator(),
                     "mgs: " + message.getData()});
             }
         });

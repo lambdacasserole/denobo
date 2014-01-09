@@ -27,7 +27,6 @@ public class SocketAgentMessage extends Message {
     public SocketAgentMessage(DenoboConnection receivedFrom, Message message) {
         super(message);
         this.receivedFrom = receivedFrom;
-        this.wrapperType = MessageWrapperType.SOCKET_MESSAGE;
     }
     
     /**
