@@ -1,7 +1,7 @@
 package denobo.centralcommand.designer;
 
 import denobo.Agent;
-import denobo.centralcommand.designer.dialogs.AgentMonitorDialog;
+import denobo.centralcommand.designer.dialogs.monitor.AgentMonitorDialog;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;

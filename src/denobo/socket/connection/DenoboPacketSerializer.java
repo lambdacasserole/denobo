@@ -63,7 +63,7 @@ public class DenoboPacketSerializer implements PacketSerializer {
         final char[] packetBody = new char[bodyLength];
         reader.read(packetBody);
 
-        // Let the observers deal with packet.
+        // Parse out packet code
         final PacketCode packetCode = PacketCode.valueOf(code);
         if (packetCode == null) {
             throw new StreamCorruptedException("invalid packet code: " + packetCode);

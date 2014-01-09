@@ -2,6 +2,7 @@ package denobo.centralcommand.designer.dialogs;
 
 import denobo.Agent;
 import denobo.socket.SocketAgent;
+import denobo.socket.SocketAgentConfiguration;
 import java.awt.BorderLayout;
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
@@ -362,7 +363,13 @@ public class CreateAgentDialog {
         
         if (socketFunctionalityCheckBox.isSelected()) {
 
-            final SocketAgent newSocketAgent = new SocketAgent(agentNameField.getText(), cloneableCheckBox.isSelected(), Integer.parseInt(maxConnectionsField.getText()));
+            final SocketAgentConfiguration agentConfig = new SocketAgentConfiguration();
+            
+            agentConfig.maximumConnections = Integer.parseInt(maxConnectionsField.getText());
+            agentConfig.password = String.valueOf(passwordField.getPassword());
+            agentConfig.credentialsHandler = new CredentialsPromptDialog();
+            
+            final SocketAgent newSocketAgent = new SocketAgent(agentNameField.getText(), cloneableCheckBox.isSelected(), agentConfig);
             
             if (startAdvertisingCheckBox.isSelected()) {
                 

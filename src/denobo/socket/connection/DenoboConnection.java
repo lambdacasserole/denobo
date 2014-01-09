@@ -53,6 +53,11 @@ public class DenoboConnection {
     private final Socket connection;
     
     /**
+     * Holds the {@link SocketAgent} that this DenoboConnection belongs to.
+     */
+    private final SocketAgent parentAgent;
+    
+    /**
      * The observers that this DenoboConnection will notify in response to 
      * connection events.
      */
@@ -93,7 +98,9 @@ public class DenoboConnection {
      * The current {@link DenoboConnectionState} of this DenoboConnection.
      */
     private volatile DenoboConnectionState state;
-
+    
+    //private Compressor compressor;
+    
     /**
      * The lock object that we use for waiting for a poke reply and notifying
      * when we get the reply.
@@ -118,16 +125,18 @@ public class DenoboConnection {
     /**
      * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
      *
+     * @param parent        the SocketAgent instance this connection belongs to
      * @param connection    the connection to handle receiving data from
      * @param initialState  the initial state this connection will be in
      * @throws IOException  if an I/O error occurs whilst setting up the connection
      */
-    public DenoboConnection(Socket connection, InitialState initialState) throws IOException {
+    public DenoboConnection(SocketAgent parent, Socket connection, InitialState initialState) throws IOException {
         
-        // Store reference to socket and initialise observer list.
+        this.parentAgent = parent;
         this.connection = connection;
         this.observers = new CopyOnWriteArrayList<>();
         this.pokeLock = new Object();
+        //this.compressor = new DummyCompressor();
      
         
         switch (initialState) {
@@ -265,8 +274,6 @@ public class DenoboConnection {
      * and delegates any received data to be processed.
      */
     private void receiveLoop() {                
-        
-        System.out.println("Waiting for data on port [" + connection.getPort() + "]...");
 
         try {
             
@@ -391,19 +398,21 @@ public class DenoboConnection {
      * @param packet    the packet to send
      */
     protected void send(Packet packet) {
-        
-        System.out.println("Writing data to port [" + connection.getPort() + "]...");
+
         try {
+
             packetSerializer.writePacket(connectionWriter, packet);
+            
         } catch (IOException ex) {
-            //disconnect();
+
             System.out.println(ex.getMessage());
+            
         }
         
     }
     
     /**
-     * Sends a POKE packet to the remote peer conencted to this connection which 
+     * Sends a POKE packet to the remote peer connected to this connection which 
      * should reply with one back.
      * <p>
      * This process is measured to give an indicator to how healthy the connection
@@ -498,9 +507,30 @@ public class DenoboConnection {
     }
     
     ////////////////////////////////////////////////////////////////////////////
+        
+    /**
+     * This represents the state a connection in when a peer has connected to us 
+     * but them connecting to us has resulting in us exceeding our maximum peer limit so
+     * we'll gracefully accept their connection request and tell them that we we've
+     * reached the peer limit.
+     *
+     * @author Alex Mullen
+     */
+    public class TooManyPeersState extends DenoboConnectionState {
+
+        @Override
+        public void handleConnectionEstablished() {
+
+            send(new Packet(PacketCode.TOO_MANY_PEERS));
+            disconnect();
+            
+        }
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
     
     /**
-     * This represents the state a connection in when we have have initialized a
+     * This represents the state a connection is in when we have have initialized a
      * connection to another peer. 
      * <p>
      * It is our responsibility to send a GREETINGS packet to them to initiate 
@@ -539,17 +569,29 @@ public class DenoboConnection {
                         + ":" + getRemotePort() + " has accepted our "
                             + "GREETINGS request");
 
-                    for (DenoboConnectionObserver currentObserver : observers) {
-                        currentObserver.connectionAuthenticated(DenoboConnection.this);
-                    }
                     state = new AuthenticatedState();
                     break;
 
                 case CREDENTIALS_PLZ:
 
-                    // TODO: Implement credentials
-                    //send(new Packet(PacketCode.CREDENTIALS, "username=foo&password=bar"));
+                    System.out.println(getRemoteAddress()
+                        + ":" + getRemotePort() + " is asking for credentials...");
+                    
+                    
+                    // Ask/retrieve the credentials to use
+                    final DenoboConnectionCredentials credentials = 
+                            parentAgent.getConfiguration().credentialsHandler.credentialsRequested(DenoboConnection.this);
+                    
+                    if (credentials == null) {
+                        send(new Packet(PacketCode.NO_CREDENTIALS));
+                        disconnect();
+                    } else {
+                        send(new Packet(PacketCode.CREDENTIALS, credentials.getPassword()));                    
+                        state = new AwaitingAuthenticationState();
+                    }
+                    
                     break;
+
 
                     /*
                      * All these mean we need to disconnect anyway so just let them
@@ -571,7 +613,6 @@ public class DenoboConnection {
 
                     // TODO: Bad status code that we weren't expecting.
                     disconnect();
-                    break;
                     
             }
             
@@ -606,25 +647,124 @@ public class DenoboConnection {
             switch(packet.getCode()) {
 
                 case GREETINGS:
-
-                    System.out.println("sending a ACCEPTED packet to " + getRemoteAddress()
-                            + ":" + getRemotePort());
-
-                    // We'll just accept everyone who greets us for now
-                    send(new Packet(PacketCode.ACCEPTED));
-                    state = new AuthenticatedState();
+                    System.out.println(getRemoteAddress()
+                        + ":" + getRemotePort() + " has sent us a GREETINGS packet");
+                    
+                    String password = parentAgent.getConfiguration().password;
+                    if ((password != null) && (!password.isEmpty())) {
+                        send(new Packet(PacketCode.CREDENTIALS_PLZ));
+                        state = new WaitingForCredentialsState();
+                    } else {
+                        send(new Packet(PacketCode.ACCEPTED));
+                        state = new AuthenticatedState();
+                    }
                     break;
 
                 default:
 
                     // TODO: Bad status code that we weren't expecting.
                     disconnect();
-                    break;
                     
             }
         }
     }
     
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * This represents the state a connection is in when the other end of the
+     * connection initiated the connection and we need some valid credentials
+     * before we will let them proceed any further.
+     * 
+     * @author Alex Mullen
+     */
+    public class WaitingForCredentialsState extends DenoboConnectionState {
+        
+        @Override
+        public void handleSendMessage(Message message) {
+            
+            // Don't send messages to this peer until authentication has been performed
+            
+        }
+
+        @Override
+        public void handleReceivedPacket(Packet packet) {
+            
+            switch (packet.getCode()) {
+                
+                case CREDENTIALS:
+
+                    // Check password
+                    if (packet.getBody().equals(parentAgent.getConfiguration().password)) {
+                        send(new Packet(PacketCode.ACCEPTED));
+                        state = new AuthenticatedState();
+                    } else {
+                        send(new Packet(PacketCode.BAD_CREDENTIALS));
+                        disconnect();
+                    }
+                    break;
+                
+                default:
+                    
+                    // TODO: Bad status code that we weren't expecting.
+                    disconnect();
+                    
+            }
+            
+        }
+        
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * This represents the state where the peer who initiated the connection has
+     * submitted some credentials as a reply to a CREDENTIALS_PLZ packet and is
+     * waiting for authentication.
+     * 
+     * @author Alex Mullen
+     */
+    public class AwaitingAuthenticationState extends DenoboConnectionState {
+        
+        @Override
+        public void handleSendMessage(Message message) {
+            
+            // Don't send messages to this peer until authentication has been performed
+            
+        }
+
+        @Override
+        public void handleReceivedPacket(Packet packet) {
+            
+            switch (packet.getCode()) {
+                
+                case ACCEPTED:
+                    
+                    System.out.println("the credentials we sent were accepted");
+                    state = new AuthenticatedState();
+                    break;
+                    
+                    /*
+                     * All these mean we need to disconnect anyway so just let them
+                     * fall through to the default.
+                     */
+                    
+                case BAD_CREDENTIALS:
+                    
+                    System.out.println("we sent some bad credentials");
+                    
+                case NO:
+
+                default:
+                    
+                    disconnect();
+                
+            }
+
+        }      
+
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     
     /**
@@ -634,6 +774,20 @@ public class DenoboConnection {
      */
     public class AuthenticatedState extends DenoboConnectionState {
 
+        /**
+         * Creates a new AuthenticatedState instance then notifies the outer
+         * DenoboConnection's observers that this connection has passed
+         * authentication.
+         */
+        public AuthenticatedState() {
+            
+            for (DenoboConnectionObserver currentObserver : observers) {
+                currentObserver.connectionAuthenticated(DenoboConnection.this);
+            }
+                    
+        }
+        
+        
         @Override
         public void handleReceivedPacket(Packet packet) {
 
@@ -652,31 +806,11 @@ public class DenoboConnection {
 
                     // TODO: Bad status code that we weren't expecting.
                     disconnect();
-                    break;
                     
             }
         }
     }    
     
     ////////////////////////////////////////////////////////////////////////////
-    
-    /**
-     * This represents the state a connection in when a peer has connected to us 
-     * but them connecting to us has resulting in us exceeding our maximum peer limit so
-     * we'll gracefully accept their connection request and tell them that we we've
-     * reached the peer limit.
-     *
-     * @author Alex Mullen
-     */
-    public class TooManyPeersState extends DenoboConnectionState {
-
-        @Override
-        public void handleConnectionEstablished() {
-
-            send(new Packet(PacketCode.TOO_MANY_PEERS));
-            disconnect();
-            
-        }
-    }
 
 }

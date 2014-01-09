@@ -41,14 +41,6 @@ public class SocketAgent extends Agent {
     private final DenoboConnectionObserver connectionObserver;
     
     /**
-     * For saving the maximum number of connections this SocketAgent is allowed.
-     * <p>
-     * Don't use this for limiting any connections. This is simply for retrieval
-     * purposes only.
-     */
-    private final int maxConnections;
-    
-    /**
      * A Semaphore for limiting the number of connections permitted to be 
      * connected to this SocketAgent.
      * <p>
@@ -78,52 +70,84 @@ public class SocketAgent extends Agent {
      */
     private volatile boolean advertising;
     
+    /**
+     * An instance of SocketAgentConfiguration that holds the configuration
+     * options for this SocketAgent.
+     */
+    private final SocketAgentConfiguration configuration;
 
+    
+    
+    
+    /**
+     * Instantiates a new instance of a SocketAgent with the specified configuration
+     * options.
+     * 
+     * @param name              the name to be assigned to the SocketAgent
+     * @param cloneable         whether or not the agent is cloneable
+     * @param configuration     the configuration options to use
+     */
+    public SocketAgent(String name, boolean cloneable, SocketAgentConfiguration configuration) {
+        
+        super(name, cloneable);
+        
+        Objects.requireNonNull(configuration, "configuration cannot be null");
+        
+        final int maxConnections = configuration.maximumConnections;
+        if (maxConnections < 1) { 
+            throw new IllegalArgumentException("Maximum number of connections is less than 1: " + maxConnections);
+        }
+
+        this.configuration = configuration;
+        
+        connectionsPermits = new Semaphore(maxConnections, false);
+        connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
+        observers = new CopyOnWriteArrayList<>();
+        connectionObserver = new SocketAgentDenoboConnectionObserver();
+        
+    }
+    
     
     /**
      * Instantiates a {@link SocketAgent} with the specified name and cloneable
      * option.
+     * <p>
+     * This constructs a SocketAgent that uses no security and does not limit the
+     * number of connections it can handle.
      *
-     * @param name              the name to be assigned to the SocketAgent
-     * @param cloneable         whether or not the agent is cloneable
-     * @param maxConnections    the maximum number of connections from that this
-     *                          SocketAgent should permit
+     * @param name          the name to be assigned to the SocketAgent
+     * @param cloneable     whether or not the agent is cloneable
+     * 
+     * @see #SocketAgent(java.lang.String, boolean, denobo.socket.SocketAgentConfiguration)
      */
-    public SocketAgent(String name, boolean cloneable, int maxConnections) {
-        
-        super(name, cloneable);
-        
-        if (maxConnections < 1) { 
-            throw new IllegalArgumentException("Maximum number of connections is less than 1: " + maxConnections);
-        }
-        
-        this.maxConnections = maxConnections;
-        connectionsPermits = new Semaphore(maxConnections, false);
-        connections = Collections.synchronizedList(new ArrayList<DenoboConnection>(maxConnections));
-        observers = new CopyOnWriteArrayList<>();
-        connectionObserver = new SocketAgentDenoboConnectionObserver();
+    public SocketAgent(String name, boolean cloneable) {
+
+        this(name, cloneable, new SocketAgentConfiguration(Integer.MAX_VALUE));
 
     }
     
     /**
      * Instantiates a non-cloneable {@link SocketAgent} with the specified name.
-     *
-     * @param name              the name to be assigned to the SocketAgent
-     * @param maxConnections    the maximum number of connections from that this
-     *                          SocketAgent should permit
+     * <p>
+     * This constructs a non-cloneable SocketAgent that uses no security and
+     * does not limit the number of connections it can handle.
+     * 
+     * @param name the name to be assigned to the SocketAgent
+     * 
+     * @see #SocketAgent(java.lang.String, boolean, denobo.socket.SocketAgentConfiguration)
      */
-    public SocketAgent(String name, int maxConnections) {
-        this(name, false, maxConnections);
+    public SocketAgent(String name) {
+        this(name, false);
     }
 
+
     /**
-     * Returns the maximum number of connections this SocketAgent is permitted 
-     * to have.
+     * Returns the configuration for this SocketAgent.
      * 
-     * @return the maximum number of connections permitted
+     * @return the configuration
      */
-    public int getMaxConnections() {
-        return maxConnections;
+    public SocketAgentConfiguration getConfiguration() {
+        return configuration;
     }
 
     /**
@@ -270,7 +294,7 @@ public class SocketAgent extends Agent {
                 final Socket acceptedSocket = serverSocket.accept();
                 if (connectionsPermits.tryAcquire()) {
                     
-                    final DenoboConnection acceptedConnection = new DenoboConnection(acceptedSocket, DenoboConnection.InitialState.WAIT_FOR_GREETING);
+                    final DenoboConnection acceptedConnection = new DenoboConnection(this, acceptedSocket, DenoboConnection.InitialState.WAIT_FOR_GREETING);
                     acceptedConnection.addObserver(connectionObserver);  
                     connections.add(acceptedConnection);
 
@@ -288,7 +312,7 @@ public class SocketAgent extends Agent {
                     
                     // Tell them there we cannot accept them because we have too
                     // many peers already connected
-                    new DenoboConnection(acceptedSocket, DenoboConnection.InitialState.TOO_MANY_PEERS);
+                    new DenoboConnection(this, acceptedSocket, DenoboConnection.InitialState.TOO_MANY_PEERS);
                     
                 }
 
@@ -325,7 +349,7 @@ public class SocketAgent extends Agent {
             // attempt to connect
             newSocket.connect(new InetSocketAddress(hostname, portNumber));
 
-            final DenoboConnection addedConnection = new DenoboConnection(newSocket, DenoboConnection.InitialState.INITIATE_GREETING);
+            final DenoboConnection addedConnection = new DenoboConnection(this, newSocket, DenoboConnection.InitialState.INITIATE_GREETING);
             addedConnection.addObserver(connectionObserver);
             connections.add(addedConnection);
 
@@ -445,7 +469,7 @@ public class SocketAgent extends Agent {
         
         /* 
         * If the Message instance is of type SocketAgentMessage, we can find out
-        * who originally send us the Message so that we know not to pass it back
+        * who originally sent us the Message so that we know not to pass it back
         * to them.
         */
         if (message instanceof SocketAgentMessage) {
