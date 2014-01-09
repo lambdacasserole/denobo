@@ -28,14 +28,7 @@ public class MessageTableModel extends DefaultTableModel {
      * @param message   The message to add.
      */
     public void addRow(Message message) {
-
-        final StringBuilder recipientString = new StringBuilder();
-        for (int i = 0; i < message.getRecipients().length; i++) {
-            recipientString.append(message.getRecipients()[i]);
-            recipientString.append(((i + 1) < message.getRecipients().length) ? ", " : "");
-        }
-
-        this.addRow(new Object[] {message.getId(), recipientString.toString(), message.getFrom(), message.getData()});
+        this.addRow(new Object[] {message.getId(), message.getRecipient(), message.getOriginator(), message.getData()});
     }
 
 }

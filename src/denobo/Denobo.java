@@ -11,19 +11,19 @@ public class Denobo implements RoutingWorkerListener, MessageHandler {
         Agent a = new Agent("A");
         
         Agent b = new Agent("B");
-        a.connectActor(b);
+        a.connectAgent(b);
         
         Agent c = new Agent("C");
-        b.connectActor(c);
+        b.connectAgent(c);
         
         Agent d = new Agent("D");
-        c.connectActor(d);
+        c.connectAgent(d);
         
         Agent e = new Agent("E");
-        d.connectActor(e);
+        d.connectAgent(e);
         
         Agent f = new Agent("F");
-        e.connectActor(f);
+        e.connectAgent(f);
         f.addMessageHandler(this);
         
         a.sendMessage("F", "Hi F!");

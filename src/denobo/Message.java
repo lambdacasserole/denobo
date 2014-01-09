@@ -124,7 +124,7 @@ public class Message {
      * 
      * @return  the next actor name from the routing queue
      */
-    public String getNextActorName() {
+    public String getNextAgentName() {
         return route.pollActorName();
     }
     

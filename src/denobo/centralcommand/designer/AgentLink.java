@@ -17,7 +17,7 @@ public class AgentLink {
     public AgentLink(AgentDisplayable agent1, AgentDisplayable agent2) {
         this.agent1 = agent1;
         this.agent2 = agent2;
-        agent1.getAgent().connectActor(agent2.getAgent());
+        agent1.getAgent().connectAgent(agent2.getAgent());
     }
     
     /**
@@ -50,7 +50,7 @@ public class AgentLink {
     }
     
     public void breakLink() {
-        agent1.getAgent().disconnectActor(agent2.getAgent());
+        agent1.getAgent().disconnectAgent(agent2.getAgent());
     }
     
     public void draw(Graphics g) {

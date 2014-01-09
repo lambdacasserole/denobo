@@ -269,7 +269,7 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         
         
         // List of local agents connected
-        for (Agent currentActorConnected : agentModel.getAgent().getConnectedActors()) {
+        for (Agent currentActorConnected : agentModel.getAgent().getConnectedAgents()) {
             for (AgentDisplayable currentAgentDisplayble : allLocalAgents) {
                 if (currentAgentDisplayble.getAgent() == currentActorConnected) {
                     localListModel.addElement(currentAgentDisplayble);
@@ -327,7 +327,7 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
     private void handleAddButtonClicked() {
         
         final AgentDisplayable actorSelected = (AgentDisplayable) localAgentsComboModel.getSelectedItem();
-        if (agentModel.getAgent().connectActor(actorSelected.getAgent())) {
+        if (agentModel.getAgent().connectAgent(actorSelected.getAgent())) {
             
             localAgentsComboModel.removeElement(actorSelected);
             localListModel.addElement(actorSelected);

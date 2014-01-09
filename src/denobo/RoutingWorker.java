@@ -80,7 +80,7 @@ public class RoutingWorker implements Runnable {
     private void route(Agent actor, RoutingQueue route) {
         
         // For each actor connected to our originator.
-        final List<Agent> connections = actor.getConnectedActors();
+        final List<Agent> connections = actor.getConnectedAgents();
         for (Agent current : connections) {
             
             // An optimal route will never take us through the same node twice.

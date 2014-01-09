@@ -13,19 +13,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Represents an abstract actor acting as part of a multi-agent system.
+ * Represents an agent acting as part of a multi-agent system.
  *
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Agent implements RoutingWorkerListener {
 
     /**
-     * A list of Actor instances connected to this one.
+     * A list of Agent instances connected to this one.
      */
-    private final List<Agent> connectedActors;
+    private final List<Agent> connectedAgents;
 
     /**
-     * The {@link BlockingQueue} that underlies this Actor.
+     * The {@link BlockingQueue} that underlies this Agent.
      */
     private final BlockingQueue<Message> messageQueue;
 
@@ -35,34 +35,34 @@ public class Agent implements RoutingWorkerListener {
     private final HashMap<String, List<String>> dispatchMap;
     
     /**
-     * Contains the names of Actors whose routes are currently being calculated.
+     * Contains the names of Agents whose routes are currently being calculated.
      */
     private final List<String> awaitingRoutingList;
     
     /**
-     * The message processing thread that underlies this Actor.
+     * The message processing thread that underlies this Agent.
      */
     private Thread underlyingThread;
 
     /**
-     * The name of this Actor.
+     * The name of this Agent.
      */
     private final String name;
 
     /**
-     * Whether or not this Actor is cloneable.
+     * Whether or not this Agent is cloneable.
      */
     private final boolean cloneable;
 
     /**
-     * The thread pool service for handling cloneable Actor instances. 
+     * The thread pool service for handling cloneable Agent instances. 
      * <p>
-     * This variable is only initialised if this Actor is cloneable.
+     * This variable is only initialised if this Agent is cloneable.
      */
     private final ExecutorService executorService;
 
     /**
-     * Whether or not this Actor has been shut down. 
+     * Whether or not this Agent has been shut down. 
      * <p>
      * Signals underlyingThread to stop processing when set to true.
      * 
@@ -76,7 +76,7 @@ public class Agent implements RoutingWorkerListener {
     private final Object shutdownLock;
     
     /**
-     * The routing table for this Actor.
+     * The routing table for this Agent.
      */
     private final RoutingTable routingTable;
     
@@ -90,18 +90,19 @@ public class Agent implements RoutingWorkerListener {
     
     
     /**
-     * Abstract constructor to initialise a new instance of an Actor.
+     * Abstract constructor to initialise a new instance of an Agent.
      *
-     * @param name      the name of the Actor
-     * @param cloneable whether or not the Actor is cloneable
+     * @param name      the name of the Agent
+     * @param cloneable whether or not the Agent is cloneable
      */
     public Agent(String name, boolean cloneable) {
 
-        this.name = Objects.requireNonNull(name, "The name of the Actor is null");
+        this.name = Objects.requireNonNull(name, "The name of the Agent cannot"
+                + " be null.");
         this.cloneable = cloneable;
 
         messageQueue = new LinkedBlockingQueue<>();
-        connectedActors = new CopyOnWriteArrayList<>();
+        connectedAgents = new CopyOnWriteArrayList<>();
         shutdownLock = new Object();
 
         // Only construct the thread pool if cloneable.
@@ -118,10 +119,9 @@ public class Agent implements RoutingWorkerListener {
     }
 
     /**
-     * Abstract constructor to initialise a new instance of a non-cloneable
-     * Actor.
+     * Initialises a new instance of a non-cloneable Agent.
      *
-     * @param name  the name of the Actor
+     * @param name  the name of the Agent
      */
     public Agent(String name) {
         this(name, false);
@@ -132,13 +132,13 @@ public class Agent implements RoutingWorkerListener {
     
     /**
      * Adds a {@link MessageHandler} to listen for messages passed to this
-     * agent.
+     * Agent.
      *
      * @param handler the {@link MessageHandler} to add as an observer
      */
     public void addMessageHandler(MessageHandler handler) {
-        handlers.add(Objects.requireNonNull(handler, "The message handler " + 
-                "to add cannot be null."));
+        handlers.add(Objects.requireNonNull(handler, "The message handler "
+                + "to add cannot be null."));
     }
 
     /**
@@ -153,120 +153,121 @@ public class Agent implements RoutingWorkerListener {
     }
     
     /**
-     * Gets the name of this Actor.
+     * Gets the name of this Agent.
      *
-     * @return  the name of this Actor
+     * @return  the name of this Agent
      */
     public final String getName() {
         return name;
     }
 
     /**
-     * Gets whether or not this Actor is cloneable.
+     * Gets whether or not this Agent is cloneable.
      *
-     * @return  true if this Actor is cloneable, otherwise false
+     * @return  true if this Agent is cloneable, otherwise false
      */
     public final boolean isCloneable() {
         return cloneable;
     }
     
     /**
-     * Gets whether or not this Actor has shut down or is currently in the 
+     * Gets whether or not this Agent has shut down or is currently in the 
      * process of shutting down.
      * 
-     * @return  true if this Actor has shut down, otherwise false
+     * @return  true if this Agent has shut down, otherwise false
      */
     public final boolean hasShutdown() {
         return shutdown;
     }
 
     /**
-     * Connects this Actor to another.
+     * Connects this Agent to another.
      *
-     * @param actor the Actor to connect to
-     * @return      true if the specified Actor was successfully connected to 
-     *              this Actor, otherwise false
+     * @param agent the Agent to connect to
+     * @return      true if the specified Agent was successfully connected to 
+     *              this Agent, otherwise false
      */
-    public boolean connectActor(Agent actor) {
+    public boolean connectAgent(Agent agent) {
 
-        Objects.requireNonNull(actor, "Actor to connect cannot be null.");
+        Objects.requireNonNull(agent, "Agent to connect cannot be null.");
         
         /* 
-         * We don't want to connect any Actors if we are shutting down or are in
+         * We don't want to connect any Agents if we are shutting down or are in
          * the process of shutting down.
          */
         synchronized (shutdownLock) {
             
             /* 
-             * If the Actor is shut down, don't connect. Don't allow connection
-             * of an Actor to itself.
+             * If the Agent is shut down, don't connect. Don't allow connection
+             * of an Agent to itself.
              */
-            if (shutdown || actor == this) { return false; }
+            if (shutdown || agent == this) { return false; }
             
             // Don't allow duplicates into the list.
-            if (!connectedActors.contains(actor)) {
+            if (!connectedAgents.contains(agent)) {
                 
                 // Bidirectional registration.
-                registerConnectedActor(actor);
-                actor.registerConnectedActor(this);
+                registerConnectedAgent(agent);
+                agent.registerConnectedAgent(this);
                 
             }
             
             return true;
+            
         }
         
     }
 
     /**
-     * Disconnects this Actor from another.
+     * Disconnects this Agent from another.
      *
-     * @param actor the Actor to disconnect from
-     * @return      true if the specified Actor was successfully disconnected
-     *              from this Actor, otherwise false
+     * @param agent the Agent to disconnect from
+     * @return      true if the specified Agent was successfully disconnected
+     *              from this Agent, otherwise false
      */
-    public boolean disconnectActor(Agent actor) {
+    public boolean disconnectAgent(Agent agent) {
 
-        Objects.requireNonNull(actor, "Actor to disconnect cannot be null.");
+        Objects.requireNonNull(agent, "Agent to disconnect cannot be null.");
         
-        final boolean wasRemoved = connectedActors.remove(actor);
+        final boolean wasRemoved = connectedAgents.remove(agent);
         if (wasRemoved) {
-            actor.unregisterConnectedActor(this);
+            agent.unregisterConnectedAgent(this);
         }
         return wasRemoved;
         
     }
     
     /**
-     * Returns a read-only snapshot of the Actor instances that are connected to
+     * Returns a read-only snapshot of the Agent instances that are connected to
      * this one as an unmodifiable list.
      * 
-     * @return  the unmodifiable list of connected Actor instances
+     * @return  the unmodifiable list of connected Agent instances
      */
-    public List<Agent> getConnectedActors() {
-        return Collections.unmodifiableList(connectedActors);
+    public List<Agent> getConnectedAgents() {
+        return Collections.unmodifiableList(connectedAgents);
     }
     
     /**
-     * Registers another Actor as connected to this one.
+     * Registers another Agent as connected to this one.
      *
-     * @param actor the Actor to register
+     * @param agent the Agent to register
      */
-    protected void registerConnectedActor(Agent actor) {
-        connectedActors.add(actor);
+    protected void registerConnectedAgent(Agent agent) {
+        connectedAgents.add(agent);
     }
 
     /**
-     * Unregisters another Actor as connected to this one.
+     * Unregisters another Agent as connected to this one.
      *
-     * @param actor the Actor to unregister
+     * @param agent the Agent to unregister
      */
-    protected void unregisterConnectedActor(Agent actor) {
-        connectedActors.remove(actor);
+    protected void unregisterConnectedAgent(Agent agent) {
+        connectedAgents.remove(agent);
     }
 
     
     /**
-     * Adds a {@link Message} to this Actor's message queue.
+     * Adds a {@link Message} to this Agent's message queue.
      *
      * @param message   the message to add
      * @return          true if the message was successfully submitted into the 
@@ -372,7 +373,7 @@ public class Agent implements RoutingWorkerListener {
     }
         
     /**
-     * Prevents any more messages from being added to this Actor's message queue
+     * Prevents any more messages from being added to this Agent's message queue
      * and processes any that remain. 
      * <p>
      * The queue is then shut down and all links to other agents are removed.
@@ -412,11 +413,11 @@ public class Agent implements RoutingWorkerListener {
             }
         }    
 
-        // Remove all links to other Actors.
-        for (Agent actor : connectedActors) {
-            actor.unregisterConnectedActor(this);
+        // Remove all links to other Agents.
+        for (Agent agent : connectedAgents) {
+            agent.unregisterConnectedAgent(this);
         }
-        connectedActors.clear();
+        connectedAgents.clear();
         
     }
 
@@ -424,7 +425,7 @@ public class Agent implements RoutingWorkerListener {
      * Takes a recipient name/message data pair and stores it while it awaits
      * calculation of a route to the recipient.
      * 
-     * @param recipientName the name of the recipient Actor
+     * @param recipientName the name of the recipient Agent
      * @param data          the data to attach to the message
      */
     private void awaitRouting(String recipientName, String data) {
@@ -442,9 +443,9 @@ public class Agent implements RoutingWorkerListener {
     }
         
     /**
-     * Forwards a message to the next actor along its route.
+     * Forwards a message to the next Agent along its route.
      * <p>
-     * If this actor is the intended recipient of the message, it will be queued
+     * If this Agent is the intended recipient of the message, it will be queued
      * for processing, and not forwarded any further.
      * 
      * @param message   the Message object to forward
@@ -459,9 +460,9 @@ public class Agent implements RoutingWorkerListener {
             
         } else {
             
-            // Otherwise, forward to next actor in route.
-            final String nextRecipient = message.getNextActorName();
-            for (Agent current : connectedActors) {
+            // Otherwise, forward to next Agent in route.
+            final String nextRecipient = message.getNextAgentName();
+            for (Agent current : connectedAgents) {
                 if (current.getName().equals(nextRecipient)) {
                     current.forwardMessage(message);
                 }
@@ -472,13 +473,13 @@ public class Agent implements RoutingWorkerListener {
     }
     
     /**
-     * Originates a message from this actor along the route stored in its
+     * Originates a message from this Agent along the route stored in its
      * routing table for the recipient.
      * <p>
      * If the routing table has no entry to the recipient, an exception will
      * be thrown.
      * 
-     * @param recipientName the name of the recipient Actor
+     * @param recipientName the name of the recipient Agent
      * @param data          the data to attach to the message
      * @return              true if message sending was successful, otherwise
      *                      false
@@ -494,7 +495,7 @@ public class Agent implements RoutingWorkerListener {
         final Message message = new Message(routingTable.getRoute(recipientName), data);    
             
         // The first entry in the routing queue is this agent. Discard this entry.
-        message.getNextActorName();
+        message.getNextAgentName();
 
         // Queue the message here for processing.
         messageQueue.add(message);
@@ -505,9 +506,9 @@ public class Agent implements RoutingWorkerListener {
     }
     
     /**
-     * Sends a message from this Actor to another.
+     * Sends a message from this Agent to another.
      * 
-     * @param recipientName the name of the recipient Actor
+     * @param recipientName the name of the recipient Agent
      * @param data          the data to attach to the message
      */
     public void sendMessage(String recipientName, String data) {
@@ -519,7 +520,7 @@ public class Agent implements RoutingWorkerListener {
              * We need to route first, then send the message when the routing 
              * worker calls back.
              */
-            System.out.println("Awaiting routing to actor [" + recipientName + "]...");
+            System.out.println("Awaiting routing to Agent [" + recipientName + "]...");
             awaitRouting(recipientName, data);
             calculateRoute(recipientName);
             
@@ -547,40 +548,40 @@ public class Agent implements RoutingWorkerListener {
     }
     
     @Override
-    public void routeCalculated(String destinationActorName, RoutingQueue route) {
+    public void routeCalculated(String destinationAgentName, RoutingQueue route) {
     
-        System.out.println("Routing to actor [" + destinationActorName + "] complete:");
+        System.out.println("Routing to Agent [" + destinationAgentName + "] complete:");
         System.out.println(route.toString()); 
         
         // Remove from awaiting list.
-        awaitingRoutingList.remove(destinationActorName);
+        awaitingRoutingList.remove(destinationAgentName);
         
         // Add to routing table.
-        routingTable.addRoute(destinationActorName, route);
+        routingTable.addRoute(destinationAgentName, route);
         
         // Any messages waiting for this route are now free to be sent.
-        if (dispatchMap.containsKey(destinationActorName)) {
+        if (dispatchMap.containsKey(destinationAgentName)) {
             
             // Get all waiting messages.
-            final List<String> waitingMessages = dispatchMap.get(destinationActorName);
+            final List<String> waitingMessages = dispatchMap.get(destinationAgentName);
             
             System.out.println("Found " + waitingMessages.size() + " messages waiting.");
             
             // Send all waiting messages.
             for (String current : waitingMessages) {
-                originate(destinationActorName, current);
+                originate(destinationAgentName, current);
             }
-            dispatchMap.remove(destinationActorName);
+            dispatchMap.remove(destinationAgentName);
             
         }
         
     }
 
     /**
-     * Handles messages passed to this Actor through its message queue.
+     * Handles messages passed to this Agent through its message queue.
      * <p>
      * Any implementation of this should be thread-safe as multiple threads 
-     * could be running this method if this Actor is cloneable.
+     * could be running this method if this Agent is cloneable.
      *
      * @param message   the message to handle
      */
