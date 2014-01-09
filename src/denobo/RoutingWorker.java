@@ -23,7 +23,7 @@ public class RoutingWorker implements Runnable {
     /**
      * The actor from which the routing algorithm will start.
      */
-    private final Actor fromActor;
+    private final Agent fromActor;
     
     /**
      * The name of the actor that the routing algorithm is seeking.
@@ -42,7 +42,7 @@ public class RoutingWorker implements Runnable {
      * @param fromActor     the actor from which this worker will start
      * @param toActorName   the name of the destination actor
      */
-    public RoutingWorker(Actor fromActor, String toActorName) {
+    public RoutingWorker(Agent fromActor, String toActorName) {
         this.fromActor = fromActor;
         this.toActorName = toActorName;
         listeners = new ArrayList<>();
@@ -77,11 +77,11 @@ public class RoutingWorker implements Runnable {
      * @param actor the actor we're currently routing from
      * @param route the currently accumulated routing queue
      */
-    private void route(Actor actor, RoutingQueue route) {
+    private void route(Agent actor, RoutingQueue route) {
         
         // For each actor connected to our originator.
-        final List<Actor> connections = actor.getConnectedActors();
-        for (Actor current : connections) {
+        final List<Agent> connections = actor.getConnectedActors();
+        for (Agent current : connections) {
             
             // An optimal route will never take us through the same node twice.
             if (route.hasActor(current)) {

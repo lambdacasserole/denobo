@@ -1,6 +1,6 @@
 package denobo.centralcommand.designer.dialogs;
 
-import denobo.Actor;
+import denobo.Agent;
 import denobo.centralcommand.designer.AgentDisplayable;
 import denobo.centralcommand.designer.AgentLink;
 import denobo.centralcommand.designer.NetworkDesigner;
@@ -269,7 +269,7 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         
         
         // List of local agents connected
-        for (Actor currentActorConnected : agentModel.getAgent().getConnectedActors()) {
+        for (Agent currentActorConnected : agentModel.getAgent().getConnectedActors()) {
             for (AgentDisplayable currentAgentDisplayble : allLocalAgents) {
                 if (currentAgentDisplayble.getAgent() == currentActorConnected) {
                     localListModel.addElement(currentAgentDisplayble);

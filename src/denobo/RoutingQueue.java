@@ -28,7 +28,7 @@ public class RoutingQueue {
      * 
      * @param originatingActor  the originating actor
      */
-    public RoutingQueue(Actor originatingActor) {
+    public RoutingQueue(Agent originatingActor) {
         this();
         enqueueActor(originatingActor);
     }
@@ -56,7 +56,7 @@ public class RoutingQueue {
      * 
      * @param actor the actor to enqueue
      */
-    public final void enqueueActor(Actor actor) {
+    public final void enqueueActor(Agent actor) {
         actorList.add(actor.getName());
     }
     
@@ -80,7 +80,7 @@ public class RoutingQueue {
      * @param actor the actor to check for
      * @return      true if the actor is in the queue, otherwise false
      */
-    public boolean hasActor(Actor actor) {
+    public boolean hasActor(Agent actor) {
         return actorList.contains(actor.getName());
     }
     
