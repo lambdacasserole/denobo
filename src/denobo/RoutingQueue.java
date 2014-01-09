@@ -93,6 +93,24 @@ public class RoutingQueue {
         return actorList.size();
     }
     
+    /**
+     * Returns the actor name at the start of the routing queue.
+     * 
+     * @return  the actor name at the start of the routing queue
+     */
+    public String peekStart() {
+        return actorList.get(0);
+    }
+    
+    /**
+     * Returns the actor name at the end of the routing queue.
+     * 
+     * @return  the actor name at the end of the routing queue
+     */
+    public String peekEnd() {
+        return actorList.get(actorList.size() - 1);
+    }
+    
     @Override
     public String toString() {
         

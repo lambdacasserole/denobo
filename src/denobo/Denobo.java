@@ -4,7 +4,7 @@ package denobo;
  *
  * @author Saul Johnson
  */
-public class Denobo implements RoutingWorkerListener {
+public class Denobo implements RoutingWorkerListener, MessageHandler {
  
     public void run() {
         
@@ -24,11 +24,10 @@ public class Denobo implements RoutingWorkerListener {
         
         Agent f = new Agent("F");
         e.connectActor(f);
+        f.addMessageHandler(this);
         
-        
-        RoutingWorker w = new RoutingWorker(a, "F");
-        w.addRoutingWorkerListener(this);
-        w.mapRouteAsync();
+        a.sendMessage("F", "Hi F!");
+        a.sendMessage("F", "Hi again F!");
         
     }
     
@@ -44,6 +43,16 @@ public class Denobo implements RoutingWorkerListener {
         
         System.out.println(routeW.toString());
         
+    }
+
+    @Override
+    public void messageIntercepted(Agent agent, Message message) {
+        
+    }
+
+    @Override
+    public void messageRecieved(Agent agent, Message message) {
+        System.out.println(message.getData());
     }
     
 }

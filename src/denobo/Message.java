@@ -14,14 +14,19 @@ public class Message {
     private final String id;
 
     /**
-     * The names of the recipient Actors.
+     * The name of the recipient Actor.
      */
-    private final String[] recipients;
+    private final String recipient;
     
     /**
      * The name of the originating Actor.
      */
-    private final String from;
+    private final String originator;
+    
+    /**
+     * The route this message should take to reach its destination Actor.
+     */
+    private final RoutingQueue route;
     
     /**
      * The Message data.
@@ -29,70 +34,40 @@ public class Message {
     private final String data;
     
     /**
-     * The type of Message wrapper this instance represents, if any.
-     */
-    protected MessageWrapperType wrapperType;
-    
-    /**
      * Initialises a new instance of a Message.
      * 
      * @param id            the unique identifier for the new Message
-     * @param from          the name of the originating Actor
-     * @param recipients    the names of the recipient Actors
+     * @param route         the route this message should take to reach its 
+     *                      destination Actor
      * @param data          the Message data
      */
-    public Message(String id, String from, String[] recipients, String data) {
+    public Message(String id, RoutingQueue route, String data) {
         this.id = id;
-        this.recipients = recipients;
-        this.from = from;
+        this.route = route;
+        this.recipient = route.peekEnd();
+        this.originator = route.peekStart();
         this.data = data;
-        this.wrapperType = MessageWrapperType.RAW;
     }
      
     /**
      * Initialises a new instance of a Message.
      * 
-     * @param from          the name of the originating Actor
-     * @param recipients    the names of the recipient Actors
+     * @param route         the route this message should take to reach its 
+     *                      destination Actor
      * @param data          the Message data
      */
-    public Message(String from, String[] recipients, String data) {
-        this(UniqueIdFactory.getId(), from, recipients, data);
-    }
-    
-    /**
-     * Initialises a new instance of a Message.
-     * 
-     * @param id            the unique identifier for the new Message
-     * @param from          the name of the originating Actor
-     * @param recipient     the name of the recipient Actor
-     * @param data          the message data
-     */
-    public Message(String id, String from, String recipient, String data) {
-        this(id, from, new String[] {recipient}, data);
-    }
-    
-    /**
-     * Initialises a new instance of a Message.
-     * 
-     * @param from          the name of the originating Actor
-     * @param recipient     the name of the recipient Actor
-     * @param data          the Message data
-     */
-    public Message(String from, String recipient, String data) {
-        this(from, new String[] {recipient}, data);
+    public Message(RoutingQueue route, String data) {
+        this(UniqueIdFactory.getId(), route, data);
     }
     
     /**
      * Initialises a new instance of a Message that is a clone of the given
      * Message.
      * 
-     * @param message       the Message instance to clone.
+     * @param message   the Message instance to clone.
      */
     public Message(Message message) {
-        // TODO: This doesn't copy the wrapperType. Every message cloned will be
-        // of type RAW. Decide on if we want this behaviour.
-        this(message.getId(), message.getFrom(), message.getRecipients(), message.getData());
+        this(message.getId(), message.getRoute(), message.getData());
     }
 
     /* ---------- */
@@ -111,22 +86,8 @@ public class Message {
      * 
      * @return  the names of the recipient Actors
      */
-    public final String[] getRecipients() {
-        return recipients;
-    }
-    
-    /**
-     * Gets whether or not the given Actor is listed as a recipient for this 
-     * Message.
-     * 
-     * @param actor the Actor to check
-     * @return      true if the specified Actor is a recipient, otherwise false
-     */
-    public final boolean hasRecipient(Actor actor) {
-        for (String currentRecipient : recipients) {
-            if (actor.getName().equals(currentRecipient)) { return true; }
-        }
-        return false;
+    public final String getRecipient() {
+        return recipient;
     }
     
     /**
@@ -134,8 +95,8 @@ public class Message {
      * 
      * @return  the name of the originating Actor
      */
-    public final String getFrom() {
-        return from;
+    public final String getOriginator() {
+        return originator;
     }
 
     /**
@@ -148,12 +109,23 @@ public class Message {
     }
     
     /**
-     * Gets the type of Message wrapper this instance represents, if any.
+     * Gets the route this message should take to reach its destination Actor.
      * 
-     * @return  the type of Message wrapper this instance represents, if any
+     * @return  the route this message should take to reach its destination 
+     *          Actor
      */
-    public final MessageWrapperType getWrapperType() {
-        return wrapperType;
+    public final RoutingQueue getRoute() {
+        return route;
+    }
+    
+    /**
+     * Polls the next actor name from the routing queue associated with this
+     * message and returns it.
+     * 
+     * @return  the next actor name from the routing queue
+     */
+    public String getNextActorName() {
+        return route.pollActorName();
     }
     
 }

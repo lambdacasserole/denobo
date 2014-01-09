@@ -70,38 +70,13 @@ public class Agent extends Actor {
         handlers.remove(Objects.requireNonNull(handler, "The message handler to remove is null"));
     }
 
-    /**
-     * Sends a {@link Message} from this {@link Agent} to another.
-     *
-     * @param to the name of the recipient {@link Agent}
-     * @param message the message to send
-     */
-    public void sendMessage(String to, String message) {
-
-        // TODO: Validation
-        
-        final Message propagatingMessage = new Message(getName(), to, message);
-
-        // Put message into history to prevent backwards propagation.
-        messageHistory.update(propagatingMessage.getId());
- 
-        /* 
-         * We could put the message in the message queue but if the queue is
-         * busy, it could be a while before the message gets propogated so we
-         * just deal with it now. 
-         */
-        handleMessage(propagatingMessage);
-        
-    }
-
     @Override
     protected boolean shouldHandleMessage(Message message) {
 
         // Remember, this method will always be executed in a single thread.
         
         /* 
-         * Reject messages that have previously passed through this node 
-         * previously. 
+         * Reject messages that have passed through this node previously. 
          */
         if (messageHistory.hasMessage(message)) {
 
@@ -139,14 +114,14 @@ public class Agent extends Actor {
          * Pass message to each handler if the message has this Agent in the
          * receipients. 
          */
-        if (message.hasRecipient(this)) {
+        if (message.getRecipient().equals(this.getName())) {
             for (MessageHandler handler : handlers) {
                 handler.messageRecieved(this, message);
             }
         }
 
         // Broadcast to peers.
-        broadcastMessage(message);
+        forwardMessage(message);
         
     }
 }

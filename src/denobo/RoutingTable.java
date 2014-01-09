@@ -60,12 +60,14 @@ public class RoutingTable {
     
     /**
      * Gets the route to an actor.
+     * <p>
+     * This method returns a clone of a master route instance.
      * 
      * @param actorName the name of the actor to get the route to
      * @return          the route to the actor
      */
     public RoutingQueue getRoute(String actorName) {
-        return table.get(actorName);
+        return new RoutingQueue(table.get(actorName));
     }
     
 }

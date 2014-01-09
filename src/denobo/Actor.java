@@ -1,6 +1,8 @@
 package denobo;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -15,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public abstract class Actor {
+public abstract class Actor implements RoutingWorkerListener {
 
     /**
      * A list of Actor instances connected to this one.
@@ -27,6 +29,16 @@ public abstract class Actor {
      */
     private final BlockingQueue<Message> messageQueue;
 
+    /**
+     * Contains messages ready for dispatching that are awaiting routing.
+     */
+    private final HashMap<String, List<String>> dispatchMap;
+    
+    /**
+     * Contains the names of Actors whose routes are currently being calculated.
+     */
+    private final List<String> awaitingRoutingList;
+    
     /**
      * The message processing thread that underlies this Actor.
      */
@@ -63,6 +75,11 @@ public abstract class Actor {
      */
     private final Object shutdownLock;
     
+    /**
+     * The routing table for this Actor.
+     */
+    private final RoutingTable routingTable;
+    
     
     /* ---------- */
     
@@ -85,6 +102,10 @@ public abstract class Actor {
         // Only construct the thread pool if cloneable.
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
 
+        dispatchMap = new HashMap<>();
+        awaitingRoutingList = new ArrayList<>();
+        routingTable = new RoutingTable();
+        
         // Start message processing.
         queueProcessThread();
 
@@ -374,51 +395,158 @@ public abstract class Actor {
         connectedActors.clear();
         
     }
-    
+
     /**
-     * Sends a message to every Actor connected to this Actor.
-     *
-     * @param message   The Message object to broadcast
+     * Takes a recipient name/message data pair and stores it while it awaits
+     * calculation of a route to the recipient.
+     * 
+     * @param recipientName the name of the recipient Actor
+     * @param data          the data to attach to the message
      */
-    protected void broadcastMessage(Message message) {
+    private void awaitRouting(String recipientName, String data) {
         
-        /*
-         * Check if the Message is wrapped in an ActorMessage wrapper. This 
-         * wrapper holds which agent we received the Message from originally so 
-         * we can avoid broadcasting it back to them. 
-         */
-        if (message.getWrapperType() == MessageWrapperType.ACTOR_MESSAGE) {
+        List<String> messageList;
+        if (!dispatchMap.containsKey(recipientName)) {
+            messageList = new ArrayList<>();
+            dispatchMap.put(recipientName, messageList);
+        } else {
+            messageList = dispatchMap.get(recipientName);
+        }
+        
+        messageList.add(data);
+        
+    }
+        
+    /**
+     * Forwards a message to the next actor along its route.
+     * <p>
+     * If this actor is the intended recipient of the message, it will be queued
+     * for processing, and not forwarded any further.
+     * 
+     * @param message   the Message object to forward
+     */
+    protected void forwardMessage(Message message) {
+     
+        // Are we this message's intended recipient?
+        if (message.getRecipient().equals(getName())) {
             
-            final ActorMessage actorMessage = (ActorMessage) message;
-            
-            /*
-             * Unwrap the wrapper to get to the raw Message instance then create
-             * a wrapper with us set as the sender. This is more efficent than
-             * wrapping another wrapper around a wrapper haha.
-             */
-            message = new ActorMessage(this, actorMessage.getRawMessage());
-            
-            /*
-             * Broadcast message to all peers except the peer we received it 
-             * from.
-             */
-            for (Actor actor : connectedActors) {
-                if (actor != actorMessage.getReceivedFrom()) {
-                    actor.queueMessage(message);
-                }
-            }
+            // If so, queue it for processing.
+            queueMessage(message);
             
         } else {
             
-            /*
-             * The message is unwrapped and so originated from this Actor. We'll 
-             * wrap it in a ActorMessage with us set as the sender and broadcast
-             * to all peers.
-             */
-            message = new ActorMessage(this, message);
-            for (Actor actor : connectedActors) {
-                actor.queueMessage(message);
+            // Otherwise, forward to next actor in route.
+            final String nextRecipient = message.getNextActorName();
+            for (Actor current : connectedActors) {
+                if (current.getName().equals(nextRecipient)) {
+                    current.forwardMessage(message);
+                }
             }
+        
+        }
+        
+    }
+    
+    /**
+     * Originates a message from this actor along the route stored in its
+     * routing table for the recipient.
+     * <p>
+     * If the routing table has no entry to the recipient, an exception will
+     * be thrown.
+     * 
+     * @param recipientName the name of the recipient Actor
+     * @param data          the data to attach to the message
+     * @return              true if message sending was successful, otherwise
+     *                      false
+     */
+    private boolean originate(String recipientName, String data) {
+        
+        // No routing entry, failure.
+        if (!routingTable.hasRoute(recipientName)) {
+            return false;
+        }
+        
+        // Create message, attach routing queue.
+        final Message message = new Message(routingTable.getRoute(recipientName), data);    
+            
+        // The first entry in the routing queue is this agent. Discard this entry.
+        message.getNextActorName();
+
+        // Foward the message on.
+        forwardMessage(message);
+
+        // Message sent, success.
+        return true;
+        
+    }
+    
+    /**
+     * Sends a message from this Actor to another.
+     * 
+     * @param recipientName the name of the recipient Actor
+     * @param data          the data to attach to the message
+     */
+    public void sendMessage(String recipientName, String data) {
+        
+        // If we can't send the message right away because a route is missing.
+        if (!originate(recipientName, data)) {
+            
+            /*
+             * We need to route first, then send the message when the routing 
+             * worker calls back.
+             */
+            System.out.println("Awaiting routing to actor [" + recipientName + "]...");
+            awaitRouting(recipientName, data);
+            calculateRoute(recipientName);
+            
+        }
+        
+    }
+    
+    /**
+     * Calculates the route to the agent with the specified name. When complete,
+     * calls back on the {@link #routeCalculated} method.
+     * 
+     * @param agentName the name of the agent to route to
+     */
+    public void calculateRoute(String agentName) {
+        
+        // If we're already waiting on a route to this agent. don't start trying
+        // to calculate it again.
+        if (!awaitingRoutingList.contains(agentName)) {
+            awaitingRoutingList.add(agentName);
+            final RoutingWorker worker = new RoutingWorker(this, agentName);
+            worker.addRoutingWorkerListener(this);
+            worker.mapRouteAsync();
+        }
+        
+    }
+    
+    @Override
+    public void routeCalculated(String destinationActorName, RoutingQueue route) {
+    
+        System.out.println("Routing to actor [" + destinationActorName + "] complete:");
+        System.out.println(route.toString()); 
+        
+        // Remove from awaiting list.
+        awaitingRoutingList.remove(destinationActorName);
+        
+        // Add to routing table.
+        routingTable.addRoute(destinationActorName, route);
+        
+        // Any messages waiting for this route are now free to be sent.
+        if (dispatchMap.containsKey(destinationActorName)) {
+            
+            // Get all waiting messages.
+            final List<String> waitingMessages = dispatchMap.get(destinationActorName);
+            
+            System.out.println("Found " + waitingMessages.size() + " messages waiting.");
+            
+            // Send all waiting messages.
+            for (String current : waitingMessages) {
+                originate(destinationActorName, current);
+            }
+            dispatchMap.remove(destinationActorName);
             
         }
         
