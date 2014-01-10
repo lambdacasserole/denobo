@@ -19,8 +19,8 @@ import javax.swing.JTabbedPane;
 public class MainWindow extends DenoboWindow implements ActionListener {
         
     private final JTabbedPane tabHolder;
-    private final JMenuItem huffmanCodingItem;
     private final JMenuItem networkDesignerItem;
+    private final JMenuItem shutdownItem;
     
     /**
      * Initialises the program main window.
@@ -43,16 +43,13 @@ public class MainWindow extends DenoboWindow implements ActionListener {
         final JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         
-        final JMenu testMenu = new JMenu("Test");
-        menuBar.add(testMenu);
-        
-        huffmanCodingItem = new JMenuItem("Huffman Coding...");
-        huffmanCodingItem.addActionListener(this);
-        testMenu.add(huffmanCodingItem);
-        
-        networkDesignerItem = new JMenuItem("Network Designer");
+        networkDesignerItem = new JMenuItem("New Network Design");
         networkDesignerItem.addActionListener(this);
-        testMenu.add(networkDesignerItem);
+        fileMenu.add(networkDesignerItem);
+        
+        shutdownItem = new JMenuItem("Exit");
+        shutdownItem.addActionListener(this);
+        fileMenu.add(shutdownItem);
         
         this.pack();
         
@@ -61,8 +58,8 @@ public class MainWindow extends DenoboWindow implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         
-        if (e.getSource() == huffmanCodingItem) {
-            tabHolder.addTab("Huffman Coding [" + HuffmanTestTab.nextTabNumber() + "]", new HuffmanTestTab());
+        if (e.getSource() == shutdownItem) {
+            System.exit(0);
         } else if (e.getSource() == networkDesignerItem) {
             tabHolder.addTab("Network Design [" + NetworkDesignTab.nextTabNumber() + "]", new NetworkDesignTab());
         }

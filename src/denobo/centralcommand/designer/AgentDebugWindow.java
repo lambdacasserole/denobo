@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
 /**
@@ -47,8 +48,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      */
     private final JTextArea messageSendArea;
     /**
-     * Instances of a table that will display the messages that are sent and
-     * received.
+     * Instances of a table that will display the messages that are sent and received.
      */
     private final JTable messageTable;
     /**
@@ -56,39 +56,34 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      */
     private final DebugAgentTableModel messageTableModel;
 
+    /**
+     * Initialise a new instance AgentDebugWindow.
+     * @param agentModel the Initial agentModel
+     */
     public AgentDebugWindow(Agent agentModel) {
         super();
         this.agentModel = agentModel;
 
         agentModel.addMessageHandler(this);
 
-
-
         this.setLayout(new BorderLayout());
-        this.setTitle(agentModel.getName() + " Debug Window");
+        this.setTitle("Debug Window [" + agentModel.getName() + "]") ;
         messageTableModel = new DebugAgentTableModel();
         messageTable = new JTable(messageTableModel);
-        messageTable.setFillsViewportHeight(false);
-
-        JPanel northPanel = new JPanel();
-        JPanel centerPanel = new JPanel();
-        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        messageTable.setFillsViewportHeight(true);
+        
+        JPanel southPanel = new JPanel();
         JPanel firstRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JPanel secondRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JPanel boxSouthPanel = new JPanel();
-        BoxLayout boxLayout = new BoxLayout(boxSouthPanel, BoxLayout.Y_AXIS);
-        boxSouthPanel.setLayout(boxLayout);
+        boxSouthPanel.setLayout(new BoxLayout(boxSouthPanel, BoxLayout.Y_AXIS));
 
         this.setAlwaysOnTop(true);
-        this.add(northPanel, BorderLayout.NORTH);
-        this.add(centerPanel, BorderLayout.CENTER);
         this.add(southPanel, BorderLayout.SOUTH);
-
-
+        
         final JScrollPane messageTableScrollPane = new JScrollPane(messageTable);
-        centerPanel.add(messageTableScrollPane);
-
-
+        this.add(messageTableScrollPane, BorderLayout.CENTER);
+        
         agentSendArea = new JTextArea(1, 10);
         agentSendArea.setBorder(BorderFactory.createLineBorder(Color.black));
         firstRowPanel.add(agentSendArea);
@@ -105,7 +100,10 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
 
         messageSendArea = new JTextArea(3, 40);
         messageSendArea.setBorder(BorderFactory.createLineBorder(Color.black));
-        secondRowPanel.add(messageSendArea);
+        messageSendArea.setLineWrap(true);
+        final JScrollPane messageBoxScrollPane = new JScrollPane(messageSendArea);
+        messageBoxScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        secondRowPanel.add(messageBoxScrollPane);
 
         boxSouthPanel.add(secondRowPanel);
 

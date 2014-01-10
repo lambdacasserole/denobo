@@ -4,12 +4,14 @@ import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.DenoboConnection;
 import denobo.Agent;
 import denobo.Message;
+import denobo.RoutingWorkerListener;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -33,6 +35,13 @@ public class SocketAgent extends Agent {
      * this SocketAgent.
      */
     private final List<SocketAgentObserver> observers;
+    
+    /**
+     * A map of RoutingWorkerListener instances that we notify if we find a 
+     * remote route to a destination.
+     */
+    // TODO: We can't be having this being public
+    public final HashMap<String, List<RoutingWorkerListener>> remoteDestinationFoundCallbacks;
 
     /**
      * The DenoboConnectionObserver that will observe each DenoboConnection that
@@ -109,6 +118,7 @@ public class SocketAgent extends Agent {
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
         observers = new CopyOnWriteArrayList<>();
         connectionObserver = new SocketAgentDenoboConnectionObserver();
+        remoteDestinationFoundCallbacks = new HashMap<String, List<RoutingWorkerListener>>();
         
     }
     
@@ -474,6 +484,22 @@ public class SocketAgent extends Agent {
         
         // Superclass shutdown code can now execute.
         super.shutdown();
+        
+    }
+    
+    /**
+     * Searches a route to a remote agent.
+     * 
+     * @param destinationAgentName  the name of the agent to route to
+     * @param listeners             the listeners to notify if a route is found
+     */
+    public void routeToRemote(String destinationAgentName, List<RoutingWorkerListener> listeners) {
+        
+        remoteDestinationFoundCallbacks.put(destinationAgentName, listeners);
+        
+        for (DenoboConnection currentConnection : connections) {
+            currentConnection.routeToRemote(destinationAgentName);
+        }
         
     }
 

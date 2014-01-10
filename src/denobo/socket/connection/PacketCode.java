@@ -24,6 +24,9 @@ public enum PacketCode {
     
     PROPAGATE           (300),
     POKE                (301),
+    ROUTE_TO            (302),
+    ROUTE_FOUND         (303),
+    ROUTE_NOT_FOUND     (304),
     
     NO                  (400),
     TOO_MANY_PEERS      (401),

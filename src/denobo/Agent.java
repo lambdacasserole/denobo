@@ -502,7 +502,7 @@ public class Agent implements RoutingWorkerListener {
     
     /**
      * Calculates the route to the agent with the specified name. When complete,
-     * calls back on the {@link #routeCalculated} method.
+     * calls back on the {@link #routeCalculationSucceeded} method.
      * 
      * @param agentName the name of the agent to route to
      */
@@ -522,7 +522,7 @@ public class Agent implements RoutingWorkerListener {
     }
     
     @Override
-    public void routeCalculated(String destinationAgentName, RoutingQueue route) {
+    public void routeCalculationSucceeded(String destinationAgentName, RoutingQueue route) {
     
         System.out.println("Routing to Agent [" + destinationAgentName + "] complete:");
         System.out.println(route.toString()); 
@@ -548,6 +548,13 @@ public class Agent implements RoutingWorkerListener {
             dispatchMap.remove(destinationAgentName);
             
         }
+        
+    }
+    
+    @Override
+    public void routeCalculationFailed(String destinationAgentName) {
+        
+        // We don't need to worry about this in this class
         
     }
 

@@ -1,5 +1,6 @@
 package denobo;
 
+import denobo.socket.SocketAgent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,11 @@ public class RoutingWorker implements Runnable {
     private List<RoutingQueue> routes;
     
     /**
+     * Any found SocketAgents we come across.
+     */
+    private List<SocketAgent> foundSocketAgents;
+    
+    /**
      * The actor from which the routing algorithm will start.
      */
     private final Agent fromActor;
@@ -29,6 +35,7 @@ public class RoutingWorker implements Runnable {
      * The name of the actor that the routing algorithm is seeking.
      */
     private final String toActorName;
+    
     
     /**
      * The listening observers that will be notified when optimal route
@@ -79,10 +86,18 @@ public class RoutingWorker implements Runnable {
      */
     private void route(Agent actor, RoutingQueue route) {
         
+        /*
+         * Remember any SocketAgents we might need to ask if we cannot find a
+         * local route.
+         */ 
+        if (actor instanceof SocketAgent) {
+            foundSocketAgents.add((SocketAgent) actor);
+        }
+
         // For each actor connected to our originator.
         final List<Agent> connections = actor.getConnectedAgents();
         for (Agent current : connections) {
-            
+
             // An optimal route will never take us through the same node twice.
             if (route.hasActor(current)) {
                 continue;
@@ -123,9 +138,18 @@ public class RoutingWorker implements Runnable {
             }
         }
         
-        // Notify listeners that route calculation is complete.
-        for (RoutingWorkerListener current : listeners) {
-            current.routeCalculated(toActorName, shortestRoute);
+        // Notify listeners that route calculation is complete if we found a local
+        // route.
+        if (shortestRoute != null) {
+            for (RoutingWorkerListener current : listeners) {
+                current.routeCalculationSucceeded(toActorName, shortestRoute);
+            }
+        } else {
+            // We didn't find a local route so we'll ask any found SocketAgent's
+            // to contact their connections and search for it.
+            for (SocketAgent current : foundSocketAgents) {
+                current.routeToRemote(toActorName, listeners);
+            }
         }
         
     }

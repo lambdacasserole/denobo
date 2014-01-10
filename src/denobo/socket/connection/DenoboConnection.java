@@ -403,8 +403,7 @@ public class DenoboConnection {
             packetSerializer.writePacket(connectionWriter, packet);
         } catch (IOException ex) {
             // TODO: Handle exception.
-            System.out.println(ex.getMessage());
-            
+            System.out.println(ex.getMessage());        
         }
         
     }
@@ -459,6 +458,10 @@ public class DenoboConnection {
             // Return how long the process took
             return (System.currentTimeMillis() - startTime);
         }
+    }
+    
+    public void routeToRemote(String destinationAgentName) {
+        send(new Packet(PacketCode.ROUTE_TO, destinationAgentName));
     }
     
     public List<DenoboConnectionObserver> getObservers() {
