@@ -2,7 +2,7 @@ package denobo.centralcommand.designer.dialogs;
 
 import denobo.socket.connection.ConnectionCredentialsHandler;
 import denobo.socket.connection.DenoboConnection;
-import denobo.socket.connection.DenoboConnectionCredentials;
+import denobo.socket.connection.Credentials;
 import java.awt.BorderLayout;
 import java.awt.Dialog;
 import java.awt.FlowLayout;
@@ -26,7 +26,7 @@ public class CredentialsPromptDialog implements ConnectionCredentialsHandler {
     private final JPasswordField passwordField;
     private final JButton okButton;
     
-    private DenoboConnectionCredentials credentialsToReturn;
+    private Credentials credentialsToReturn;
     
     public CredentialsPromptDialog() {
         
@@ -41,8 +41,9 @@ public class CredentialsPromptDialog implements ConnectionCredentialsHandler {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                credentialsToReturn = 
-                        new DenoboConnectionCredentials(String.valueOf(passwordField.getPassword()));
+                // TODO: Broken password.
+                //credentialsToReturn = 
+                  //      new DenoboConnectionCredentials(String.valueOf(passwordField.getPassword()));
 
                 dialog.dispose();
             }
@@ -67,7 +68,7 @@ public class CredentialsPromptDialog implements ConnectionCredentialsHandler {
     
     
     @Override
-    public DenoboConnectionCredentials credentialsRequested(DenoboConnection connection) {
+    public Credentials credentialsRequested(DenoboConnection connection) {
  
         credentialsToReturn = null;
         

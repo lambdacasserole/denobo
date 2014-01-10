@@ -366,7 +366,8 @@ public class CreateAgentDialog {
             final SocketAgentConfiguration agentConfig = new SocketAgentConfiguration();
             
             agentConfig.maximumConnections = Integer.parseInt(maxConnectionsField.getText());
-            agentConfig.password = String.valueOf(passwordField.getPassword());
+            // TODO: Broken password.
+            //agentConfig.password = String.valueOf(passwordField.getPassword());
             agentConfig.credentialsHandler = new CredentialsPromptDialog();
             
             final SocketAgent newSocketAgent = new SocketAgent(agentNameField.getText(), cloneableCheckBox.isSelected(), agentConfig);

@@ -1,8 +1,11 @@
 package denobo.socket.connection;
 
 import denobo.Message;
-import denobo.MessageSerializer;
 import denobo.socket.SocketAgent;
+import denobo.socket.connection.state.DenoboConnectionState;
+import denobo.socket.connection.state.InitiateGreetingState;
+import denobo.socket.connection.state.TooManyPeersState;
+import denobo.socket.connection.state.WaitForGreetingState;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -10,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StreamCorruptedException;
 import java.net.Socket;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
@@ -120,8 +124,9 @@ public class DenoboConnection {
     private boolean pokeReturned;
 
     
+    /* ---------- */
     
-
+    
     /**
      * Creates a {@link DenoboConnection} that will handle receiving data from a socket.
      *
@@ -136,34 +141,31 @@ public class DenoboConnection {
         this.connection = connection;
         this.observers = new CopyOnWriteArrayList<>();
         this.pokeLock = new Object();
-        //this.compressor = new DummyCompressor();
      
-        
         switch (initialState) {
-            
             case WAIT_FOR_GREETING:
                 
-                state = new WaitForGreetingState();
+                state = new WaitForGreetingState(this);
                 break;
                 
             case INITIATE_GREETING:
                 
-                state = new InitiateGreetingState();
+                state = new InitiateGreetingState(this);
                 break;
                 
             case TOO_MANY_PEERS:
                 
-                state = new TooManyPeersState();
+                state = new TooManyPeersState(this);
                 break;
                 
             default:
                 
-                System.out.println("Unknown initial state");
-            
+                System.out.println("Initial state is invalid.");
+                break;
         }
 
         
-        // PacketSerializer to be used for message serialization and packet I/O.
+        // Serialization to be used for message serialization and packet I/O.
         packetSerializer = new DenoboPacketSerializer();
         
         // Get I/O streams.
@@ -172,13 +174,6 @@ public class DenoboConnection {
 
         state.handleConnectionEstablished();
         
-    }
-
-    @Override
-    public String toString() {
-        return getLocalAddress() + ":" + getLocalPort() 
-                + " ----> "
-                + getRemoteAddress() + ":" + getRemotePort();
     }
     
     /**
@@ -247,6 +242,10 @@ public class DenoboConnection {
         return connection.getInetAddress().getHostAddress();
     }
 
+    public void setState(DenoboConnectionState state) {
+        this.state = state;
+    }
+    
     /**
      * Starts waiting to receive data through this connection.
      */
@@ -395,16 +394,15 @@ public class DenoboConnection {
     
     /**
      * Sends a packet over this connection.
+     * 
      * @param packet    the packet to send
      */
-    protected void send(Packet packet) {
+    public void send(Packet packet) {
 
         try {
-
             packetSerializer.writePacket(connectionWriter, packet);
-            
         } catch (IOException ex) {
-
+            // TODO: Handle exception.
             System.out.println(ex.getMessage());
             
         }
@@ -463,354 +461,19 @@ public class DenoboConnection {
         }
     }
     
-    ////////////////////////////////////////////////////////////////////////////
-    
-    /**
-     * Represents a state that a DenoboConnection can be in.
-     *
-     * @author Alex Mullen
-     */
-    public abstract class DenoboConnectionState {
-    
-        /**
-         * Handles the moments after the connection has been established and
-         * communication can begin.
-         * 
-         */
-        public void handleConnectionEstablished() {
-
-        }
-
-        /**
-         * Handles a received packet from a connection.
-         * 
-         * @param packet the packet that was received
-         */
-        public void handleReceivedPacket(Packet packet) {
-
-        }
-
-        /**
-         * Handles a request to send a message to this connected peer. 
-         * <p>
-         * It is useful to override this to prevent messages been sent until 
-         * authentication has occurred.
-         * 
-         * @param message the message to send
-         */
-        public void handleSendMessage(Message message) {
-
-            send(new Packet(PacketCode.PROPAGATE, MessageSerializer.serialize(message)));
-
-        }
-        
+    public List<DenoboConnectionObserver> getObservers() {
+        return Collections.unmodifiableList(observers);
     }
     
-    ////////////////////////////////////////////////////////////////////////////
-        
-    /**
-     * This represents the state a connection in when a peer has connected to us 
-     * but them connecting to us has resulting in us exceeding our maximum peer limit so
-     * we'll gracefully accept their connection request and tell them that we we've
-     * reached the peer limit.
-     *
-     * @author Alex Mullen
-     */
-    public class TooManyPeersState extends DenoboConnectionState {
-
-        @Override
-        public void handleConnectionEstablished() {
-
-            send(new Packet(PacketCode.TOO_MANY_PEERS));
-            disconnect();
-            
-        }
+    public SocketAgent getParentAgent() {
+        return parentAgent;
     }
     
-    ////////////////////////////////////////////////////////////////////////////
-    
-    /**
-     * This represents the state a connection is in when we have have initialized a
-     * connection to another peer. 
-     * <p>
-     * It is our responsibility to send a GREETINGS packet to them to initiate 
-     * a session.
-     *
-     * @author Alex Mullen
-     */
-    public class InitiateGreetingState extends DenoboConnectionState {
-
-        @Override
-        public void handleConnectionEstablished() {
-
-            System.out.println("sending a GREETINGS packet to " + getRemoteAddress()
-                                + ":" + getRemotePort());
-
-            send(new Packet(PacketCode.GREETINGS));
-            
-        }
-
-        @Override
-        public void handleSendMessage(Message message) {
-
-            // Don't send messages to this peer until authentication has been performed
-
-        }
-
-        @Override
-        public void handleReceivedPacket(Packet packet) {
-
-            // Process packet according to status code.
-            switch(packet.getCode()) {
-
-                case ACCEPTED:
-
-                    System.out.println(getRemoteAddress()
-                        + ":" + getRemotePort() + " has accepted our "
-                            + "GREETINGS request");
-
-                    state = new AuthenticatedState();
-                    break;
-
-                case CREDENTIALS_PLZ:
-
-                    System.out.println(getRemoteAddress()
-                        + ":" + getRemotePort() + " is asking for credentials...");
-                    
-                    
-                    // Ask/retrieve the credentials to use
-                    final DenoboConnectionCredentials credentials = 
-                            parentAgent.getConfiguration().credentialsHandler.credentialsRequested(DenoboConnection.this);
-                    
-                    if (credentials == null) {
-                        send(new Packet(PacketCode.NO_CREDENTIALS));
-                        disconnect();
-                    } else {
-                        send(new Packet(PacketCode.CREDENTIALS, credentials.getPassword()));                    
-                        state = new AwaitingAuthenticationState();
-                    }
-                    
-                    break;
-
-
-                    /*
-                     * All these mean we need to disconnect anyway so just let them
-                     * fall through to the default.
-                     */
-
-                case TOO_MANY_PEERS:  
-
-                    System.out.println(getRemoteAddress()
-                        + ":" + getRemotePort() + " has declined our connection"
-                            + " request because it has reached its peer limit.");
-                    break;
-
-                case NO:
-                    
-                case NOT_A_SERVER:
-                    
-                default:
-
-                    // TODO: Bad status code that we weren't expecting.
-                    disconnect();
-                    
-            }
-            
-        }
-        
+    @Override
+    public String toString() {
+        return getLocalAddress() + ":" + getLocalPort() 
+                + " ----> "
+                + getRemoteAddress() + ":" + getRemotePort();
     }
-    
-    ////////////////////////////////////////////////////////////////////////////
-    
-    /**
-     * This represents the state a connection is in when the other end of the
-     * connection initiated the connection. 
-     * <p>
-     * This side of the connection needs to wait for a GREETINGS packet from the 
-     * other end before a session is allowed.
-     *
-     * @author Alex Mullen
-     */
-    public class WaitForGreetingState extends DenoboConnectionState {
-
-        @Override
-        public void handleSendMessage(Message message) {
-
-            // Don't send messages to this peer until authentication has been performed
-
-        }
-
-        @Override
-        public void handleReceivedPacket(Packet packet) {
-
-            // Process packet according to status code.
-            switch(packet.getCode()) {
-
-                case GREETINGS:
-                    System.out.println(getRemoteAddress()
-                        + ":" + getRemotePort() + " has sent us a GREETINGS packet");
-                    
-                    String password = parentAgent.getConfiguration().password;
-                    if ((password != null) && (!password.isEmpty())) {
-                        send(new Packet(PacketCode.CREDENTIALS_PLZ));
-                        state = new WaitingForCredentialsState();
-                    } else {
-                        send(new Packet(PacketCode.ACCEPTED));
-                        state = new AuthenticatedState();
-                    }
-                    break;
-
-                default:
-
-                    // TODO: Bad status code that we weren't expecting.
-                    disconnect();
-                    
-            }
-        }
-    }
-    
-    ////////////////////////////////////////////////////////////////////////////
-    
-    /**
-     * This represents the state a connection is in when the other end of the
-     * connection initiated the connection and we need some valid credentials
-     * before we will let them proceed any further.
-     * 
-     * @author Alex Mullen
-     */
-    public class WaitingForCredentialsState extends DenoboConnectionState {
-        
-        @Override
-        public void handleSendMessage(Message message) {
-            
-            // Don't send messages to this peer until authentication has been performed
-            
-        }
-
-        @Override
-        public void handleReceivedPacket(Packet packet) {
-            
-            switch (packet.getCode()) {
-                
-                case CREDENTIALS:
-
-                    // Check password
-                    if (packet.getBody().equals(parentAgent.getConfiguration().password)) {
-                        send(new Packet(PacketCode.ACCEPTED));
-                        state = new AuthenticatedState();
-                    } else {
-                        send(new Packet(PacketCode.BAD_CREDENTIALS));
-                        disconnect();
-                    }
-                    break;
-                
-                default:
-                    
-                    // TODO: Bad status code that we weren't expecting.
-                    disconnect();
-                    
-            }
-            
-        }
-        
-    }
-    
-    ////////////////////////////////////////////////////////////////////////////
-    
-    /**
-     * This represents the state where the peer who initiated the connection has
-     * submitted some credentials as a reply to a CREDENTIALS_PLZ packet and is
-     * waiting for authentication.
-     * 
-     * @author Alex Mullen
-     */
-    public class AwaitingAuthenticationState extends DenoboConnectionState {
-        
-        @Override
-        public void handleSendMessage(Message message) {
-            
-            // Don't send messages to this peer until authentication has been performed
-            
-        }
-
-        @Override
-        public void handleReceivedPacket(Packet packet) {
-            
-            switch (packet.getCode()) {
-                
-                case ACCEPTED:
-                    
-                    System.out.println("the credentials we sent were accepted");
-                    state = new AuthenticatedState();
-                    break;
-                    
-                    /*
-                     * All these mean we need to disconnect anyway so just let them
-                     * fall through to the default.
-                     */
-                    
-                case BAD_CREDENTIALS:
-                    
-                    System.out.println("we sent some bad credentials");
-                    
-                case NO:
-
-                default:
-                    
-                    disconnect();
-                
-            }
-
-        }      
-
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    
-    /**
-     * This represents the state of a connection has completed the hand-shake.
-     *
-     * @author Alex Mullen
-     */
-    public class AuthenticatedState extends DenoboConnectionState {
-
-        /**
-         * Creates a new AuthenticatedState instance then notifies the outer
-         * DenoboConnection's observers that this connection has passed
-         * authentication.
-         */
-        public AuthenticatedState() {
-            
-            for (DenoboConnectionObserver currentObserver : observers) {
-                currentObserver.connectionAuthenticated(DenoboConnection.this);
-            }
-                    
-        }
-        
-        
-        @Override
-        public void handleReceivedPacket(Packet packet) {
-
-            // Process packet according to status code.
-            switch(packet.getCode()) {
-
-                case PROPAGATE:
-
-                    final Message deserializedMessage = MessageSerializer.deserialize(packet.getBody());
-                    for (DenoboConnectionObserver currentObserver : observers) {
-                        currentObserver.messageReceived(DenoboConnection.this, deserializedMessage); 
-                    }
-                    break;
-
-                default:
-
-                    // TODO: Bad status code that we weren't expecting.
-                    disconnect();
-                    
-            }
-        }
-    }    
-    
-    ////////////////////////////////////////////////////////////////////////////
 
 }

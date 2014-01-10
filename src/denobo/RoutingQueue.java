@@ -15,12 +15,18 @@ public class RoutingQueue {
      * The list of visited actors in chronological order.
      */
     private List<String> actorList;
+
+    /**
+     * The index from which to poll actors.
+     */
+    private int pollIndex;
     
     /**
      * Initialises a new instance of a routing queue.
      */
     public RoutingQueue() {
         actorList = new ArrayList<>();
+        pollIndex = 0;
     }
     
     /**
@@ -66,12 +72,7 @@ public class RoutingQueue {
      * @return  an actor name retrieved on a first-in-first-out basis
      */
     public String pollActorName() {
-        
-        final String value = actorList.get(0);
-        actorList.remove(0);
-        
-        return value;
-        
+        return actorList.get(++pollIndex);
     }
 
     /**
@@ -114,11 +115,9 @@ public class RoutingQueue {
     @Override
     public String toString() {
         
-        final RoutingQueue printQueue = new RoutingQueue(this);
-       
         final StringBuilder sb = new StringBuilder();
-        while (printQueue.getSize() > 0) {
-            sb.append(printQueue.pollActorName()).append(" -> \r\n");
+        for (String current : actorList) {
+            sb.append(current).append(" -> \r\n");
         }
         sb.append("[End of Route]");
         

@@ -19,6 +19,6 @@ public interface ConnectionCredentialsHandler {
      *                      credentials to use, or null can be returned if the
      *                      implementation wishes to refuse to give credentials
      */
-    public DenoboConnectionCredentials credentialsRequested(DenoboConnection connection);
+    public Credentials credentialsRequested(DenoboConnection connection);
     
 }

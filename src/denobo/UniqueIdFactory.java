@@ -16,12 +16,7 @@ public class UniqueIdFactory {
      * Holds the incremental ID used to calculate each unique hash.
      */
     private static int incrementalId = 0;
-    
-    /**
-     * Holds a hash set of used ID strings to ensure no duplicates are dispensed.
-     */
-    //private static final HashSet<String> usedStrings = new HashSet<>();
-    
+        
     /**
      * Gets a SHA256 hash of the given string.
      * 
@@ -63,11 +58,6 @@ public class UniqueIdFactory {
     }
     
     public static String getId() {
-        //String buffer = getRandomId();
-        //while(usedStrings.contains(buffer)) {
-            //buffer = getRandomId();
-        //}
-        //usedStrings.add(buffer);
         return getRandomId();
     }
         

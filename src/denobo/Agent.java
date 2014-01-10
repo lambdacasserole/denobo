@@ -86,6 +86,7 @@ public class Agent implements RoutingWorkerListener {
      */
     private final List<MessageHandler> handlers;
     
+    
     /* ---------- */
     
     
@@ -100,14 +101,15 @@ public class Agent implements RoutingWorkerListener {
         this.name = Objects.requireNonNull(name, "The name of the Agent cannot"
                 + " be null.");
         this.cloneable = cloneable;
-
-        messageQueue = new LinkedBlockingQueue<>();
-        connectedAgents = new CopyOnWriteArrayList<>();
+        
         shutdownLock = new Object();
 
         // Only construct the thread pool if cloneable.
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
-
+        
+        // Initialise lists, maps and queues.
+        messageQueue = new LinkedBlockingQueue<>();
+        connectedAgents = new CopyOnWriteArrayList<>();
         dispatchMap = new HashMap<>();
         awaitingRoutingList = new ArrayList<>();
         routingTable = new RoutingTable();
@@ -129,6 +131,7 @@ public class Agent implements RoutingWorkerListener {
     
     
     /* ---------- */
+    
     
     /**
      * Adds a {@link MessageHandler} to listen for messages passed to this
@@ -437,41 +440,10 @@ public class Agent implements RoutingWorkerListener {
         } else {
             messageList = dispatchMap.get(recipientName);
         }
-        
         messageList.add(data);
         
     }
-        
-    /**
-     * Forwards a message to the next Agent along its route.
-     * <p>
-     * If this Agent is the intended recipient of the message, it will be queued
-     * for processing, and not forwarded any further.
-     * 
-     * @param message   the Message object to forward
-     */
-    protected void forwardMessage(Message message) {
-     
-        // Are we this message's intended recipient?
-        if (message.getRecipient().equals(getName())) {
-            
-            // If so, queue it for processing.
-            queueMessage(message);
-            
-        } else {
-            
-            // Otherwise, forward to next Agent in route.
-            final String nextRecipient = message.getNextAgentName();
-            for (Agent current : connectedAgents) {
-                if (current.getName().equals(nextRecipient)) {
-                    current.forwardMessage(message);
-                }
-            }
-        
-        }
-        
-    }
-    
+
     /**
      * Originates a message from this Agent along the route stored in its
      * routing table for the recipient.
@@ -536,8 +508,10 @@ public class Agent implements RoutingWorkerListener {
      */
     public void calculateRoute(String agentName) {
         
-        // If we're already waiting on a route to this agent. don't start trying
-        // to calculate it again.
+        /* 
+         * If we're already waiting on a route to this agent. don't start trying
+         * to calculate it again.
+         */
         if (!awaitingRoutingList.contains(agentName)) {
             awaitingRoutingList.add(agentName);
             final RoutingWorker worker = new RoutingWorker(this, agentName);
@@ -610,8 +584,13 @@ public class Agent implements RoutingWorkerListener {
             }
         } else {
             
-            // Otherwise, forward it on.
-            forwardMessage(message);
+            // Otherwise, forward to next Agent in route.
+            final String nextRecipient = message.getNextAgentName();
+            for (Agent current : connectedAgents) {
+                if (current.getName().equals(nextRecipient)) {
+                    current.queueMessage(message);
+                }
+            }
             
         }
         
