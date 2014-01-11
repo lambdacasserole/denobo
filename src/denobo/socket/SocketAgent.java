@@ -4,6 +4,7 @@ import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.DenoboConnection;
 import denobo.Agent;
 import denobo.Message;
+import denobo.Route;
 import denobo.RoutingWorkerListener;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -488,21 +489,43 @@ public class SocketAgent extends Agent {
     }
     
     /**
-     * Searches a route to a remote agent.
+     * Searches for a route to a remote agent.
      * 
      * @param destinationAgentName  the name of the agent to route to
+     * @param localRoute            the local route taken to reach this
+     *                              SocketAgent instance
      * @param listeners             the listeners to notify if a route is found
      */
-    public void routeToRemote(String destinationAgentName, List<RoutingWorkerListener> listeners) {
+    public void routeToRemote(String destinationAgentName, Route localRoute, List<RoutingWorkerListener> listeners) {
         
         remoteDestinationFoundCallbacks.put(destinationAgentName, listeners);
-        
         for (DenoboConnection currentConnection : connections) {
-            currentConnection.routeToRemote(destinationAgentName);
+            currentConnection.routeToRemote(destinationAgentName, localRoute);
         }
         
     }
 
+    @Override
+    public boolean handleMessage(Message message) {
+        
+        // Store the name of the next agent.
+        final String nextAgentName = message.getRoute().peek();
+        
+        // Handle the case that the agent is local.
+        if (super.handleMessage(message)) { return true; } 
+        
+        // Handle the case that the agent is remote.
+        for (DenoboConnection currentConnection : connections) {
+            if (currentConnection.getRemoteAgentName().equals(nextAgentName)) {
+                currentConnection.send(message);
+                return true;
+            }
+        }
+        
+        return false;
+        
+    }
+    
     /**
      * Anonymous class that a SocketAgent creates to observe all 
      * {@link DenoboConnection} instances that are connected.

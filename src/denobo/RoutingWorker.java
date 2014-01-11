@@ -19,12 +19,13 @@ public class RoutingWorker implements Runnable {
     /**
      * The routing queues returned by the algorithm.
      */
-    private List<RoutingQueue> routes;
+    private List<Route> routes;
     
     /**
      * Any found SocketAgents we come across.
      */
     private List<SocketAgent> foundSocketAgents;
+    private List<Route> socketAgentRoutes;
     
     /**
      * The actor from which the routing algorithm will start.
@@ -36,12 +37,13 @@ public class RoutingWorker implements Runnable {
      */
     private final String toActorName;
     
-    
     /**
      * The listening observers that will be notified when optimal route
      * calculation is complete.
      */
     private final List<RoutingWorkerListener> listeners;
+    
+    private final Route initialRoutingQueue;
     
     /**
      * Initialises a new instance of a routing worker.
@@ -50,10 +52,15 @@ public class RoutingWorker implements Runnable {
      * @param toActorName   the name of the destination actor
      */
     public RoutingWorker(Agent fromActor, String toActorName) {
+        this(fromActor, toActorName, new Route());
+    }
+    
+    public RoutingWorker(Agent fromActor, String toActorName, Route initialRoutingQueue) {
         this.fromActor = fromActor;
         this.toActorName = toActorName;
+        this.initialRoutingQueue = initialRoutingQueue;
+        
         listeners = new ArrayList<>();
-    
     }
     
     /**
@@ -84,7 +91,7 @@ public class RoutingWorker implements Runnable {
      * @param actor the actor we're currently routing from
      * @param route the currently accumulated routing queue
      */
-    private void route(Agent actor, RoutingQueue route) {
+    private void route(Agent actor, Route route) {
         
         /*
          * Remember any SocketAgents we might need to ask if we cannot find a
@@ -92,6 +99,7 @@ public class RoutingWorker implements Runnable {
          */ 
         if (actor instanceof SocketAgent) {
             foundSocketAgents.add((SocketAgent) actor);
+            socketAgentRoutes.add(route);
         }
 
         // For each actor connected to our originator.
@@ -99,13 +107,13 @@ public class RoutingWorker implements Runnable {
         for (Agent current : connections) {
 
             // An optimal route will never take us through the same node twice.
-            if (route.hasActor(current)) {
+            if (route.has(current)) {
                 continue;
             }
             
             // Clone route, append this actor.
-            final RoutingQueue newQueue = new RoutingQueue(route);
-            newQueue.enqueueActor(current);
+            final Route newQueue = new Route(route);
+            newQueue.append(current);
             
             // If this actor is our destination, put our route into the array.
             if (current.getName().equals(toActorName)) {
@@ -126,14 +134,18 @@ public class RoutingWorker implements Runnable {
         
         // Initialise our array of routes.
         routes = new ArrayList<>();
+        foundSocketAgents = new ArrayList<>();
+        socketAgentRoutes = new ArrayList<>();
         
         // Recursively map routes to destination.
-        route(fromActor, new RoutingQueue(fromActor));
+        final Route queue = new Route(initialRoutingQueue);
+        queue.append(fromActor);
+        route(fromActor, queue);
         
         // Get shortest route from all possible routes.        
-        RoutingQueue shortestRoute = null;
-        for (RoutingQueue current : routes) {
-            if (shortestRoute == null || shortestRoute.getSize() > current.getSize()) {
+        Route shortestRoute = null;
+        for (Route current : routes) {
+            if (shortestRoute == null || shortestRoute.size() > current.size()) {
                 shortestRoute = current;
             }
         }
@@ -147,8 +159,8 @@ public class RoutingWorker implements Runnable {
         } else {
             // We didn't find a local route so we'll ask any found SocketAgent's
             // to contact their connections and search for it.
-            for (SocketAgent current : foundSocketAgents) {
-                current.routeToRemote(toActorName, listeners);
+            for (int i = 0; i < foundSocketAgents.size(); i++) {
+                foundSocketAgents.get(i).routeToRemote(toActorName, socketAgentRoutes.get(i), listeners);
             }
         }
         

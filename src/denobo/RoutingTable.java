@@ -13,7 +13,7 @@ public class RoutingTable {
     /**
      * The map of actors names to routes.
      */
-    private final HashMap<String, RoutingQueue> table;
+    private final HashMap<String, Route> table;
     
     /**
      * Initialises a new instance of a routing table.
@@ -40,14 +40,14 @@ public class RoutingTable {
      * @param actorName the name of the destination actor
      * @param queue     the routing queue that represents the route to the actor 
      */
-    public void addRoute(String actorName, RoutingQueue queue) {
+    public void addRoute(String actorName, Route queue) {
         
         /* 
          * Remove any previous, less efficient routes or stop right now if the
          * proposed new route is less efficient
          */ 
         if (hasRoute(actorName)) {
-            if (table.get(actorName).getSize() <= queue.getSize()) {
+            if (table.get(actorName).size() <= queue.size()) {
                 return;
             } else {
                 table.remove(actorName);
@@ -66,8 +66,8 @@ public class RoutingTable {
      * @param actorName the name of the actor to get the route to
      * @return          the route to the actor
      */
-    public RoutingQueue getRoute(String actorName) {
-        return new RoutingQueue(table.get(actorName));
+    public Route getRoute(String actorName) {
+        return new Route(table.get(actorName));
     }
     
 }

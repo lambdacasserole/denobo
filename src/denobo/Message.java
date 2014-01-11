@@ -26,12 +26,16 @@ public class Message {
     /**
      * The route this message should take to reach its destination Actor.
      */
-    private final RoutingQueue route;
+    private final Route route;
     
     /**
      * The Message data.
      */
     private final String data;
+    
+    
+    /* ---------- */
+    
     
     /**
      * Initialises a new instance of a Message.
@@ -41,11 +45,11 @@ public class Message {
      *                      destination Actor
      * @param data          the Message data
      */
-    public Message(String id, RoutingQueue route, String data) {
+    public Message(String id, Route route, String data) {
         this.id = id;
         this.route = route;
-        this.recipient = route.peekEnd();
-        this.originator = route.peekStart();
+        this.recipient = route.last();
+        this.originator = route.first();
         this.data = data;
     }
      
@@ -56,7 +60,7 @@ public class Message {
      *                      destination Actor
      * @param data          the Message data
      */
-    public Message(RoutingQueue route, String data) {
+    public Message(Route route, String data) {
         this(UniqueIdFactory.getId(), route, data);
     }
     
@@ -70,7 +74,9 @@ public class Message {
         this(message.getId(), message.getRoute(), message.getData());
     }
 
+    
     /* ---------- */
+    
     
     /**
      * Gets the unique identifier for this Message.
@@ -114,18 +120,8 @@ public class Message {
      * @return  the route this message should take to reach its destination 
      *          Actor
      */
-    public final RoutingQueue getRoute() {
+    public final Route getRoute() {
         return route;
-    }
-    
-    /**
-     * Polls the next actor name from the routing queue associated with this
-     * message and returns it.
-     * 
-     * @return  the next actor name from the routing queue
-     */
-    public String getNextAgentName() {
-        return route.pollActorName();
     }
     
 }

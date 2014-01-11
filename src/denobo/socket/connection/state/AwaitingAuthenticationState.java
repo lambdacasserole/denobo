@@ -38,6 +38,8 @@ public class AwaitingAuthenticationState extends DenoboConnectionState {
            case ACCEPTED:
 
                System.out.println("The credentials we sent were accepted.");
+               
+               connection.setRemoteAgentName(packet.getBody());
                connection.setState(new AuthenticatedState(connection));
                break;
 

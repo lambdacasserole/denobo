@@ -15,6 +15,8 @@ public class QueryString {
     public QueryString(String string) {
         
         Objects.requireNonNull(string, "Query string cannot be null.");
+       
+        map = new HashMap<>();
         
         // Parse query string.
         final String[] entries = string.split("&");

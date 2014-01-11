@@ -39,17 +39,28 @@ public class WaitForGreetingState extends DenoboConnectionState {
             case GREETINGS:
                 
                 System.out.println(connection.getRemoteAddress()
-                    + ":" + connection.getRemotePort() + " has sent us a GREETINGS packet");
-                
-                Credentials masterCredentials = connection.getParentAgent() 
+                        + ":" + connection.getRemotePort() 
+                        + " has sent us a 100 (GREETINGS) packet.");
+                          
+                /* 
+                 * The 100 (GREETINGS) packet contains the name of the agent 
+                 * connecting.
+                 */
+                connection.setRemoteAgentName(packet.getBody());
+                    
+                final Credentials masterCredentials = connection.getParentAgent() 
                        .getConfiguration().getCredentialsHandler().credentialsRequested(connection);
                 
-                if (masterCredentials != null) {
+                if (masterCredentials == null) {
+                    
+                    connection.send(new Packet(PacketCode.ACCEPTED, connection.getParentAgent().getName()));
+                    connection.setState(new AuthenticatedState(connection));
+                    
+                } else {
+                    
                     connection.send(new Packet(PacketCode.CREDENTIALS_PLZ));
                     connection.setState(new WaitingForCredentialsState(connection));
-                } else {
-                    connection.send(new Packet(PacketCode.ACCEPTED));
-                    connection.setState(new AuthenticatedState(connection));
+                    
                 }
                 break;
 

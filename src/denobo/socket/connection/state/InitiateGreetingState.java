@@ -10,8 +10,8 @@ import denobo.socket.connection.PacketCode;
 * This represents the state a connection is in when we have have initialised a
 * connection to another peer. 
 * <p>
-* It is our responsibility to send a GREETINGS packet to them to initiate 
-* a session.
+* It is our responsibility to send a GREETINGS packet to them to initiate  a 
+* session.
 *
 * @author Alex Mullen
 */
@@ -24,9 +24,12 @@ public class InitiateGreetingState extends DenoboConnectionState {
     @Override
     public void handleConnectionEstablished() {
 
-       System.out.println("Sending a 100 (GREETINGS) packet to " + connection.getRemoteAddress()
-                           + ":" + connection.getRemotePort());
-       connection.send(new Packet(PacketCode.GREETINGS));
+       System.out.println("Sending a 100 (GREETINGS) packet to - ["
+               + connection.getRemoteAddress() + ":" 
+               + connection.getRemotePort() + "]");
+       
+       connection.send(new Packet(PacketCode.GREETINGS, 
+               connection.getParentAgent().getName()));
 
    }
 
@@ -48,8 +51,14 @@ public class InitiateGreetingState extends DenoboConnectionState {
 
                 System.out.println(connection.getRemoteAddress()
                         + ":" + connection.getRemotePort() + " has accepted our "
-                        + "GREETINGS request");
-
+                        + "GREETINGS request.");
+                
+                /* 
+                 * The 101 (ACCEPTED) packet contains the name of the agent 
+                 * we connected to.
+                 */
+                connection.setRemoteAgentName(packet.getBody());
+                
                 connection.setState(new AuthenticatedState(connection));
                 break;
 
@@ -57,7 +66,6 @@ public class InitiateGreetingState extends DenoboConnectionState {
 
                 System.out.println(connection.getRemoteAddress()
                     + ":" + connection.getRemotePort() + " is asking for credentials...");
-
 
                 // Ask/retrieve the credentials to use
                 final Credentials credentials = 
@@ -73,7 +81,6 @@ public class InitiateGreetingState extends DenoboConnectionState {
 
                 break;
 
-
                 /*
                  * All these mean we need to disconnect anyway so just let them
                  * fall through to the default.
@@ -82,7 +89,7 @@ public class InitiateGreetingState extends DenoboConnectionState {
             case TOO_MANY_PEERS:  
 
                 System.out.println(connection.getRemoteAddress()
-                    + ":" + connection.getRemotePort() + " has declined our connection"
+                        + ":" + connection.getRemotePort() + " has declined our connection"
                         + " request because it has reached its peer limit.");
                 break;
 

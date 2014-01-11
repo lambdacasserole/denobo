@@ -1,6 +1,8 @@
 package denobo.socket.connection;
 
 import denobo.Message;
+import denobo.QueryString;
+import denobo.Route;
 import denobo.socket.SocketAgent;
 import denobo.socket.connection.state.DenoboConnectionState;
 import denobo.socket.connection.state.InitiateGreetingState;
@@ -19,15 +21,23 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Represents a bidirectional communication line between two {@link SocketAgent} objects.
+ * Represents a bidirectional communication line between two {@link SocketAgent} 
+ * instances.
  * 
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DenoboConnection {
+
+    public String getRemoteAgentName() {
+        return remoteAgentName;
+    }
+
+    public void setRemoteAgentName(String remoteAgentName) {
+        this.remoteAgentName = remoteAgentName;
+    }
     
     /**
-     * An enum of initial states a {@link DenoboConnection} can initially
-     * be in.
+     * An enum of initial states a {@link DenoboConnection} can initially be in.
      */
     public enum InitialState {
         
@@ -49,8 +59,11 @@ public class DenoboConnection {
          * to gracefully tell them and close the connection.
          */
         TOO_MANY_PEERS
+        
     }
 
+    private String remoteAgentName;
+    
     /**
      * Holds the {@Link Socket} used to send and receive data.
      */
@@ -242,6 +255,11 @@ public class DenoboConnection {
         return connection.getInetAddress().getHostAddress();
     }
 
+    /**
+     * Sets the state of this connection.
+     * 
+     * @param state the new state of the connection
+     */
     public void setState(DenoboConnectionState state) {
         this.state = state;
     }
@@ -460,8 +478,18 @@ public class DenoboConnection {
         }
     }
     
-    public void routeToRemote(String destinationAgentName) {
-        send(new Packet(PacketCode.ROUTE_TO, destinationAgentName));
+    public void routeToRemote(String destinationAgentName, Route localRoute) {
+        
+        /* 
+         * Pass the destination agent name and the route we have so far to the
+         * remote agent.
+         */
+        final QueryString query = new QueryString();
+        query.add("to", destinationAgentName);
+        query.add("localroute", localRoute.serialize());
+        
+        send(new Packet(PacketCode.ROUTE_TO, query.toString()));
+        
     }
     
     public List<DenoboConnectionObserver> getObservers() {

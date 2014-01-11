@@ -39,7 +39,7 @@ public class Denobo implements RoutingWorkerListener, MessageHandler {
     }
 
     @Override
-    public void routeCalculationSucceeded(String destinationAgentName, RoutingQueue routeW) {
+    public void routeCalculationSucceeded(String destinationAgentName, Route routeW) {
         
         System.out.println(routeW.toString());
         

@@ -467,7 +467,7 @@ public class Agent implements RoutingWorkerListener {
         final Message message = new Message(routingTable.getRoute(recipientName), data);    
             
         // The first entry in the routing queue is this agent. Discard this entry.
-        message.getNextAgentName();
+        message.getRoute().next();
 
         // Queue the message here for processing.
         messageQueue.add(message);
@@ -522,7 +522,7 @@ public class Agent implements RoutingWorkerListener {
     }
     
     @Override
-    public void routeCalculationSucceeded(String destinationAgentName, RoutingQueue route) {
+    public void routeCalculationSucceeded(String destinationAgentName, Route route) {
     
         System.out.println("Routing to Agent [" + destinationAgentName + "] complete:");
         System.out.println(route.toString()); 
@@ -565,13 +565,17 @@ public class Agent implements RoutingWorkerListener {
      * could be running this method if this Agent is cloneable.
      *
      * @param message   the message to handle
+     * @return          true if the message was handled, otherwise false
      */
-    protected void handleMessage(Message message) {
+    protected boolean handleMessage(Message message) {
 
         /* 
          * If we are cloneable, this method will possibly be executing in
          * multiple threads.
          */
+        
+        // Handled flag.
+        boolean wasHandled = false;
         
         /* 
          * Let any handlers know of the message received even though it may
@@ -589,17 +593,21 @@ public class Agent implements RoutingWorkerListener {
             for (MessageHandler handler : handlers) {
                 handler.messageRecieved(this, message);
             }
+            wasHandled = true;
         } else {
             
             // Otherwise, forward to next Agent in route.
-            final String nextRecipient = message.getNextAgentName();
+            final String nextRecipient = message.getRoute().next();
             for (Agent current : connectedAgents) {
                 if (current.getName().equals(nextRecipient)) {
                     current.queueMessage(message);
+                    wasHandled = true;
                 }
             }
             
         }
+        
+        return wasHandled;
         
     }
 
