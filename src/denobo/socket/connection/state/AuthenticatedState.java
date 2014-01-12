@@ -7,14 +7,16 @@ import denobo.QueryString;
 import denobo.Route;
 import denobo.RoutingWorker;
 import denobo.RoutingWorkerListener;
-import denobo.TheUndertaker;
+import denobo.Undertaker;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This represents the state of a connection has completed the hand-shake.
@@ -123,15 +125,20 @@ public class AuthenticatedState extends DenoboConnectionState {
                 final String agent2Name = queryString.get("agent2");
                 
                 final String combinedVisitedAgents = queryString.get("visitedagents");
-                final ArrayList<String> visitedAgentsNames = new ArrayList<>();
-                final String[] splitVisitedAgents = combinedVisitedAgents.split(";");
-                visitedAgentsNames.addAll(Arrays.asList(splitVisitedAgents));
-            
-                    
+                
+                final Set<String> visitedAgentsNames = new HashSet<>();
+                
+                
+                // Check if there was no previously visited agents
+                if (combinedVisitedAgents != null) {
+                    final String[] splitVisitedAgents = combinedVisitedAgents.split(";");
+                    visitedAgentsNames.addAll(Arrays.asList(splitVisitedAgents));                 
+                }
+                
                 final ArrayList<Agent> branches = new ArrayList<>(1);
                 branches.add(connection.getParentAgent());
 
-                final TheUndertaker undertaker = new TheUndertaker(branches, agent1Name, agent2Name, visitedAgentsNames);
+                final Undertaker undertaker = new Undertaker(branches, agent1Name, agent2Name, visitedAgentsNames);
                 undertaker.undertakeAsync();
                 break;
                 

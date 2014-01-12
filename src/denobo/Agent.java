@@ -245,7 +245,7 @@ public class Agent implements RoutingWorkerListener {
         branches.add(this);
         branches.add(agent);
         
-        final TheUndertaker undertaker = new TheUndertaker(branches, this.getName(), agent.getName());
+        final Undertaker undertaker = new Undertaker(branches, this.getName(), agent.getName());
         undertaker.undertakeAsync();
         
         return wasRemoved;

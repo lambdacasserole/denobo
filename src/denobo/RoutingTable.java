@@ -59,22 +59,33 @@ public class RoutingTable {
         
     }
     
+    /**
+     * Removes any route that contains the specified agent name in it's path.
+     * 
+     * @param agentName the name of the agent
+     */
     public void invalidateAgent(String agentName) {
 
+        // Remove any routes that are a destination to the given agent
         table.remove(agentName);
 
+        /*
+         * Go through each Route entry and if any route has the given agent name
+         * in its path then remove that route.
+         */
         final Iterator<Route> routeIterator = table.values().iterator();
         while (routeIterator.hasNext()) {
-            
             final Route currentRoute = routeIterator.next();
             if (currentRoute.has(agentName)) {
                 routeIterator.remove();
             }
-
         }
 
     }
     
+    /**
+     * Clears this routing table.
+     */
     public void clear() {
         table.clear();
     }
@@ -94,7 +105,7 @@ public class RoutingTable {
     @Override
     public String toString() {
         
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         
         for (Route currentRoute : table.values()) {
             sb.append(currentRoute.toString()).append("\n\n");

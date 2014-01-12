@@ -94,19 +94,31 @@ public class Route {
      * @return  the name of the next actor in the route
      */
     public String peek() {
+        
+        if (position == route.size()) {
+            return null;
+        }
+        
         return route.get(position);
+        
     }
 
     /**
-     * Checks to see if this route already contains the specified actor.
+     * Checks to see if this route already contains the specified agent instance.
      *
-     * @param actor the actor to check for
-     * @return      true if the actor is in the route, otherwise false
+     * @param agent the agent instance to check for
+     * @return      true if the agent is in the route, otherwise false
      */
-    public boolean has(Agent actor) {
-        return route.contains(actor.getName());
+    public boolean has(Agent agent) {
+        return route.contains(agent.getName());
     }
     
+    /**
+     * Checks to see if this route already contains the specified agent name.
+     *
+     * @param agentName the name of the agent to check for
+     * @return          true if the agent is in the route, otherwise false
+     */
     public boolean has(String agentName) {
         return route.contains(agentName);
     }
@@ -162,9 +174,9 @@ public class Route {
     }
     
     /**
-     * Deserialises a route out of a string and returns it.
+     * Deserializes a route out of a string and returns it.
      * 
-     * @param string    the string from which to deserialise the route
+     * @param string    the string from which to deserialize the route
      * @return          a route instance
      */
     public static Route deserialize(String string) {

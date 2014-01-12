@@ -6,6 +6,7 @@ import denobo.Agent;
 import denobo.Message;
 import denobo.Route;
 import denobo.RoutingWorkerListener;
+import denobo.Undertaker;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -15,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
@@ -104,22 +106,13 @@ public class SocketAgent extends Agent {
         
         super(name, cloneable);
         
-        Objects.requireNonNull(configuration, "Configuration cannot be null.");
-        
-        // Check max connections.
-        final int maxConnections = configuration.maximumConnections;
-        if (maxConnections < 1) { 
-            throw new IllegalArgumentException("Maximum number of connections"
-                    + " cannot be less than 1.");
-        }
+        this.configuration = Objects.requireNonNull(configuration, "Configuration cannot be null.");
 
-        this.configuration = configuration;
-        
-        connectionsPermits = new Semaphore(maxConnections, false);
+        connectionsPermits = new Semaphore(configuration.maximumConnections, false);
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
         observers = new CopyOnWriteArrayList<>();
         connectionObserver = new SocketAgentDenoboConnectionObserver();
-        remoteDestinationFoundCallbacks = new HashMap<String, List<RoutingWorkerListener>>();
+        remoteDestinationFoundCallbacks = new HashMap<>();
         
     }
     
@@ -500,15 +493,46 @@ public class SocketAgent extends Agent {
         
         remoteDestinationFoundCallbacks.put(destinationAgentName, listeners);
         for (DenoboConnection currentConnection : connections) {
+            
+            /*
+             * Check to see if the current route has already passed through this
+             * connection in which case we don't need to and we shouldn't send
+             * a request to this connection otherwise a loop will occur.
+             */
+            if (localRoute.has(currentConnection.getRemoteAgentName())) { 
+                continue; 
+            }
+            
             currentConnection.routeToRemote(destinationAgentName, localRoute);
+            
         }
         
     }
     
-    public void invalidateRemote(String agent1, String agent2, List<String> visitedNodes) {
+    /**
+     * Tells any remote SocketAgents connected to invalidate any routing table
+     * entries containing the specified two agents.
+     * 
+     * @param agent1        the name of the first agent
+     * @param agent2        the name of the second agent
+     * @param visitedNodes  a set of Agent names that have already had their
+     *                      routing tables updated
+     */
+    public void invalidateRemote(String agent1, String agent2, Set<String> visitedNodes) {
         
         for (DenoboConnection currentConnection : connections) {
+            
+            /**
+             * Check to see if the current connection has already been visited
+             * by an undertaker in which case we don't need to and we shouldn't
+             * send a request to this connection otherwise a loop can occur.
+             */
+            if (visitedNodes.contains(currentConnection.getRemoteAgentName())) { 
+                continue; 
+            }
+            
             currentConnection.invalidateRemote(agent1, agent2, visitedNodes);
+            
         }
         
     }
@@ -556,7 +580,17 @@ public class SocketAgent extends Agent {
 
             // Remove connection.
             connections.remove(connection);
+            
+            // Spawn an undertaker to invalidate any routes that were using this
+            // connection
+            final ArrayList<Agent> branches = new ArrayList<>(1);
+            branches.add(SocketAgent.this);
+        
+            final Undertaker undertaker = new Undertaker(branches, 
+                    SocketAgent.this.getName(), connection.getRemoteAgentName());
+            undertaker.undertakeAsync();
 
+            
             // Notify any observers.
             for (SocketAgentObserver currentObserver : observers) {
                 currentObserver.connectionClosed(SocketAgent.this, connection);

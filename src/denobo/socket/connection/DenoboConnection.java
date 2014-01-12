@@ -17,6 +17,7 @@ import java.io.StreamCorruptedException;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
@@ -28,14 +29,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class DenoboConnection {
 
-    public String getRemoteAgentName() {
-        return remoteAgentName;
-    }
-
-    public void setRemoteAgentName(String remoteAgentName) {
-        this.remoteAgentName = remoteAgentName;
-    }
-    
     /**
      * An enum of initial states a {@link DenoboConnection} can initially be in.
      */
@@ -62,6 +55,12 @@ public class DenoboConnection {
         
     }
 
+    /**
+     * Holds the name of the remote SocketAgent on the other end of this
+     * connection.
+     * <p>
+     * This is only acquired after authentication.
+     */
     private String remoteAgentName;
     
     /**
@@ -115,8 +114,6 @@ public class DenoboConnection {
      * The current {@link DenoboConnectionState} of this DenoboConnection.
      */
     private volatile DenoboConnectionState state;
-    
-    //private Compressor compressor;
     
     /**
      * The lock object that we use for waiting for a poke reply and notifying
@@ -212,10 +209,30 @@ public class DenoboConnection {
     }
     
     /**
+     * Returns the parent SocketAgent instance that this DenoboConnection
+     * instance belongs to.
+     * 
+     * @return the SocketAgent instance
+     */
+    public SocketAgent getParentAgent() {
+        return parentAgent;
+    }
+    
+    /**
      * Removes all observers from this DenoboConnection.
      */
     public void removeObservers() {
         observers.clear();
+    }
+    
+    /**
+     * Returns a read-only view of all observers that are currently attached to
+     * this DenoboConnection instance.
+     * 
+     * @return the read-only list of DenoboConnectionObserver instances
+     */
+    public List<DenoboConnectionObserver> getObservers() {
+        return Collections.unmodifiableList(observers);
     }
     
     /**
@@ -255,6 +272,26 @@ public class DenoboConnection {
         return connection.getInetAddress().getHostAddress();
     }
 
+    /**
+     * Returns the name of the SocketAgent on the remote end of this connection.
+     * 
+     * @return  the name or null if authentication hasn't occurred for this
+     *          connection at the time of this call.
+     */
+    public String getRemoteAgentName() {
+        return remoteAgentName;
+    }
+
+    /**
+     * Sets the name of the SocketAgent on the remote end of this connection.
+     * 
+     * @param remoteAgentName the name
+     */
+    public void setRemoteAgentName(String remoteAgentName) {
+        this.remoteAgentName = remoteAgentName;
+    }
+    
+    
     /**
      * Sets the state of this connection.
      * 
@@ -478,6 +515,14 @@ public class DenoboConnection {
         }
     }
     
+    /**
+     * Sends a request to this remote agent to try and find a route to the specified
+     * agent.
+     * 
+     * @param destinationAgentName  the name of the agent to route to
+     * @param localRoute            the local route taken to reach this SocketAgent
+     *                              instance
+     */
     public void routeToRemote(String destinationAgentName, Route localRoute) {
         
         /* 
@@ -492,30 +537,33 @@ public class DenoboConnection {
         
     }
     
-    public void invalidateRemote(String agent1, String agent2, List<String> visitedNodes) {
+    /**
+     * Tells this remote agent to invalidate any routing table entries containing
+     * the specified two agents.
+     * 
+     * @param agent1        the name of the first agent
+     * @param agent2        the name of the second agent
+     * @param visitedNodes  a set of Agent names that have already had their
+     *                      routing tables updated
+     */
+    public void invalidateRemote(String agent1, String agent2, Set<String> visitedNodes) {
         
         final QueryString query = new QueryString();
         query.add("agent1", agent1);
         query.add("agent2", agent2);
-        
+
+        // Build a string of all visited agents seperated by a semi-colon
         final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < visitedNodes.size(); i++) {
-            sb.append(visitedNodes.get(i));
-            sb.append((i + 1 < visitedNodes.size()) ? ";" : "");
+        int i = 0;
+        for (String visitedNodeName : visitedNodes) {
+            sb.append(visitedNodeName);
+            sb.append((++i < visitedNodes.size()) ? ";" : "");
         }
-        
         query.add("visitedagents", sb.toString());
 
+        System.out.println(query.toString());
         send(new Packet(PacketCode.INVALIDATE_AGENTS, query.toString()));
         
-    }
-    
-    public List<DenoboConnectionObserver> getObservers() {
-        return Collections.unmodifiableList(observers);
-    }
-    
-    public SocketAgent getParentAgent() {
-        return parentAgent;
     }
     
     @Override

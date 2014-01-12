@@ -101,21 +101,21 @@ public class RoutingWorker implements Runnable {
     /**
      * Recursive function to map routes to the destination node.
      * 
-     * @param actor the actor we're currently routing from
+     * @param agent the agent we're currently routing from
      * @param route the currently accumulated routing queue
      */
-    private void route(Agent actor, Route route) {
+    private void route(Agent agent, Route route) {
         
         /*
          * Remember any SocketAgents we might need to check if we cannot find a
          * local route.
          */ 
-        if (actor instanceof SocketAgent) {
-            socketAgentRoutePairs.put((SocketAgent) actor, route);
+        if (agent instanceof SocketAgent) {
+            socketAgentRoutePairs.put((SocketAgent) agent, route);
         }
 
-        // For each actor connected to our originator.
-        final List<Agent> connections = actor.getConnectedAgents();
+        // For each agent connected to our originator.
+        final List<Agent> connections = agent.getConnectedAgents();
         for (Agent current : connections) {
 
             // An optimal route will never take us through the same node twice.
@@ -123,11 +123,11 @@ public class RoutingWorker implements Runnable {
                 continue;
             }
             
-            // Clone route, append this actor.
+            // Clone route, append this agent.
             final Route newQueue = new Route(route);
             newQueue.append(current);
             
-            // If this actor is our destination, put our route into the array.
+            // If this agent is our destination, put our route into the array.
             if (current.getName().equals(destination)) {
                 routes.add(newQueue);
             } else {
@@ -151,7 +151,12 @@ public class RoutingWorker implements Runnable {
         // Recursively map routes to destination.
         final Route queue = new Route(initialRoute);
         queue.append(origin);
-        route(origin, queue);
+        
+        if (origin.getName().equals(destination)) {
+            routes.add(queue);
+        } else {
+            route(origin, queue);
+        }
         
         // Get shortest route from all possible routes.        
         Route shortestRoute = null;
