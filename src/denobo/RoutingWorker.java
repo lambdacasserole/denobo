@@ -2,7 +2,9 @@ package denobo;
 
 import denobo.socket.SocketAgent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 /**
  * Represents a worker that will calculate the optimal route to an actor.
@@ -17,25 +19,27 @@ public class RoutingWorker implements Runnable {
     private Thread underlyingThread;
     
     /**
-     * The routing queues returned by the algorithm.
+     * The potential routes returned by the recursive algorithm.
      */
     private List<Route> routes;
     
     /**
-     * Any found SocketAgents we come across.
+     * Any SocketAgent instances encountered during the recursive crawl of the 
+     * local network along with routes to them from the origin.
+     * 
+     * @see #origin
      */
-    private List<SocketAgent> foundSocketAgents;
-    private List<Route> socketAgentRoutes;
+    private HashMap<SocketAgent, Route> socketAgentRoutePairs;
     
     /**
      * The actor from which the routing algorithm will start.
      */
-    private final Agent fromActor;
+    private final Agent origin;
     
     /**
      * The name of the actor that the routing algorithm is seeking.
      */
-    private final String toActorName;
+    private final String destination;
     
     /**
      * The listening observers that will be notified when optimal route
@@ -43,23 +47,32 @@ public class RoutingWorker implements Runnable {
      */
     private final List<RoutingWorkerListener> listeners;
     
-    private final Route initialRoutingQueue;
+    /**
+     * The existing route to append to.
+     */
+    private final Route initialRoute;
     
     /**
      * Initialises a new instance of a routing worker.
      * 
-     * @param fromActor     the actor from which this worker will start
-     * @param toActorName   the name of the destination actor
+     * @param origin        the actor from which this worker will start
+     * @param destination   the name of the destination actor
      */
-    public RoutingWorker(Agent fromActor, String toActorName) {
-        this(fromActor, toActorName, new Route());
+    public RoutingWorker(Agent origin, String destination) {
+        this(origin, destination, new Route());
     }
     
-    public RoutingWorker(Agent fromActor, String toActorName, Route initialRoutingQueue) {
-        this.fromActor = fromActor;
-        this.toActorName = toActorName;
-        this.initialRoutingQueue = initialRoutingQueue;
-        
+    /**
+     * Initialises a new instance of a routing worker.
+     *
+     * @param origin        the actor from which this worker will start
+     * @param destination   the name of the destination actor
+     * @param initialRoute  the existing route to append to
+     */
+    public RoutingWorker(Agent origin, String destination, Route initialRoute) {
+        this.origin = origin;
+        this.destination = destination;
+        this.initialRoute = initialRoute;
         listeners = new ArrayList<>();
     }
     
@@ -94,12 +107,11 @@ public class RoutingWorker implements Runnable {
     private void route(Agent actor, Route route) {
         
         /*
-         * Remember any SocketAgents we might need to ask if we cannot find a
+         * Remember any SocketAgents we might need to check if we cannot find a
          * local route.
          */ 
         if (actor instanceof SocketAgent) {
-            foundSocketAgents.add((SocketAgent) actor);
-            socketAgentRoutes.add(route);
+            socketAgentRoutePairs.put((SocketAgent) actor, route);
         }
 
         // For each actor connected to our originator.
@@ -116,7 +128,7 @@ public class RoutingWorker implements Runnable {
             newQueue.append(current);
             
             // If this actor is our destination, put our route into the array.
-            if (current.getName().equals(toActorName)) {
+            if (current.getName().equals(destination)) {
                 routes.add(newQueue);
             } else {
                 
@@ -134,13 +146,12 @@ public class RoutingWorker implements Runnable {
         
         // Initialise our array of routes.
         routes = new ArrayList<>();
-        foundSocketAgents = new ArrayList<>();
-        socketAgentRoutes = new ArrayList<>();
+        socketAgentRoutePairs = new HashMap<>();
         
         // Recursively map routes to destination.
-        final Route queue = new Route(initialRoutingQueue);
-        queue.append(fromActor);
-        route(fromActor, queue);
+        final Route queue = new Route(initialRoute);
+        queue.append(origin);
+        route(origin, queue);
         
         // Get shortest route from all possible routes.        
         Route shortestRoute = null;
@@ -150,18 +161,25 @@ public class RoutingWorker implements Runnable {
             }
         }
         
-        // Notify listeners that route calculation is complete if we found a local
-        // route.
+        /* 
+         * Notify listeners that route calculation is complete if we found a 
+         * local route.
+         */
         if (shortestRoute != null) {
             for (RoutingWorkerListener current : listeners) {
-                current.routeCalculationSucceeded(toActorName, shortestRoute);
+                current.routeCalculationSucceeded(destination, shortestRoute);
             }
         } else {
-            // We didn't find a local route so we'll ask any found SocketAgent's
-            // to contact their connections and search for it.
-            for (int i = 0; i < foundSocketAgents.size(); i++) {
-                foundSocketAgents.get(i).routeToRemote(toActorName, socketAgentRoutes.get(i), listeners);
+            
+            /* 
+             * We didn't find a local route so we'll check with any SocketAgent
+             * instances we encountered. We're now passing off the listeners to
+             * the SocketAgent. Routing is no longer our responsibility.
+             */
+            for (Entry<SocketAgent, Route> current : socketAgentRoutePairs.entrySet()) {
+               current.getKey().routeToRemote(destination, current.getValue(), listeners);
             }
+            
         }
         
     }
