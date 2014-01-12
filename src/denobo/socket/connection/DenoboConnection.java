@@ -492,6 +492,24 @@ public class DenoboConnection {
         
     }
     
+    public void invalidateRemote(String agent1, String agent2, List<String> visitedNodes) {
+        
+        final QueryString query = new QueryString();
+        query.add("agent1", agent1);
+        query.add("agent2", agent2);
+        
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < visitedNodes.size(); i++) {
+            sb.append(visitedNodes.get(i));
+            sb.append((i + 1 < visitedNodes.size()) ? ";" : "");
+        }
+        
+        query.add("visitedagents", sb.toString());
+
+        send(new Packet(PacketCode.INVALIDATE_AGENTS, query.toString()));
+        
+    }
+    
     public List<DenoboConnectionObserver> getObservers() {
         return Collections.unmodifiableList(observers);
     }

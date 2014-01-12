@@ -504,6 +504,14 @@ public class SocketAgent extends Agent {
         }
         
     }
+    
+    public void invalidateRemote(String agent1, String agent2, List<String> visitedNodes) {
+        
+        for (DenoboConnection currentConnection : connections) {
+            currentConnection.invalidateRemote(agent1, agent2, visitedNodes);
+        }
+        
+    }
 
     @Override
     public boolean handleMessage(Message message) {

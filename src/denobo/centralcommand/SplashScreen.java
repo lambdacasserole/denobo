@@ -2,13 +2,14 @@ package denobo.centralcommand;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Timer;
-import java.util.TimerTask;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.Timer;
 
 /**
  * Represents the program splash screen.
@@ -57,19 +58,24 @@ public class SplashScreen extends DenoboWindow {
         
         super.setVisible(b);
         if (b) {
-            final Timer timer = new Timer();
-            timer.schedule(new TimerTask() { 
+            
+            final Timer timer = new Timer(SPLASH_DELAY, new ActionListener() {
                 @Override
-                public void run() {
-                    
-                   // Show main window.
-                   final MainWindow mainWnd = new MainWindow();
-                   mainWnd.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                   mainWnd.setVisible(true);
-                   setVisible(false);
-                   
+                public void actionPerformed(ActionEvent ae) {
+                    // Show main window.
+                    final MainWindow mainWnd = new MainWindow();
+                    mainWnd.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    mainWnd.setVisible(true);
+                    setVisible(false);
                 }
-            }, SPLASH_DELAY);
+            });
+            
+            // We only want the timer to run once
+            timer.setRepeats(false);
+            
+            // Start the timer
+            timer.start();
+
         }
         
     }

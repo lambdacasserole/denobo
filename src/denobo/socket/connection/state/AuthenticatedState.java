@@ -1,15 +1,19 @@
 package denobo.socket.connection.state;
 
+import denobo.Agent;
 import denobo.Message;
 import denobo.MessageSerializer;
 import denobo.QueryString;
 import denobo.Route;
 import denobo.RoutingWorker;
 import denobo.RoutingWorkerListener;
+import denobo.TheUndertaker;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -109,7 +113,27 @@ public class AuthenticatedState extends DenoboConnectionState {
                 for (RoutingWorkerListener currentListener : listeners) {
                     currentListener.routeCalculationSucceeded(destinationAgent, queue);
                 }
-                break;  
+                break;
+                
+            case INVALIDATE_AGENTS:
+                
+                queryString = new QueryString(packet.getBody());
+                
+                final String agent1Name = queryString.get("agent1");
+                final String agent2Name = queryString.get("agent2");
+                
+                final String combinedVisitedAgents = queryString.get("visitedagents");
+                final ArrayList<String> visitedAgentsNames = new ArrayList<>();
+                final String[] splitVisitedAgents = combinedVisitedAgents.split(";");
+                visitedAgentsNames.addAll(Arrays.asList(splitVisitedAgents));
+            
+                    
+                final ArrayList<Agent> branches = new ArrayList<>(1);
+                branches.add(connection.getParentAgent());
+
+                final TheUndertaker undertaker = new TheUndertaker(branches, agent1Name, agent2Name, visitedAgentsNames);
+                undertaker.undertakeAsync();
+                break;
                 
             case ROUTE_NOT_FOUND:
                 

@@ -2,7 +2,6 @@ package denobo.centralcommand.designer;
 
 import denobo.Agent;
 import denobo.centralcommand.designer.dialogs.monitor.AgentMonitorDialog;
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -18,7 +17,6 @@ import javax.imageio.ImageIO;
 public class AgentDisplayable {
     
     private static BufferedImage agentImage;
-    protected static BufferedImage socketImage;
     
     public static final int height = 75;
     public static final int width = 75;
@@ -28,6 +26,17 @@ public class AgentDisplayable {
     private final Agent agent;
     private final AgentDebugWindow debugWindow;
     private final AgentMonitorDialog monitorDialog;
+    
+    
+    
+    static {
+        final URL imageUrl = AgentDisplayable.class.getResource("resources/agent.png");
+        try {
+            agentImage = ImageIO.read(imageUrl);
+        } catch (IOException ex) {
+            System.err.println("Could not load resources/agent.png: " + ex.getMessage());
+        }
+    }
     
     public AgentDisplayable(Agent agent, int x, int y) {
         
@@ -64,10 +73,6 @@ public class AgentDisplayable {
     }
     
     public void draw(Graphics g) {
-//        g.setColor(new Color(38, 127, 0));
-//        g.fillOval(bounds.x, bounds.y, height, width);
-//        g.setColor(Color.BLACK);
-//        g.drawOval(bounds.x, bounds.y, height, width);
         g.drawImage(agentImage, bounds.x, bounds.y, null);
     }
 

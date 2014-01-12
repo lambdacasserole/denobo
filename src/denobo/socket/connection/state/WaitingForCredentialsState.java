@@ -47,7 +47,7 @@ public class WaitingForCredentialsState extends DenoboConnectionState {
                
                // Check username/password.
                if (Credentials.validate(masterCredentials, submittedCredentials)) {
-                   connection.send(new Packet(PacketCode.ACCEPTED));
+                   connection.send(new Packet(PacketCode.ACCEPTED, connection.getParentAgent().getName()));
                    connection.setState(new AuthenticatedState(connection));
                } else {
                    connection.send(new Packet(PacketCode.BAD_CREDENTIALS));

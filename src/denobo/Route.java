@@ -107,6 +107,10 @@ public class Route {
         return route.contains(actor.getName());
     }
     
+    public boolean has(String agentName) {
+        return route.contains(agentName);
+    }
+    
     /**
      * Returns the number of members of this route.
      * 

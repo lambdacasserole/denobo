@@ -16,11 +16,11 @@ import javax.swing.JTabbedPane;
  * 
  * @author Saul Johnson
  */
-public class MainWindow extends DenoboWindow implements ActionListener {
+public class MainWindow extends DenoboWindow {
         
     private final JTabbedPane tabHolder;
-    private final JMenuItem networkDesignerItem;
-    private final JMenuItem shutdownItem;
+    private final JMenuItem networkDesignItem;
+    private final JMenuItem exitItem;
     
     /**
      * Initialises the program main window.
@@ -43,27 +43,26 @@ public class MainWindow extends DenoboWindow implements ActionListener {
         final JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         
-        networkDesignerItem = new JMenuItem("New Network Design");
-        networkDesignerItem.addActionListener(this);
-        fileMenu.add(networkDesignerItem);
+        networkDesignItem = new JMenuItem("New Network Design");
+        networkDesignItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                tabHolder.addTab("Network Design [" + NetworkDesignTab.nextTabNumber() + "]", new NetworkDesignTab());
+            }
+        });
+        fileMenu.add(networkDesignItem);
         
-        shutdownItem = new JMenuItem("Exit");
-        shutdownItem.addActionListener(this);
-        fileMenu.add(shutdownItem);
+        exitItem = new JMenuItem("Exit");
+        exitItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                System.exit(0);
+            }
+        });
+        fileMenu.add(exitItem);
         
         this.pack();
         
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        
-        if (e.getSource() == shutdownItem) {
-            System.exit(0);
-        } else if (e.getSource() == networkDesignerItem) {
-            tabHolder.addTab("Network Design [" + NetworkDesignTab.nextTabNumber() + "]", new NetworkDesignTab());
-        }
-        
-    }
-    
 }

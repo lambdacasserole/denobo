@@ -4,6 +4,7 @@ import denobo.centralcommand.designer.dialogs.AgentPropertiesDialog;
 import denobo.centralcommand.designer.dialogs.CreateAgentDialog;
 import denobo.Agent;
 import denobo.centralcommand.designer.dialogs.AgentConnectionsDialog;
+import denobo.centralcommand.designer.dialogs.AgentRoutingDialog;
 import denobo.socket.SocketAgent;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -52,6 +53,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
     private final JMenuItem menuOptionMonitor;
     private final JMenuItem menuOptionDebugWindow;
     private final JMenuItem menuOptionDelete;
+    private final JMenuItem menuOptionRouting;
     
     // Dialogs
     private final CreateAgentDialog createAgentDialog;
@@ -122,6 +124,10 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         menuOptionDelete = new JMenuItem("Delete");
         menuOptionDelete.addActionListener(this);
         agentSelectedPopup.add(menuOptionDelete);
+        
+        menuOptionRouting = new JMenuItem("Routing");
+        menuOptionRouting.addActionListener(this);
+        agentSelectedPopup.add(menuOptionRouting);
         
         agentSelectedPopup.addSeparator();
         
@@ -529,6 +535,10 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         } else if (e.getSource() == menuOptionDelete) {
             
             removeAgent(agentSelected);
+            
+        } else if (e.getSource() == menuOptionRouting) {
+            
+            new AgentRoutingDialog().show(agentSelected.getAgent());
             
         } else if (e.getSource() == menuOptionProperties) {
             

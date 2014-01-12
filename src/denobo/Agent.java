@@ -78,7 +78,7 @@ public class Agent implements RoutingWorkerListener {
     /**
      * The routing table for this Agent.
      */
-    private final RoutingTable routingTable;
+    public final RoutingTable routingTable;
     
     /**
      * A list of {@link MessageHandler} objects observing Messages passed to the 
@@ -236,6 +236,18 @@ public class Agent implements RoutingWorkerListener {
         if (wasRemoved) {
             agent.unregisterConnectedAgent(this);
         }
+
+        this.clearRoutingTable();
+        agent.clearRoutingTable();
+        
+        
+        final ArrayList<Agent> branches = new ArrayList<>(2);
+        branches.add(this);
+        branches.add(agent);
+        
+        final TheUndertaker undertaker = new TheUndertaker(branches, this.getName(), agent.getName());
+        undertaker.undertakeAsync();
+        
         return wasRemoved;
         
     }
@@ -512,12 +524,12 @@ public class Agent implements RoutingWorkerListener {
          * If we're already waiting on a route to this agent. don't start trying
          * to calculate it again.
          */
-        if (!awaitingRoutingList.contains(agentName)) {
+        //if (!awaitingRoutingList.contains(agentName)) {
             awaitingRoutingList.add(agentName);
             final RoutingWorker worker = new RoutingWorker(this, agentName);
             worker.addRoutingWorkerListener(this);
             worker.mapRouteAsync();
-        }
+        //}
         
     }
     
@@ -549,6 +561,15 @@ public class Agent implements RoutingWorkerListener {
             
         }
         
+    }
+    
+    public void invalidateAgentName(String agentName) {
+        System.out.println("invalidateAgent " + agentName + " from " + name);
+        routingTable.invalidateAgent(agentName);
+    }
+    
+    public void clearRoutingTable() {
+        routingTable.clear();
     }
     
     @Override

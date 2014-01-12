@@ -1,6 +1,7 @@
 package denobo;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Represents a table of destination actors and optimal routes that should be
@@ -58,6 +59,26 @@ public class RoutingTable {
         
     }
     
+    public void invalidateAgent(String agentName) {
+
+        table.remove(agentName);
+
+        final Iterator<Route> routeIterator = table.values().iterator();
+        while (routeIterator.hasNext()) {
+            
+            final Route currentRoute = routeIterator.next();
+            if (currentRoute.has(agentName)) {
+                routeIterator.remove();
+            }
+
+        }
+
+    }
+    
+    public void clear() {
+        table.clear();
+    }
+    
     /**
      * Gets the route to an actor.
      * <p>
@@ -70,4 +91,15 @@ public class RoutingTable {
         return new Route(table.get(actorName));
     }
     
+    @Override
+    public String toString() {
+        
+        StringBuilder sb = new StringBuilder();
+        
+        for (Route currentRoute : table.values()) {
+            sb.append(currentRoute.toString()).append("\n\n");
+        }
+        
+        return sb.toString();
+    }
 }

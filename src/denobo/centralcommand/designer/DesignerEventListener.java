@@ -1,7 +1,5 @@
 package denobo.centralcommand.designer;
 
-import java.awt.Point;
-
 /**
  * A specialised event listener designed to listen for events raised by a NetworkDesigner control.
  * 

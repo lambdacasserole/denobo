@@ -27,6 +27,7 @@ public enum PacketCode {
     ROUTE_TO            (302),
     ROUTE_FOUND         (303),
     ROUTE_NOT_FOUND     (304),
+    INVALIDATE_AGENTS   (305),
     
     NO                  (400),
     TOO_MANY_PEERS      (401),
