@@ -48,7 +48,8 @@ public class AuthenticatedState extends DenoboConnectionState {
                 
         // Process packet according to status code.
         switch(packet.getCode()) {
-            case PROPAGATE:
+            
+            case SEND_MESSAGE:
 
                 // Pass message on to observers.
                 final Message deserializedMessage = MessageSerializer.deserialize(packet.getBody());
@@ -85,17 +86,6 @@ public class AuthenticatedState extends DenoboConnectionState {
                         connection.send(new Packet(PacketCode.ROUTE_FOUND, queryString.toString()));
                         
                     }
-
-                    @Override
-                    public void routeCalculationFailed(String destinationAgentName) {
-                        
-                        /*
-                         * Pass back a 304 (ROUTE_NOT_FOUND) packet. This 
-                         * currently has no effect on the system.
-                         */
-                        connection.send(new Packet(PacketCode.ROUTE_NOT_FOUND, destinationAgentName));
-                        
-                    }
                 });
                 worker.mapRouteAsync();
                 break;
@@ -108,7 +98,7 @@ public class AuthenticatedState extends DenoboConnectionState {
                 // Get routing listeners for the agent we just got a route to.
                 final String destinationAgent = queryString.get("to");
                 final List<RoutingWorkerListener> listeners = 
-                        connection.getParentAgent().remoteDestinationFoundCallbacks.get(destinationAgent);
+                        connection.getParentAgent().remoteRouteToCallbacks.get(destinationAgent);
                 
                 // Call back on those listeners. Route calculation success.
                 final Route queue = Route.deserialize(queryString.get("route"));
@@ -119,11 +109,14 @@ public class AuthenticatedState extends DenoboConnectionState {
                 
             case INVALIDATE_AGENTS:
                 
+                // Parse query string passed back.
                 queryString = new QueryString(packet.getBody());
                 
+                // Get the names of the agents to invalidate
                 final String agent1Name = queryString.get("agent1");
                 final String agent2Name = queryString.get("agent2");
                 
+                // Get the set of agents that have already been visited.
                 final String combinedVisitedAgents = queryString.get("visitedagents");
                 
                 final Set<String> visitedAgentsNames = new HashSet<>();
@@ -135,11 +128,17 @@ public class AuthenticatedState extends DenoboConnectionState {
                     visitedAgentsNames.addAll(Arrays.asList(splitVisitedAgents));                 
                 }
                 
+                /*
+                 * Add this SocketAgent instance as a branch for the Undertaker
+                 * to crawl along.
+                 */
                 final ArrayList<Agent> branches = new ArrayList<>(1);
                 branches.add(connection.getParentAgent());
-
+                
+                // Start an asyncronous Undertaker instance to update our local network
                 final Undertaker undertaker = new Undertaker(branches, agent1Name, agent2Name, visitedAgentsNames);
                 undertaker.undertakeAsync();
+                
                 break;
                 
             case ROUTE_NOT_FOUND:

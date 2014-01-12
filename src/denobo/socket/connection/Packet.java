@@ -24,10 +24,8 @@ public class Packet {
      * @param body    the packet payload
      */
     public Packet(PacketCode code, String body) {
-        
         this.code = code;
         this.body = body;
-        
     }
     
     /**

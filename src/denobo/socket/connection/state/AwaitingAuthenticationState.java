@@ -1,6 +1,7 @@
 package denobo.socket.connection.state;
 
 import denobo.Message;
+import denobo.QueryString;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Packet;
 
@@ -22,46 +23,50 @@ public class AwaitingAuthenticationState extends DenoboConnectionState {
        super(connection);
     }
 
-   @Override
-   public void handleSendMessage(Message message) {
+    @Override
+    public void handleSendMessage(Message message) {
 
-       /* 
-        * Don't send messages to this peer until authentication has been 
-        * performed.
-        */
+        /* 
+         * Don't send messages to this peer until authentication has been 
+         * performed.
+         */
 
-   }
+    }
 
-   @Override
-   public void handleReceivedPacket(Packet packet) {
-       switch (packet.getCode()) {
-           case ACCEPTED:
+    @Override
+    public void handleReceivedPacket(Packet packet) {
+        
+        switch (packet.getCode()) {
+            
+            case ACCEPTED:
 
-               System.out.println("The credentials we sent were accepted.");
-               
-               connection.setRemoteAgentName(packet.getBody());
-               connection.setState(new AuthenticatedState(connection));
-               break;
+                System.out.println("The credentials we sent were accepted.");
 
-           case BAD_CREDENTIALS:
-               
-               /*
-                * Bad credentials, fall through.
-                */
-               
-               System.out.println("We sent some bad credentials.");
+                final QueryString acceptedQueryString = new QueryString(packet.getBody());
+  
+                connection.setRemoteAgentName(acceptedQueryString.get("name"));
+                connection.setState(new AuthenticatedState(connection));
+                break;
 
-           case NO:
+            case BAD_CREDENTIALS:
 
-               /**
-                * Unspecified error, fall through.
-                */
-               
-           default:
+                /*
+                 * Bad credentials, fall through.
+                 */
 
-               connection.disconnect();
-               break;
-       }
-   }
+                System.out.println("We sent some bad credentials.");
+
+            case NO:
+
+                /**
+                 * Unspecified error, fall through.
+                 */
+
+            default:
+
+                connection.disconnect();
+                break;
+        }
+    }
 
 }

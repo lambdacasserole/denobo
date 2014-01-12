@@ -1,6 +1,7 @@
 package denobo.socket.connection.state;
 
 import denobo.Message;
+import denobo.QueryString;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Credentials;
 import denobo.socket.connection.Packet;
@@ -46,14 +47,19 @@ public class WaitForGreetingState extends DenoboConnectionState {
                  * The 100 (GREETINGS) packet contains the name of the agent 
                  * connecting.
                  */
-                connection.setRemoteAgentName(packet.getBody());
+                
+                final QueryString greetingsQueryString = new QueryString(packet.getBody());
+                connection.setRemoteAgentName(greetingsQueryString.get("name"));
                     
                 final Credentials masterCredentials = connection.getParentAgent() 
                        .getConfiguration().getCredentialsHandler().credentialsRequested(connection);
                 
                 if (masterCredentials == null) {
                     
-                    connection.send(new Packet(PacketCode.ACCEPTED, connection.getParentAgent().getName()));
+                    final QueryString acceptedQueryString = new QueryString();
+                    acceptedQueryString.add("name", connection.getParentAgent().getName());
+                    
+                    connection.send(new Packet(PacketCode.ACCEPTED, acceptedQueryString.toString()));
                     connection.setState(new AuthenticatedState(connection));
                     
                 } else {

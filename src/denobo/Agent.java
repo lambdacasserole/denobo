@@ -571,13 +571,6 @@ public class Agent implements RoutingWorkerListener {
     public void clearRoutingTable() {
         routingTable.clear();
     }
-    
-    @Override
-    public void routeCalculationFailed(String destinationAgentName) {
-        
-        // We don't need to worry about this in this class
-        
-    }
 
     /**
      * Handles messages passed to this Agent through its message queue.

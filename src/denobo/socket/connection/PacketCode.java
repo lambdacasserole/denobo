@@ -22,7 +22,7 @@ public enum PacketCode {
     CONFIRM_SECURE      (203),
     END_SECURE          (204),
     
-    PROPAGATE           (300),
+    SEND_MESSAGE        (300),
     POKE                (301),
     ROUTE_TO            (302),
     ROUTE_FOUND         (303),

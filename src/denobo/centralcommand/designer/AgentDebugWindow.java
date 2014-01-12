@@ -15,7 +15,9 @@ import java.awt.event.KeyListener;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -44,7 +46,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
     /**
      * Instances of a text area for the agent name.
      */
-    private final JTextArea agentSendArea;
+    private final JComboBox agentSendArea;
     /**
      * Instances of a text area for the message.
      */
@@ -57,7 +59,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      * Instances of the debug table model.
      */
     private final DebugAgentTableModel messageTableModel;
-
+    
     /**
      * Initialise a new instance AgentDebugWindow.
      * @param agentModel the Initial agentModel
@@ -77,6 +79,8 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         JPanel southPanel = new JPanel();
         JPanel firstRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JPanel secondRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel namePos = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel messagePos = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JPanel boxSouthPanel = new JPanel();
         boxSouthPanel.setLayout(new BoxLayout(boxSouthPanel, BoxLayout.Y_AXIS));
 
@@ -86,8 +90,9 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         final JScrollPane messageTableScrollPane = new JScrollPane(messageTable);
         this.add(messageTableScrollPane, BorderLayout.CENTER);
         
-        agentSendArea = new JTextArea(1, 10);
+        agentSendArea = new JComboBox();
         agentSendArea.setBorder(BorderFactory.createLineBorder(Color.black));
+        agentSendArea.setEditable(true);
         firstRowPanel.add(agentSendArea);
 
         sendButton = new JButton("Send");
@@ -98,6 +103,9 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         clearButton.addActionListener(this);
         firstRowPanel.add(clearButton);
 
+        JLabel nameLabel = new JLabel("Name");
+        namePos.add(nameLabel);
+        boxSouthPanel.add(namePos);
         boxSouthPanel.add(firstRowPanel);
 
         messageSendArea = new JTextArea(3, 40);
@@ -125,6 +133,10 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         messageBoxScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         secondRowPanel.add(messageBoxScrollPane);
 
+        JLabel messageLabel = new JLabel("Message");
+        messagePos.add(messageLabel);
+        
+        boxSouthPanel.add(messagePos);
         boxSouthPanel.add(secondRowPanel);
 
         southPanel.add(boxSouthPanel);
@@ -134,18 +146,23 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
 
     }
 
-    public void showAt(Point position) {
+    public void showAt(NetworkDesigner designer, Point position) {
 
+        agentSendArea.removeAllItems();
+        for (AgentDisplayable current : designer.getAgentDisplayables()) {
+            String localName = current.getAgent().getName();
+            agentSendArea.addItem(localName);
+        }
         this.setLocation(position);
         this.setVisible(true);
 
     }
     
     public void sendMessage() {
-        messageTableModel.addRow(new Object[]{"To: " + agentSendArea.getText(),
+        messageTableModel.addRow(new Object[]{"To: " + (String) agentSendArea.getSelectedItem(),
             "mgs: " + messageSendArea.getText()});
  
-        agentModel.sendMessage(agentSendArea.getText(), messageSendArea.getText());
+        agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText());
         messageSendArea.setText(null);
     }
 
@@ -154,10 +171,10 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
 
         if (e.getSource() == sendButton) {
 
-            messageTableModel.addRow(new Object[]{"To: " + agentSendArea.getText(),
+            messageTableModel.addRow(new Object[]{"To: " + (String) agentSendArea.getSelectedItem(),
                 "mgs: " + messageSendArea.getText()});
 
-            agentModel.sendMessage(agentSendArea.getText(), messageSendArea.getText());
+            agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText());
 
         } else if (e.getSource() == clearButton) {
 

@@ -16,13 +16,5 @@ public interface RoutingWorkerListener {
      * @param route                 the optimal route to the agent
      */
     void routeCalculationSucceeded(String destinationAgentName, Route route);
-    
-    /**
-     * Called when the routing worker has finished but it was unable to calculate
-     * a route to the specified destination agent.
-     * 
-     * @param destinationAgentName  the name of the destination agent
-     */
-    void routeCalculationFailed(String destinationAgentName);
-    
+
 }

@@ -530,7 +530,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             
         } else if (e.getSource() == menuOptionDebugWindow) {
                     
-            agentSelected.getDebugWindow().showAt(lastMenuClickPosition);
+            agentSelected.getDebugWindow().showAt(this, lastMenuClickPosition);
             
         } else if (e.getSource() == menuOptionDelete) {
             

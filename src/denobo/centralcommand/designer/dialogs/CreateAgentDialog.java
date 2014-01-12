@@ -3,6 +3,7 @@ package denobo.centralcommand.designer.dialogs;
 import denobo.Agent;
 import denobo.socket.SocketAgent;
 import denobo.socket.SocketAgentConfiguration;
+import denobo.socket.connection.Credentials;
 import java.awt.BorderLayout;
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
@@ -365,10 +366,9 @@ public class CreateAgentDialog {
 
             final SocketAgentConfiguration agentConfig = new SocketAgentConfiguration();
             
-            agentConfig.maximumConnections = Integer.parseInt(maxConnectionsField.getText());
-            // TODO: Broken password.
-            //agentConfig.password = String.valueOf(passwordField.getPassword());
-            agentConfig.credentialsHandler = new CredentialsPromptDialog();
+            agentConfig.setMaximumConnections(Integer.parseInt(maxConnectionsField.getText()));
+            agentConfig.setCredentials(new Credentials(null, String.valueOf(passwordField.getPassword())));
+            agentConfig.setCredentialsHandler(new CredentialsPromptDialog());
             
             final SocketAgent newSocketAgent = new SocketAgent(agentNameField.getText(), cloneableCheckBox.isSelected(), agentConfig);
             

@@ -46,12 +46,6 @@ public class Denobo implements RoutingWorkerListener, MessageHandler {
     }
 
     @Override
-    public void routeCalculationFailed(String destinationAgentName) {
-        
-        
-    }
-
-    @Override
     public void messageIntercepted(Agent agent, Message message) {
         
     }

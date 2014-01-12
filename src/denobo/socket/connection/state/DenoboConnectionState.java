@@ -46,7 +46,7 @@ public abstract class DenoboConnectionState {
     */
    public void handleSendMessage(Message message) {
 
-       connection.send(new Packet(PacketCode.PROPAGATE, MessageSerializer.serialize(message)));
+       connection.send(new Packet(PacketCode.SEND_MESSAGE, MessageSerializer.serialize(message)));
 
    }
 

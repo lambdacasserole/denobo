@@ -1,6 +1,7 @@
 package denobo.socket.connection.state;
 
 import denobo.Message;
+import denobo.QueryString;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Credentials;
 import denobo.socket.connection.Packet;
@@ -40,15 +41,20 @@ public class WaitingForCredentialsState extends DenoboConnectionState {
 
                // Get master credentials.
                final Credentials masterCredentials = connection.getParentAgent()
-                       .getConfiguration().getCredentialsHandler().credentialsRequested(connection);
+                       .getConfiguration().getCredentials();
                
                // Get credentuials submitted.
                final Credentials submittedCredentials = Credentials.parse(packet.getBody());
                
                // Check username/password.
                if (Credentials.validate(masterCredentials, submittedCredentials)) {
-                   connection.send(new Packet(PacketCode.ACCEPTED, connection.getParentAgent().getName()));
+                   
+                   final QueryString acceptedQueryString = new QueryString();
+                   acceptedQueryString.add("name", connection.getParentAgent().getName());
+                   
+                   connection.send(new Packet(PacketCode.ACCEPTED, acceptedQueryString.toString()));
                    connection.setState(new AuthenticatedState(connection));
+                   
                } else {
                    connection.send(new Packet(PacketCode.BAD_CREDENTIALS));
                    connection.disconnect();

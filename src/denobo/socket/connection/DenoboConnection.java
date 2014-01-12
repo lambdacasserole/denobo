@@ -153,6 +153,7 @@ public class DenoboConnection {
         this.pokeLock = new Object();
      
         switch (initialState) {
+            
             case WAIT_FOR_GREETING:
                 
                 state = new WaitForGreetingState(this);
@@ -172,6 +173,7 @@ public class DenoboConnection {
                 
                 System.out.println("Initial state is invalid.");
                 break;
+                
         }
 
         

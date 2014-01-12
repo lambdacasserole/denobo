@@ -1,6 +1,7 @@
 package denobo.socket.connection.state;
 
 import denobo.Message;
+import denobo.QueryString;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Credentials;
 import denobo.socket.connection.Packet;
@@ -28,8 +29,10 @@ public class InitiateGreetingState extends DenoboConnectionState {
                + connection.getRemoteAddress() + ":" 
                + connection.getRemotePort() + "]");
        
-       connection.send(new Packet(PacketCode.GREETINGS, 
-               connection.getParentAgent().getName()));
+       final QueryString queryString = new QueryString();
+       queryString.add("name", connection.getParentAgent().getName());
+       
+       connection.send(new Packet(PacketCode.GREETINGS, queryString.toString()));
 
    }
 
@@ -57,7 +60,9 @@ public class InitiateGreetingState extends DenoboConnectionState {
                  * The 101 (ACCEPTED) packet contains the name of the agent 
                  * we connected to.
                  */
-                connection.setRemoteAgentName(packet.getBody());
+
+                final QueryString acceptedQueryString = new QueryString(packet.getBody());
+                connection.setRemoteAgentName(acceptedQueryString.get("name"));
                 
                 connection.setState(new AuthenticatedState(connection));
                 break;
@@ -69,7 +74,7 @@ public class InitiateGreetingState extends DenoboConnectionState {
 
                 // Ask/retrieve the credentials to use
                 final Credentials credentials = 
-                        connection.getParentAgent().getConfiguration().credentialsHandler.credentialsRequested(connection);
+                        connection.getParentAgent().getConfiguration().getCredentialsHandler().credentialsRequested(connection);
 
                 if (credentials == null) {
                     connection.send(new Packet(PacketCode.NO_CREDENTIALS));

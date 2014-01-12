@@ -18,11 +18,11 @@ public class TooManyPeersState extends DenoboConnectionState {
         super(connection);
     }
     
-   @Override
-   public void handleConnectionEstablished() {
-       
-       connection.send(new Packet(PacketCode.TOO_MANY_PEERS));
-       connection.disconnect();
-       
-   }
+    @Override
+    public void handleConnectionEstablished() {
+
+        connection.send(new Packet(PacketCode.TOO_MANY_PEERS));
+        connection.disconnect();
+
+    }
 }

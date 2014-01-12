@@ -38,13 +38,6 @@ public class SocketAgent extends Agent {
      * this SocketAgent.
      */
     private final List<SocketAgentObserver> observers;
-    
-    /**
-     * A map of RoutingWorkerListener instances that we notify if we find a 
-     * remote route to a destination.
-     */
-    // TODO: We can't be having this being public
-    public final HashMap<String, List<RoutingWorkerListener>> remoteDestinationFoundCallbacks;
 
     /**
      * The DenoboConnectionObserver that will observe each DenoboConnection that
@@ -91,6 +84,19 @@ public class SocketAgent extends Agent {
     private final SocketAgentConfiguration configuration;
 
     
+    
+    
+        
+    /**
+     * A map of RoutingWorkerListener instances that we notify if we find a 
+     * remote route to a destination.
+     */
+    // TODO: We can't be having this being public
+    public final HashMap<String, List<RoutingWorkerListener>> remoteRouteToCallbacks;
+    
+    
+    
+    
     /* ---------- */
     
     
@@ -108,11 +114,11 @@ public class SocketAgent extends Agent {
         
         this.configuration = Objects.requireNonNull(configuration, "Configuration cannot be null.");
 
-        connectionsPermits = new Semaphore(configuration.maximumConnections, false);
+        connectionsPermits = new Semaphore(configuration.getMaximumConnections(), false);
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
         observers = new CopyOnWriteArrayList<>();
         connectionObserver = new SocketAgentDenoboConnectionObserver();
-        remoteDestinationFoundCallbacks = new HashMap<>();
+        remoteRouteToCallbacks = new HashMap<>();
         
     }
     
@@ -491,7 +497,7 @@ public class SocketAgent extends Agent {
      */
     public void routeToRemote(String destinationAgentName, Route localRoute, List<RoutingWorkerListener> listeners) {
         
-        remoteDestinationFoundCallbacks.put(destinationAgentName, listeners);
+        remoteRouteToCallbacks.put(destinationAgentName, listeners);
         for (DenoboConnection currentConnection : connections) {
             
             /*
