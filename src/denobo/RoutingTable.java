@@ -1,7 +1,9 @@
 package denobo;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Represents a table of destination actors and optimal routes that should be
@@ -14,18 +16,22 @@ public class RoutingTable {
     /**
      * The map of actors names to routes.
      */
-    private final HashMap<String, Route> table;
+    private final Map<String, Route> table;
     
     /**
      * Initialises a new instance of a routing table.
      */
     public RoutingTable() {
-        table = new HashMap<>();
+        table = Collections.synchronizedMap(new HashMap<String, Route>());
     }
     
     /**
      * Gets whether or not this routing table contains an entry to reach the 
      * actor with the specified name.
+     * <p>
+     * This checks for a route and returns the whether there is currently
+     * a route at the time of calling. After the call there is a possibility
+     * that it could have been removed by another thread.
      * 
      * @param actorName the name of the destination actor
      * @return          true if the table has a route for the actor, otherwise
@@ -43,19 +49,21 @@ public class RoutingTable {
      */
     public void addRoute(String actorName, Route queue) {
         
-        /* 
-         * Remove any previous, less efficient routes or stop right now if the
-         * proposed new route is less efficient
-         */ 
-        if (hasRoute(actorName)) {
-            if (table.get(actorName).size() <= queue.size()) {
-                return;
-            } else {
-                table.remove(actorName);
+        synchronized (table) {
+            /* 
+             * Remove any previous, less efficient routes or stop right now if the
+             * proposed new route is less efficient
+             */ 
+            if (hasRoute(actorName)) {
+                if (table.get(actorName).size() <= queue.size()) {
+                    return;
+                } else {
+                    table.remove(actorName);
+                }
             }
+
+            table.put(actorName, queue);
         }
-        
-        table.put(actorName, queue);
         
     }
     
@@ -66,18 +74,20 @@ public class RoutingTable {
      */
     public void invalidateAgent(String agentName) {
 
-        // Remove any routes that are a destination to the given agent
-        table.remove(agentName);
+        synchronized (table) {
+            // Remove any routes that are a destination to the given agent
+            table.remove(agentName);
 
-        /*
-         * Go through each Route entry and if any route has the given agent name
-         * in its path then remove that route.
-         */
-        final Iterator<Route> routeIterator = table.values().iterator();
-        while (routeIterator.hasNext()) {
-            final Route currentRoute = routeIterator.next();
-            if (currentRoute.has(agentName)) {
-                routeIterator.remove();
+            /*
+             * Go through each Route entry and if any route has the given agent name
+             * in its path then remove that route.
+             */
+            final Iterator<Route> routeIterator = table.values().iterator();
+            while (routeIterator.hasNext()) {
+                final Route currentRoute = routeIterator.next();
+                if (currentRoute.has(agentName)) {
+                    routeIterator.remove();
+                }
             }
         }
 
@@ -99,7 +109,12 @@ public class RoutingTable {
      * @return          the route to the actor
      */
     public Route getRoute(String actorName) {
-        return new Route(table.get(actorName));
+        
+        synchronized (table) {
+            final Route foundRoute = table.get(actorName);
+            return foundRoute != null ? new Route(foundRoute) : null;
+        }
+        
     }
     
     @Override
@@ -107,8 +122,10 @@ public class RoutingTable {
         
         final StringBuilder sb = new StringBuilder();
         
-        for (Route currentRoute : table.values()) {
-            sb.append(currentRoute.toString()).append("\n\n");
+        synchronized (table) {
+            for (Route currentRoute : table.values()) {
+                sb.append(currentRoute.toString()).append("\n\n");
+            }
         }
         
         return sb.toString();

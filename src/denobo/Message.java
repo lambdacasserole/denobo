@@ -124,4 +124,29 @@ public class Message {
         return route;
     }
     
+    /**
+     * Returns a serialised representation of this message.
+     * 
+     * @return  a serialised representation of this message
+     */
+    public String serialize() {
+        final QueryString queryString = new QueryString();
+        queryString.add("id", getId());
+        queryString.add("route", getRoute().serialize());
+        queryString.add("data",  getData());
+        return queryString.toString();
+    }
+    
+    /**
+     * Deserializes a route out of a string and returns it.
+     * 
+     * @param string    the string from which to deserialize the route
+     * @return          a route instance
+     */
+    public static Message deserialize(String string) {
+        final QueryString queryString = new QueryString(string);
+        return new Message(queryString.get("id"), 
+                Route.deserialize(queryString.get("route")), queryString.get("data"));
+    } 
+    
 }

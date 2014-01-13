@@ -14,10 +14,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
@@ -93,7 +94,7 @@ public class SocketAgent extends Agent {
      * remote route to a destination.
      */
     // TODO: We can't be having this being public
-    public final HashMap<String, List<RoutingWorkerListener>> remoteRouteToCallbacks;
+    public final Map<String, List<RoutingWorkerListener>> remoteRouteToCallbacks;
     
     
     
@@ -116,10 +117,26 @@ public class SocketAgent extends Agent {
         this.configuration = Objects.requireNonNull(configuration, "Configuration cannot be null.");
 
         connectionsPermits = new Semaphore(configuration.getMaximumConnections(), false);
+        
+        /*
+         * This ArrayList of DenoboConnection instances is wrapped in a 
+         * synchronizedList. This makes it thread safe to modify and access but
+         * any code that iterates on it MUST wrap it within a synchronized block 
+         * with the 'connections' instance as the lock. like this.
+         * 
+         * synchronized (connections) {
+         *      for (DenoboConnection currentConnection : connections) {
+         *          ...
+         *      }
+         * }
+         * 
+         */
         connections = Collections.synchronizedList(new ArrayList<DenoboConnection>());
+        
+        
         observers = new CopyOnWriteArrayList<>();
         connectionObserver = new SocketAgentDenoboConnectionObserver();
-        remoteRouteToCallbacks = new HashMap<>();
+        remoteRouteToCallbacks = new ConcurrentHashMap<>();
         
     }
     
@@ -499,18 +516,21 @@ public class SocketAgent extends Agent {
     public void routeToRemote(String destinationAgentName, Route localRoute, List<RoutingWorkerListener> listeners) {
         
         remoteRouteToCallbacks.put(destinationAgentName, listeners);
-        for (DenoboConnection currentConnection : connections) {
+        
+        synchronized (connections) {
             
-            /*
-             * Check to see if the current route has already passed through this
-             * connection in which case we don't need to and we shouldn't send
-             * a request to this connection otherwise a loop will occur.
-             */
-            if (localRoute.has(currentConnection.getRemoteAgentName())) { 
-                continue; 
+            for (DenoboConnection currentConnection : connections) {
+                /*
+                 * Check to see if the current route has already passed through this
+                 * connection in which case we don't need to and we shouldn't send
+                 * a request to this connection otherwise a loop will occur.
+                 */
+                if (localRoute.has(currentConnection.getRemoteAgentName())) { 
+                    continue; 
+                }
+
+                currentConnection.routeToRemote(destinationAgentName, localRoute);
             }
-            
-            currentConnection.routeToRemote(destinationAgentName, localRoute);
             
         }
         
@@ -526,18 +546,20 @@ public class SocketAgent extends Agent {
      */
     public void invalidateRemote(List<String> invalidatedAgentNames, Set<String> visitedNodes) {
         
-        for (DenoboConnection currentConnection : connections) {
+        synchronized (connections) {
             
-            /**
-             * Check to see if the current connection has already been visited
-             * by an undertaker in which case we don't need to and we shouldn't
-             * send a request to this connection otherwise a loop can occur.
-             */
-            if (visitedNodes.contains(currentConnection.getRemoteAgentName())) { 
-                continue; 
+            for (DenoboConnection currentConnection : connections) {
+                /**
+                 * Check to see if the current connection has already been visited
+                 * by an undertaker in which case we don't need to and we shouldn't
+                 * send a request to this connection otherwise a loop can occur.
+                 */
+                if (visitedNodes.contains(currentConnection.getRemoteAgentName())) { 
+                    continue; 
+                }
+
+                currentConnection.invalidateRemote(invalidatedAgentNames, visitedNodes);
             }
-            
-            currentConnection.invalidateRemote(invalidatedAgentNames, visitedNodes);
             
         }
         
@@ -553,11 +575,15 @@ public class SocketAgent extends Agent {
         if (super.handleMessage(message)) { return true; } 
         
         // Handle the case that the agent is remote.
-        for (DenoboConnection currentConnection : connections) {
-            if (currentConnection.getRemoteAgentName().equals(nextAgentName)) {
-                currentConnection.send(message);
-                return true;
+        synchronized (connections) {
+            
+            for (DenoboConnection currentConnection : connections) {
+                if (currentConnection.getRemoteAgentName().equals(nextAgentName)) {
+                    currentConnection.send(message);
+                    return true;
+                }
             }
+            
         }
         
         return false;

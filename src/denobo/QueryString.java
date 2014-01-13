@@ -5,13 +5,26 @@ import java.util.Map.Entry;
 import java.util.Objects;
 
 /**
- *
+ * Represents a query string.
+ * 
  * @author Saul Johnson
  */
 public class QueryString {
 
+    /**
+     * The underlying key-value map.
+     */
     private HashMap<String, String> map;
     
+    
+    /* ---------- */
+    
+    
+    /**
+     * Initialises a new instance of a query string.
+     * 
+     * @param string    the string from which to initialise the query string
+     */
     public QueryString(String string) {
         
         Objects.requireNonNull(string, "Query string cannot be null.");
@@ -29,16 +42,97 @@ public class QueryString {
         
     }
     
+    /**
+     * Initialises a new instance of a query string.
+     */
     public QueryString() {
         this("");
     }
     
-    public String get(String key) {
-        return map.get(key);
+    
+    /* ---------- */
+    
+    
+    /**
+     * Returns true if the character is safe for inclusion in a query string.
+     * 
+     * @param c the character to check
+     * @return  true if the character is safe, otherwise false
+     */
+    private static boolean isSafeCharacter(char c) {
+        return (c > 64 && c < 91) 
+                || (c > 96 && c < 123) 
+                || (c == 95)
+                || (c > 47 && c < 58);
     }
     
+    /**
+     * Encodes a string in HTTP URL format.
+     * 
+     * @param str   the string to encode
+     * @return      the string encoded in HTTP URL format
+     */
+    public static String htmlEncode(String str) {
+        if (str == null) { return null; }
+        final StringBuilder sb = new StringBuilder();
+        for (char current : str.toCharArray()) {
+            if (!isSafeCharacter(current)) {
+                String hexCode = Integer.toHexString(current);
+                if (hexCode.length() == 1) {
+                    hexCode = "0" + hexCode;
+                }
+                sb.append("%").append(hexCode);
+            } else {
+                sb.append(current);
+            }
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * Decodes a string from HTTP URL format.
+     * 
+     * @param str   the string to be decoded
+     * @return      the string decoded from HTTP URL format
+     */
+    public static String htmlDecode(String str) {
+        if (str == null) { return null; }
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == '%' && i < str.length() - 2) {
+                final String hexCode = str.substring(i + 1, i + 3);
+                final char decodedChar = (char) Integer.parseInt(hexCode, 16);
+                sb.append(decodedChar);
+                i += 2;
+            } else {
+                sb.append(str.charAt(i));
+            }
+        }
+        return sb.toString();
+    }
+    
+    
+    /* ---------- */
+    
+    
+    /**
+     * Gets the value associated with the specified key.
+     * 
+     * @param key   the key for which to get the associated value
+     * @return      the value associated with the specified key
+     */
+    public String get(String key) {
+        return htmlDecode(map.get(key));
+    }
+    
+    /**
+     * Adds a key-value pair to the query string.
+     * 
+     * @param key   the key part of the new entry
+     * @param value the value part of the new entry
+     */
     public void add(String key, String value) {
-        map.put(key, value);
+        map.put(key, htmlEncode(value));
     }
     
     @Override

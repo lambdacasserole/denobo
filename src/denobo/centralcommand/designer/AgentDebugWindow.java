@@ -44,6 +44,14 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      */
     private final JButton clearButton;
     /**
+     * Used for spamming tons of messages. TODO: Delete when not needed anymore.
+     */
+    private final JButton spamButton;
+    /**
+     * Used for spam. TODO: deleted when finished with.
+     */
+    private Thread spamThread;
+    /**
      * Instances of a text area for the agent name.
      */
     private final JComboBox agentSendArea;
@@ -52,16 +60,18 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      */
     private final JTextArea messageSendArea;
     /**
-     * Instances of a table that will display the messages that are sent and received.
+     * Instances of a table that will display the messages that are sent and
+     * received.
      */
     private final JTable messageTable;
     /**
      * Instances of the debug table model.
      */
     private final DebugAgentTableModel messageTableModel;
-    
+
     /**
      * Initialise a new instance AgentDebugWindow.
+     *
      * @param agentModel the Initial agentModel
      */
     public AgentDebugWindow(Agent agentModel) {
@@ -71,11 +81,11 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         agentModel.addMessageHandler(this);
 
         this.setLayout(new BorderLayout());
-        this.setTitle("Debug Window [" + agentModel.getName() + "]") ;
+        this.setTitle("Debug Window [" + agentModel.getName() + "]");
         messageTableModel = new DebugAgentTableModel();
         messageTable = new JTable(messageTableModel);
         messageTable.setFillsViewportHeight(true);
-        
+
         JPanel southPanel = new JPanel();
         JPanel firstRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JPanel secondRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -86,10 +96,10 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
 
         this.setAlwaysOnTop(true);
         this.add(southPanel, BorderLayout.SOUTH);
-        
+
         final JScrollPane messageTableScrollPane = new JScrollPane(messageTable);
         this.add(messageTableScrollPane, BorderLayout.CENTER);
-        
+
         agentSendArea = new JComboBox();
         agentSendArea.setBorder(BorderFactory.createLineBorder(Color.black));
         agentSendArea.setEditable(true);
@@ -102,6 +112,11 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         clearButton = new JButton("Clear");
         clearButton.addActionListener(this);
         firstRowPanel.add(clearButton);
+
+        //TODO: remove when not needed anymore
+        spamButton = new JButton("Spam");
+        spamButton.addActionListener(this);
+        firstRowPanel.add(spamButton);
 
         JLabel nameLabel = new JLabel("Name");
         namePos.add(nameLabel);
@@ -116,12 +131,12 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
             public void keyTyped(KeyEvent e) {
                 //
             }
- 
+
             @Override
             public void keyPressed(KeyEvent e) {
                 //
             }
- 
+
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -135,7 +150,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
 
         JLabel messageLabel = new JLabel("Message");
         messagePos.add(messageLabel);
-        
+
         boxSouthPanel.add(messagePos);
         boxSouthPanel.add(secondRowPanel);
 
@@ -157,11 +172,11 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         this.setVisible(true);
 
     }
-    
+
     public void sendMessage() {
         messageTableModel.addRow(new Object[]{"To: " + (String) agentSendArea.getSelectedItem(),
             "mgs: " + messageSendArea.getText()});
- 
+
         agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText());
         messageSendArea.setText(null);
     }
@@ -170,13 +185,20 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
     public void actionPerformed(ActionEvent e) {
 
         if (e.getSource() == sendButton) {
-
             sendMessage();
-
         } else if (e.getSource() == clearButton) {
-
             messageTableModel.setRowCount(0);
-
+        } else if (e.getSource() == spamButton) {
+            //TODO: Delete when testing finished.
+            spamThread = new Thread() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10000000; i++) {
+                        agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText() + " " + i);
+                    }
+                }
+            };
+            spamThread.start();
         }
 
     }

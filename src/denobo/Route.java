@@ -165,12 +165,15 @@ public class Route {
      * @return  a serialised representation of this route
      */
     public String serialize() {
-        final StringBuilder sb = new StringBuilder(position + ":");
+        final StringBuilder sb = new StringBuilder();
         for (String current : route) {
-            sb.append(current).append(";");
+            sb.append(current).append(",");
         }
         if (sb.length() > 0) { sb.deleteCharAt(sb.length() - 1); }
-        return sb.toString();
+        final QueryString queryString = new QueryString();
+        queryString.add("position", Integer.toString(position));
+        queryString.add("route", sb.toString());
+        return queryString.toString();
     }
     
     /**
@@ -180,13 +183,13 @@ public class Route {
      * @return          a route instance
      */
     public static Route deserialize(String string) {
+        final QueryString queryString = new QueryString(string);
         final Route queue = new Route();
-        final String[] positionSplitter = string.split(":");
-        final String[] nameSplitter = positionSplitter[1].split(";");
+        final String[] nameSplitter = queryString.get("route").split(",");
         for (String current : nameSplitter) {
             queue.append(current);
         }
-        queue.setPosition(Integer.parseInt(positionSplitter[0]));
+        queue.setPosition(Integer.parseInt(queryString.get("position")));
         return queue;
     }
     

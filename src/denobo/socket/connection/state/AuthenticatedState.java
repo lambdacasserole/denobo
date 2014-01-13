@@ -2,7 +2,6 @@ package denobo.socket.connection.state;
 
 import denobo.Agent;
 import denobo.Message;
-import denobo.MessageSerializer;
 import denobo.QueryString;
 import denobo.Route;
 import denobo.RoutingWorker;
@@ -54,7 +53,7 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
             case SEND_MESSAGE:
 
                 // Pass message on to observers.
-                final Message deserializedMessage = MessageSerializer.deserialize(packet.getBody());
+                final Message deserializedMessage = Message.deserialize(packet.getBody());
                 for (DenoboConnectionObserver currentObserver : connection.getObservers()) {
                     currentObserver.messageReceived(connection, deserializedMessage); 
                 }

@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -35,12 +38,12 @@ public class Agent implements RoutingWorkerListener {
     /**
      * Contains messages ready for dispatching that are awaiting routing.
      */
-    private final HashMap<String, List<String>> dispatchMap;
+    private final Map<String, List<String>> dispatchMap;
     
     /**
      * Contains the names of Agents whose routes are currently being calculated.
      */
-    private final List<String> awaitingRoutingList;
+    private final Set<String> awaitingRoutingSet;
     
     /**
      * The message processing thread that underlies this Agent.
@@ -100,7 +103,7 @@ public class Agent implements RoutingWorkerListener {
         // start with a number. Underscores are allowed.
         this.name = Objects.requireNonNull(name, "The name of the Agent cannot"
                 + " be null.");
-        if(!isValidName(name)) {
+        if (!isValidName(name)) {
             throw new IllegalArgumentException("Invalid agent name.");
         }
         
@@ -112,10 +115,12 @@ public class Agent implements RoutingWorkerListener {
         // Initialise lists, maps and queues.
         messageQueue = new LinkedBlockingQueue<>();
         connectedAgents = new CopyOnWriteArrayList<>();
-        dispatchMap = new HashMap<>();
-        awaitingRoutingList = new ArrayList<>();
-        routingTable = new RoutingTable();
         handlers = new CopyOnWriteArrayList<>();
+        
+        dispatchMap = Collections.synchronizedMap(new HashMap<String, List<String>>());
+        awaitingRoutingSet = Collections.synchronizedSet(new HashSet<String>());
+        routingTable = new RoutingTable();
+        
         
         // Start message processing.
         queueProcessThread();
@@ -458,65 +463,12 @@ public class Agent implements RoutingWorkerListener {
             unregisterConnectedAgent(agent);
             agent.unregisterConnectedAgent(this);
         }
-                
+        
         final Undertaker undertaker = new Undertaker(branches, agentNames);
         undertaker.undertakeAsync();
 
     }
 
-    /**
-     * Takes a recipient name/message data pair and stores it while it awaits
-     * calculation of a route to the recipient.
-     * 
-     * @param recipientName the name of the recipient Agent
-     * @param data          the data to attach to the message
-     */
-    private void awaitRouting(String recipientName, String data) {
-        
-        List<String> messageList;
-        if (!dispatchMap.containsKey(recipientName)) {
-            messageList = new ArrayList<>();
-            dispatchMap.put(recipientName, messageList);
-        } else {
-            messageList = dispatchMap.get(recipientName);
-        }
-        messageList.add(data);
-        
-    }
-
-    /**
-     * Originates a message from this Agent along the route stored in its
-     * routing table for the recipient.
-     * <p>
-     * If the routing table has no entry to the recipient, an exception will
-     * be thrown.
-     * 
-     * @param recipientName the name of the recipient Agent
-     * @param data          the data to attach to the message
-     * @return              true if message sending was successful, otherwise
-     *                      false
-     */
-    private boolean originate(String recipientName, String data) {
-        
-        // No routing entry, failure.
-        if (!routingTable.hasRoute(recipientName)) {
-            return false;
-        }
-        
-        // Create message, attach routing queue.
-        final Message message = new Message(routingTable.getRoute(recipientName), data);    
-            
-        // The first entry in the routing queue is this agent. Discard this entry.
-        message.getRoute().next();
-
-        // Queue the message here for processing.
-        messageQueue.add(message);
-
-        // Message sent, success.
-        return true;
-        
-    }
-    
     /**
      * Sends a message from this Agent to another.
      * 
@@ -541,6 +493,61 @@ public class Agent implements RoutingWorkerListener {
     }
     
     /**
+     * Originates a message from this Agent along the route stored in its
+     * routing table for the recipient.
+     * <p>
+     * If the routing table has no entry to the recipient, an exception will
+     * be thrown.
+     * 
+     * @param recipientName the name of the recipient Agent
+     * @param data          the data to attach to the message
+     * @return              true if message sending was successful, otherwise
+     *                      false
+     */
+    private boolean originate(String recipientName, String data) {
+        
+        // Check and retrieve if there is a route to the specified recipient.
+        final Route route = routingTable.getRoute(recipientName);
+        if (route == null) {
+            // No route.
+            return false;
+        }
+
+        // Create message and attach route
+        final Message message = new Message(route, data);    
+            
+        // The first entry in the routing queue is this agent. Discard this entry.
+        message.getRoute().next();
+
+        // Queue the message here for processing.
+        messageQueue.add(message);
+
+        // Message sent, success.
+        return true;
+
+    }
+    
+    /**
+     * Takes a recipient name/message data pair and stores it while it awaits
+     * calculation of a route to the recipient.
+     * 
+     * @param recipientName the name of the recipient Agent
+     * @param data          the data to attach to the message
+     */
+    private void awaitRouting(String recipientName, String data) {
+        
+        synchronized (dispatchMap) {
+            List<String> messageList = dispatchMap.get(recipientName);
+            if (messageList == null) {
+                messageList = Collections.synchronizedList(new ArrayList<String>());
+                dispatchMap.put(recipientName, messageList);
+            }
+            messageList.add(data);
+        }
+
+    }
+
+    /**
      * Calculates the route to the agent with the specified name. When complete,
      * calls back on the {@link #routeCalculationSucceeded} method.
      * 
@@ -552,12 +559,15 @@ public class Agent implements RoutingWorkerListener {
          * If we're already waiting on a route to this agent. don't start trying
          * to calculate it again.
          */
-        //if (!awaitingRoutingList.contains(agentName)) {
-            awaitingRoutingList.add(agentName);
-            final RoutingWorker worker = new RoutingWorker(this, agentName);
-            worker.addRoutingWorkerListener(this);
-            worker.mapRouteAsync();
-        //}
+        synchronized (awaitingRoutingSet) {
+            // Commented out for stress testing
+            //if (!awaitingRoutingSet.contains(agentName)) {
+                awaitingRoutingSet.add(agentName);
+                final RoutingWorker worker = new RoutingWorker(this, agentName);
+                worker.addRoutingWorkerListener(this);
+                worker.mapRouteAsync();                
+            //}
+        }
         
     }
     
@@ -568,22 +578,22 @@ public class Agent implements RoutingWorkerListener {
         System.out.println(route.toString()); 
         
         // Remove from awaiting list.
-        awaitingRoutingList.remove(destinationAgentName);
+        awaitingRoutingSet.remove(destinationAgentName);
         
         // Add to routing table.
         routingTable.addRoute(destinationAgentName, route);
         
         // Any messages waiting for this route are now free to be sent.
-        if (dispatchMap.containsKey(destinationAgentName)) {
-            
-            // Get all waiting messages.
-            final List<String> waitingMessages = dispatchMap.get(destinationAgentName);
-            
+        final List<String> waitingMessages = dispatchMap.get(destinationAgentName);
+        if (waitingMessages != null) {
+
             System.out.println("Found " + waitingMessages.size() + " messages waiting.");
-            
-            // Send all waiting messages.
-            for (String current : waitingMessages) {
-                originate(destinationAgentName, current);
+
+            synchronized (waitingMessages) {
+                // Send all waiting messages.
+                for (String current : waitingMessages) {
+                    originate(destinationAgentName, current);
+                }
             }
             dispatchMap.remove(destinationAgentName);
             
@@ -591,11 +601,19 @@ public class Agent implements RoutingWorkerListener {
         
     }
     
+    /**
+     * Invalidates a name from this agent's routing table.
+     * 
+     * @param agentName the name of the agent to invalidate
+     */
     public void invalidateAgentName(String agentName) {
         System.out.println("invalidateAgent " + agentName + " from " + name);
         routingTable.invalidateAgent(agentName);
     }
     
+    /**
+     * Clears this agent's routing table.
+     */
     public void clearRoutingTable() {
         routingTable.clear();
     }

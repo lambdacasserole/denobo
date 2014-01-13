@@ -1,7 +1,6 @@
 package denobo.socket.connection.state;
 
 import denobo.Message;
-import denobo.MessageSerializer;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
@@ -46,7 +45,7 @@ public abstract class DenoboConnectionState {
     */
    public void handleSendMessage(Message message) {
 
-       connection.send(new Packet(PacketCode.SEND_MESSAGE, MessageSerializer.serialize(message)));
+       connection.send(new Packet(PacketCode.SEND_MESSAGE, message.serialize()));
 
    }
 

@@ -116,8 +116,8 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         disconnectRemoteConnectionButton = new JButton("Disconnect");
         connectButton = new JButton("Connect");
         
-        ipField = new JTextField(10);
-        portField = new JTextField(4);
+        ipField = new JTextField("localhost", 10);
+        portField = new JTextField("4757", 4);
         
 
         registerActionListeners();

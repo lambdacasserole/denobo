@@ -454,7 +454,7 @@ public class DenoboConnection {
      * 
      * @param packet    the packet to send
      */
-    public void send(Packet packet) {
+    public synchronized void send(Packet packet) {
 
         try {
             packetSerializer.writePacket(connectionWriter, packet);
