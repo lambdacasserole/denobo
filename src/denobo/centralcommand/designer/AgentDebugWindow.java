@@ -171,10 +171,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
 
         if (e.getSource() == sendButton) {
 
-            messageTableModel.addRow(new Object[]{"To: " + (String) agentSendArea.getSelectedItem(),
-                "mgs: " + messageSendArea.getText()});
-
-            agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText());
+            sendMessage();
 
         } else if (e.getSource() == clearButton) {
 
