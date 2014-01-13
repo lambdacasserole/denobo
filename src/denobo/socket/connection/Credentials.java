@@ -84,7 +84,7 @@ public class Credentials {
     
     @Override
     public String toString() {
-        final QueryString queryString = new QueryString("");
+        final QueryString queryString = new QueryString();
         queryString.add("username", username);
         queryString.add("password", password);
         return queryString.toString();

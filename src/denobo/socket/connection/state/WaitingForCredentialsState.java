@@ -41,10 +41,11 @@ public class WaitingForCredentialsState extends DenoboConnectionState {
 
                // Get master credentials.
                final Credentials masterCredentials = connection.getParentAgent()
-                       .getConfiguration().getCredentials();
+                       .getConfiguration().getMasterCredentials();
                
-               // Get credentuials submitted.
+               // Get credentials submitted.
                final Credentials submittedCredentials = Credentials.parse(packet.getBody());
+               System.out.println("Server got credentials: " + submittedCredentials.toString());
                
                // Check username/password.
                if (Credentials.validate(masterCredentials, submittedCredentials)) {

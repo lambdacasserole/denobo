@@ -41,9 +41,9 @@ public class CredentialsPromptDialog implements ConnectionCredentialsHandler {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO: Broken password.
-                //credentialsToReturn = 
-                  //      new DenoboConnectionCredentials(String.valueOf(passwordField.getPassword()));
+                // TODO: Broken username.
+                credentialsToReturn = 
+                        new Credentials(null, String.valueOf(passwordField.getPassword()));
 
                 dialog.dispose();
             }

@@ -30,14 +30,9 @@ public class Undertaker implements Runnable {
     private final List<Agent> branches;
     
     /**
-     * The name of the first Agent that was apart of the link.
+     * A list of agent names that have been invalidated.
      */
-    private final String firstAgentName;
-    
-    /**
-     * The name of the second Agent that was apart of the link. 
-     */
-    private final String secondAgentName;
+    private final List<String> invalidatedAgentNames;
     
     /**
      * A Set of agent names that this Undertaker has already visited.
@@ -50,35 +45,36 @@ public class Undertaker implements Runnable {
     private final List<SocketAgent> visitedSocketAgents;
     
     
+    /* ---------- */
+    
+    
     /**
-     * Initializes a new instance of an Undertaker with a list of visited agents
+     * Initialises a new instance of an Undertaker with a list of visited agents
      * that it does not need to visit.
      * 
      * @param branches              A list of Agent's that formed the link
-     * @param firstAgentName        The name of the first agent that formed the link
-     * @param secondAgentName       the name of the second agent that formed the link
+     * @param invalidatedAgentNames A set of agent names that have been invalidated
      * @param alreadyVisitedNodes   A set of agent names that don't need to be visited
      */
-    public Undertaker(List<Agent> branches, String firstAgentName, String secondAgentName, Set<String> alreadyVisitedNodes) {
+    public Undertaker(List<Agent> branches, List<String> invalidatedAgentNames, Set<String> alreadyVisitedNodes) {
         this.branches = branches;
-        this.firstAgentName = firstAgentName;
-        this.secondAgentName = secondAgentName;
+        this.invalidatedAgentNames = invalidatedAgentNames;
         this.visitedAgentNames = alreadyVisitedNodes;
         this.visitedSocketAgents = new ArrayList<>();
     }
     
     /**
-     * Initializes a new instance of an Undertaker that will visit every Agent
+     * Initialises a new instance of an Undertaker that will visit every Agent
      * in the local network.
-     * 
+     * @param invalidatedAgentNames A set of agent names that have been invalidated
      * @param branches              A list of Agent's that formed the link
-     * @param firstAgentName        The name of the first agent that formed the link
-     * @param secondAgentName       the name of the second agent that formed the link
     */    
-    public Undertaker(List<Agent> branches, String firstAgentName, String secondAgentName) {
-        this(branches, firstAgentName, secondAgentName, new HashSet<String>());
+    public Undertaker(List<Agent> branches, List<String> invalidatedAgentNames) {
+        this(branches, invalidatedAgentNames, new HashSet<String>());
     }
     
+    
+    /* ---------- */
     
     
     /**
@@ -94,27 +90,28 @@ public class Undertaker implements Runnable {
          */
         visitedAgentNames.add(agent.getName());     
             
+        System.out.println("undertaking on agent: " + agent.getName());
+        
         /*
-         * Remember any SocketAgent's we will visit later but make sure not to
-         * remember it if it was one of the branches of the link.
+         * Remember any SocketAgent's we will visit later.
          */
         if (agent instanceof SocketAgent) {
             visitedSocketAgents.add((SocketAgent) agent);
         }
+            
+        // Invalidate the agents in the current agent's routing table.
+        for (String currentAgentName : invalidatedAgentNames) {
+            agent.invalidateAgentName(currentAgentName);
+        }
 
-        
-        // For each agent connected to the current agent
+        // For each agent connected to the current agent.
         final List<Agent> connections = agent.getConnectedAgents();
         for (Agent currentAgent : connections) {
             
-            // Make sure we don't visit an already visited agent again
+            // Make sure we don't visit an already visited agent again.
             if (visitedAgentNames.contains(currentAgent.getName())) {
                 continue;
             }
-            
-            // Invalidate the agents in the current agent's routing table
-            currentAgent.invalidateAgentName(firstAgentName);
-            currentAgent.invalidateAgentName(secondAgentName);
 
             // Continue crawling the network
             undertake(currentAgent);
@@ -137,7 +134,7 @@ public class Undertaker implements Runnable {
          * specified two agents.
          */
         for (SocketAgent currentSocketAgent : visitedSocketAgents) {
-            currentSocketAgent.invalidateRemote(firstAgentName, secondAgentName, visitedAgentNames);
+            currentSocketAgent.invalidateRemote(invalidatedAgentNames, visitedAgentNames);
         }
         
     }

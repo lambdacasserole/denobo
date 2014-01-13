@@ -23,7 +23,7 @@ import java.util.Set;
  *
  * @author Alex Mullen, Saul Johnson
  */
-public class AuthenticatedState extends DenoboConnectionState {
+public class AuthenticatedState extends DenoboConnectionState implements RoutingWorkerListener {
     
     /**
      * Initialises a new instance of an authenticated connection state.
@@ -45,7 +45,9 @@ public class AuthenticatedState extends DenoboConnectionState {
     public void handleReceivedPacket(Packet packet) {
 
         QueryString queryString;
-                
+        
+        System.out.println(packet.getCode() + ": " + packet.getBody());
+        
         // Process packet according to status code.
         switch(packet.getCode()) {
             
@@ -64,29 +66,27 @@ public class AuthenticatedState extends DenoboConnectionState {
                 queryString = new QueryString(packet.getBody());
                 
                 /* 
-                 * Extract local route from query string to continue building 
-                 * the route on this side of the connection.
+                 * Extract local route and destination name from query string to 
+                 * continue building the route on this side of the connection.
                  */
                 final Route localRoute = 
-                        Route.deserialize(queryString.get("localroute"));
+                        Route.deserialize(queryString.get("localroute"));                
+                final String destinationName = queryString.get("to");
+                
+                /*
+                 * If we are the agent in question, we don't need to spawn a
+                 * routing worker at all.
+                 */
+                if(connection.getParentAgent().getName().equals(destinationName)) {
+                    localRoute.append(connection.getParentAgent().getName());
+                    this.routeCalculationSucceeded(destinationName, localRoute);
+                    return;
+                }
                 
                 // Route to destination agent.
-                final RoutingWorker worker = new RoutingWorker(this.connection.getParentAgent(), queryString.get("to"), localRoute);
-                worker.addRoutingWorkerListener(new RoutingWorkerListener() {
-                    @Override
-                    public void routeCalculationSucceeded(String destinationAgentName, Route route) {
-
-                        /* 
-                         * Pass back a 303 (ROUTE_FOUND) packet containing our
-                         * calculated route.
-                         */
-                        final QueryString queryString = new QueryString();
-                        queryString.add("to", destinationAgentName);
-                        queryString.add("route", route.serialize());
-                        connection.send(new Packet(PacketCode.ROUTE_FOUND, queryString.toString()));
-                        
-                    }
-                });
+                final RoutingWorker worker = new RoutingWorker(this.connection.getParentAgent(), 
+                        destinationName, localRoute);
+                worker.addRoutingWorkerListener(this);
                 worker.mapRouteAsync();
                 break;
                 
@@ -109,23 +109,26 @@ public class AuthenticatedState extends DenoboConnectionState {
                 
             case INVALIDATE_AGENTS:
                 
-                // Parse query string passed back.
+                // Parse query string passed through.
                 queryString = new QueryString(packet.getBody());
-                
-                // Get the names of the agents to invalidate
-                final String agent1Name = queryString.get("agent1");
-                final String agent2Name = queryString.get("agent2");
                 
                 // Get the set of agents that have already been visited.
                 final String combinedVisitedAgents = queryString.get("visitedagents");
                 
-                final Set<String> visitedAgentsNames = new HashSet<>();
-                
+                // Get the list of invalidated agent names
+                final String combinedInvalidatedAgents = queryString.get("invalidatedagents");
                 
                 // Check if there was no previously visited agents
+                final Set<String> visitedAgentsNames = new HashSet<>();
                 if (combinedVisitedAgents != null) {
                     final String[] splitVisitedAgents = combinedVisitedAgents.split(";");
                     visitedAgentsNames.addAll(Arrays.asList(splitVisitedAgents));                 
+                }
+                
+                final List<String> invalidatedAgentsNames = new ArrayList<>();
+                if (combinedInvalidatedAgents != null) {
+                    final String[] splitInvalidatedAgents = combinedInvalidatedAgents.split(";");
+                    invalidatedAgentsNames.addAll(Arrays.asList(splitInvalidatedAgents));                 
                 }
                 
                 /*
@@ -135,8 +138,12 @@ public class AuthenticatedState extends DenoboConnectionState {
                 final ArrayList<Agent> branches = new ArrayList<>(1);
                 branches.add(connection.getParentAgent());
                 
-                // Start an asyncronous Undertaker instance to update our local network
-                final Undertaker undertaker = new Undertaker(branches, agent1Name, agent2Name, visitedAgentsNames);
+                /* 
+                 * Start an asyncronous Undertaker instance to update our local 
+                 * network.
+                 */
+                final Undertaker undertaker = 
+                        new Undertaker(branches, invalidatedAgentsNames, visitedAgentsNames);
                 undertaker.undertakeAsync();
                 
                 break;
@@ -153,4 +160,19 @@ public class AuthenticatedState extends DenoboConnectionState {
                 break;
         }
     }
+    
+    @Override
+    public void routeCalculationSucceeded(String destinationAgentName, Route route) {
+
+        /* 
+         * Pass back a 303 (ROUTE_FOUND) packet containing our
+         * calculated route.
+         */
+        final QueryString queryString = new QueryString();
+        queryString.add("to", destinationAgentName);
+        queryString.add("route", route.serialize());
+        connection.send(new Packet(PacketCode.ROUTE_FOUND, queryString.toString()));
+
+    }
+                    
 }    

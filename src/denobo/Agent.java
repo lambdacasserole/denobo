@@ -1,6 +1,7 @@
 package denobo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents an agent acting as part of a multi-agent system.
@@ -48,11 +51,6 @@ public class Agent implements RoutingWorkerListener {
      * The name of this Agent.
      */
     private final String name;
-
-    /**
-     * Whether or not this Agent is cloneable.
-     */
-    private final boolean cloneable;
 
     /**
      * The thread pool service for handling cloneable Agent instances. 
@@ -98,9 +96,13 @@ public class Agent implements RoutingWorkerListener {
      */
     public Agent(String name, boolean cloneable) {
 
+        // Agent names cannot be null, must be alphanumeric and cannot
+        // start with a number. Underscores are allowed.
         this.name = Objects.requireNonNull(name, "The name of the Agent cannot"
                 + " be null.");
-        this.cloneable = cloneable;
+        if(!isValidName(name)) {
+            throw new IllegalArgumentException("Invalid agent name.");
+        }
         
         shutdownLock = new Object();
 
@@ -132,12 +134,23 @@ public class Agent implements RoutingWorkerListener {
     
     /* ---------- */
     
+    /**
+     * Validates a potential agent name.
+     * 
+     * @param name  the agent name to validate
+     * @return      true if the agent name is valid, otherwise false
+     */
+    public static boolean isValidName(String name) {
+        final Pattern regex = Pattern.compile("^[a-zA-Z]{1}[a-zA-Z0-9_]*$");
+        final Matcher matcher = regex.matcher(name);
+        return matcher.matches();
+    }
     
     /**
      * Adds a {@link MessageHandler} to listen for messages passed to this
      * Agent.
      *
-     * @param handler the {@link MessageHandler} to add as an observer
+     * @param handler   the {@link MessageHandler} to add as an observer
      */
     public void addMessageHandler(MessageHandler handler) {
         handlers.add(Objects.requireNonNull(handler, "The message handler "
@@ -170,7 +183,7 @@ public class Agent implements RoutingWorkerListener {
      * @return  true if this Agent is cloneable, otherwise false
      */
     public final boolean isCloneable() {
-        return cloneable;
+        return executorService != null;
     }
     
     /**
@@ -192,6 +205,7 @@ public class Agent implements RoutingWorkerListener {
      */
     public boolean connectAgent(Agent agent) {
 
+        // Cannot connect null agents.
         Objects.requireNonNull(agent, "Agent to connect cannot be null.");
         
         /* 
@@ -230,24 +244,26 @@ public class Agent implements RoutingWorkerListener {
      */
     public boolean disconnectAgent(Agent agent) {
 
+        // Cannot disconnect null agents.
         Objects.requireNonNull(agent, "Agent to disconnect cannot be null.");
         
-        final boolean wasRemoved = connectedAgents.remove(agent);
+        // Try to remove agent.
+        final boolean wasRemoved = unregisterConnectedAgent(agent);
         if (wasRemoved) {
+            
             agent.unregisterConnectedAgent(this);
+          
+            /* 
+             * Spawn undertaker to crawl the local network and remove any routes
+             * involving this link.
+             */
+            final List<Agent> branches = Arrays.asList(new Agent[] {this, agent});  
+            final Undertaker undertaker = new Undertaker(branches, 
+                    Arrays.asList(new String[] {Agent.this.getName(), agent.getName()}));
+            undertaker.undertakeAsync();
+        
         }
 
-        this.clearRoutingTable();
-        agent.clearRoutingTable();
-        
-        
-        final ArrayList<Agent> branches = new ArrayList<>(2);
-        branches.add(this);
-        branches.add(agent);
-        
-        final Undertaker undertaker = new Undertaker(branches, this.getName(), agent.getName());
-        undertaker.undertakeAsync();
-        
         return wasRemoved;
         
     }
@@ -267,8 +283,8 @@ public class Agent implements RoutingWorkerListener {
      *
      * @param agent the Agent to register
      */
-    protected void registerConnectedAgent(Agent agent) {
-        connectedAgents.add(agent);
+    private boolean registerConnectedAgent(Agent agent) {
+        return connectedAgents.add(agent);
     }
 
     /**
@@ -276,13 +292,14 @@ public class Agent implements RoutingWorkerListener {
      *
      * @param agent the Agent to unregister
      */
-    protected void unregisterConnectedAgent(Agent agent) {
-        connectedAgents.remove(agent);
+    private boolean unregisterConnectedAgent(Agent agent) {
+        invalidateAgentName(agent.getName());
+        return connectedAgents.remove(agent);
     }
 
     
     /**
-     * Adds a {@link Message} to this Agent's message queue.
+     * Adds a Message to this Agent's message queue.
      *
      * @param message   the message to add
      * @return          true if the message was successfully submitted into the 
@@ -324,7 +341,7 @@ public class Agent implements RoutingWorkerListener {
             
             /* 
              * Remember to reset the interrupt flag for this thread for any 
-             * higher up the chain caller if we were interuppted.
+             * caller higher up the chain if we were interuppted.
              */
             if (interrupted) { Thread.currentThread().interrupt(); }
             return added;
@@ -334,8 +351,8 @@ public class Agent implements RoutingWorkerListener {
     }
 
     /**
-     * Starts the message processing on a new thread and places the handle 
-     * into the underlyingThread field.
+     * Starts the message processing on a new thread and places the handle into 
+     * the underlyingThread field.
      * 
      * @see #underlyingThread
      */
@@ -354,14 +371,14 @@ public class Agent implements RoutingWorkerListener {
                     try {
                         final Message message = messageQueue.take();
 
-                        if (!cloneable) {
+                        if (!isCloneable()) {
 
                             // Handle message in this thread.
                             handleMessage(message);
 
                         } else {
 
-                            // Execute handleMessage on a seperate thread.
+                            // Handle message on a seperate thread.
                             executorService.execute(new Runnable() {
                                 @Override
                                 public void run() {
@@ -410,8 +427,7 @@ public class Agent implements RoutingWorkerListener {
         try {
             underlyingThread.join();
         } catch (InterruptedException ex) {
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
+            System.out.println("Thread was interrupted during message pump shutdown.");
         }
         
         /* 
@@ -423,17 +439,29 @@ public class Agent implements RoutingWorkerListener {
                 executorService.shutdown();
                 executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             } catch (InterruptedException ex) {
-                // TODO: Handle exception.
-                System.out.println(ex.getMessage());
+                System.out.println("Executor service shutdown was interrupted. "
+                    + "Some queued messages may not have been processed.");
             }
         }    
 
+        final ArrayList<Agent> branches = new ArrayList<>(connectedAgents.size());
+        final ArrayList<String> agentNames = new ArrayList<>(connectedAgents.size());
+        
+        branches.add(this);
+        for (Agent current : connectedAgents) {
+            branches.add(current);
+            agentNames.add(current.getName());
+        }
+        
         // Remove all links to other Agents.
         for (Agent agent : connectedAgents) {
+            unregisterConnectedAgent(agent);
             agent.unregisterConnectedAgent(this);
         }
-        connectedAgents.clear();
-        
+                
+        final Undertaker undertaker = new Undertaker(branches, agentNames);
+        undertaker.undertakeAsync();
+
     }
 
     /**

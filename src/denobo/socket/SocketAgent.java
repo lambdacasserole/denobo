@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -519,12 +520,11 @@ public class SocketAgent extends Agent {
      * Tells any remote SocketAgents connected to invalidate any routing table
      * entries containing the specified two agents.
      * 
-     * @param agent1        the name of the first agent
-     * @param agent2        the name of the second agent
+     * @param invalidatedAgentNames the list of agent names that have been invalidated
      * @param visitedNodes  a set of Agent names that have already had their
      *                      routing tables updated
      */
-    public void invalidateRemote(String agent1, String agent2, Set<String> visitedNodes) {
+    public void invalidateRemote(List<String> invalidatedAgentNames, Set<String> visitedNodes) {
         
         for (DenoboConnection currentConnection : connections) {
             
@@ -537,7 +537,7 @@ public class SocketAgent extends Agent {
                 continue; 
             }
             
-            currentConnection.invalidateRemote(agent1, agent2, visitedNodes);
+            currentConnection.invalidateRemote(invalidatedAgentNames, visitedNodes);
             
         }
         
@@ -593,7 +593,7 @@ public class SocketAgent extends Agent {
             branches.add(SocketAgent.this);
         
             final Undertaker undertaker = new Undertaker(branches, 
-                    SocketAgent.this.getName(), connection.getRemoteAgentName());
+                    Arrays.asList(new String[] {SocketAgent.this.getName(), connection.getRemoteAgentName()}));
             undertaker.undertakeAsync();
 
             

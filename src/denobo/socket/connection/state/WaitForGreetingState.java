@@ -1,5 +1,6 @@
 package denobo.socket.connection.state;
 
+import denobo.Agent;
 import denobo.Message;
 import denobo.QueryString;
 import denobo.socket.connection.DenoboConnection;
@@ -47,19 +48,32 @@ public class WaitForGreetingState extends DenoboConnectionState {
                  * The 100 (GREETINGS) packet contains the name of the agent 
                  * connecting.
                  */
-                
                 final QueryString greetingsQueryString = new QueryString(packet.getBody());
-                connection.setRemoteAgentName(greetingsQueryString.get("name"));
+                final String remoteName = greetingsQueryString.get("name");
+                if(!Agent.isValidName(remoteName)) {
+                    connection.send(new Packet(PacketCode.NO, "Your name doesn't look valid to me."));
+                    connection.disconnect();
+                    return;
+                }
+                connection.setRemoteAgentName(remoteName);
                 
                 /*
                  * Check if we have some credentials set that we require from
                  * the remote SocketAgent before we can authenticate them.
                  */
                 final Credentials masterCredentials = connection.getParentAgent() 
-                       .getConfiguration().getCredentials();
+                       .getConfiguration().getMasterCredentials();
+                if (masterCredentials != null) {
+                    System.out.println("Server expects credentials: " 
+                            + masterCredentials.toString());
+                }
                 
+                /* 
+                 * If we have no master credentials, send back an ACCEPTED packet
+                 * right away.
+                 */
                 if (masterCredentials == null) {
-                    
+
                     final QueryString acceptedQueryString = new QueryString();
                     acceptedQueryString.add("name", connection.getParentAgent().getName());
                     

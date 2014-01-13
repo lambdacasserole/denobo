@@ -543,26 +543,35 @@ public class DenoboConnection {
      * Tells this remote agent to invalidate any routing table entries containing
      * the specified two agents.
      * 
-     * @param agent1        the name of the first agent
-     * @param agent2        the name of the second agent
+     * @param invalidatedAgentNames a list of agent names that have been invalidated
      * @param visitedNodes  a set of Agent names that have already had their
      *                      routing tables updated
      */
-    public void invalidateRemote(String agent1, String agent2, Set<String> visitedNodes) {
+    public void invalidateRemote(List<String> invalidatedAgentNames, Set<String> visitedNodes) {
         
         final QueryString query = new QueryString();
-        query.add("agent1", agent1);
-        query.add("agent2", agent2);
+
+        
+        // Build a string of all visited agents seperated by a semi-colon
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (String invalidatedAgentName : invalidatedAgentNames) {
+            sb.append(invalidatedAgentName);
+            sb.append((++i < invalidatedAgentNames.size()) ? ";" : "");
+        }
+        query.add("invalidatedagents", sb.toString());
+        
 
         // Build a string of all visited agents seperated by a semi-colon
-        final StringBuilder sb = new StringBuilder();
-        int i = 0;
+        sb = new StringBuilder();
+        i = 0;
         for (String visitedNodeName : visitedNodes) {
             sb.append(visitedNodeName);
             sb.append((++i < visitedNodes.size()) ? ";" : "");
         }
         query.add("visitedagents", sb.toString());
 
+        
         System.out.println(query.toString());
         send(new Packet(PacketCode.INVALIDATE_AGENTS, query.toString()));
         

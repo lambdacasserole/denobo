@@ -16,7 +16,7 @@ import denobo.socket.connection.DummyConnectionCredentialsHandler;
 public class SocketAgentConfiguration {
 
     private int maximumConnections;
-    private Credentials credentials;
+    private Credentials masterCredentials;
     private Compressor compression;
     private CryptoAlgorithm encryption;
     private ConnectionCredentialsHandler credentialsHandler;
@@ -38,11 +38,11 @@ public class SocketAgentConfiguration {
     }
     
     public void setCredentials(Credentials credentials) {
-        this.credentials = credentials;
+        this.masterCredentials = credentials;
     }
     
-    public Credentials getCredentials() {
-        return credentials;
+    public Credentials getMasterCredentials() {
+        return masterCredentials;
     }
 
     public Compressor getCompression() {
