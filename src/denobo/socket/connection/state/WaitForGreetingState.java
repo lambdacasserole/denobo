@@ -50,9 +50,13 @@ public class WaitForGreetingState extends DenoboConnectionState {
                 
                 final QueryString greetingsQueryString = new QueryString(packet.getBody());
                 connection.setRemoteAgentName(greetingsQueryString.get("name"));
-                    
+                
+                /*
+                 * Check if we have some credentials set that we require from
+                 * the remote SocketAgent before we can authenticate them.
+                 */
                 final Credentials masterCredentials = connection.getParentAgent() 
-                       .getConfiguration().getCredentialsHandler().credentialsRequested(connection);
+                       .getConfiguration().getCredentials();
                 
                 if (masterCredentials == null) {
                     
