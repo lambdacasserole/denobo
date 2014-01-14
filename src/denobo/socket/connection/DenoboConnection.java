@@ -325,7 +325,7 @@ public class DenoboConnection {
                 }
 
                 state.handleReceivedPacket(nextPacket);
-                
+
             }
             
         } catch (StreamCorruptedException ex) {
@@ -334,7 +334,7 @@ public class DenoboConnection {
             
         } catch (IOException ex) {
             
-            System.out.println("I/O exception whilst receving data: " + ex.getMessage());
+            System.out.println("I/O exception whilst receving: " + ex.getMessage());
             
         }
         
@@ -422,7 +422,7 @@ public class DenoboConnection {
     public void send(Packet packet) {
 
         try {
-            synchronized (connection) {
+            synchronized (packetSerializer) {
                 packetSerializer.writePacket(connectionWriter, packet);
             }
         } catch (IOException ex) {

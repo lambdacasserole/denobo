@@ -70,6 +70,11 @@ public class SocketAgent extends Agent {
     /**
      * A status variable we use to indicate that this SocketAgent is 
      * advertising.
+     * <p>
+     * This is also used as an indicator to the acceptThread for it to stop
+     * accepting connections when this is set to false.
+     * 
+     * @see #acceptThread
      */
     private volatile boolean advertising;
     
@@ -298,7 +303,6 @@ public class SocketAgent extends Agent {
          * Notify any observers that this SocketAgent has stopped advertising
          * if it was previously advertising
          */
-        
         if (serverSocket != null) {
             for (SocketAgentObserver currentObserver : observers) {
                 currentObserver.advertisingStopped(this, serverSocket.getLocalPort());

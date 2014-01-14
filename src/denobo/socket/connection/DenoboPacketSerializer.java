@@ -58,7 +58,7 @@ public class DenoboPacketSerializer implements PacketSerializer {
         
         // Read string up until ending token.
         int buffer;
-        final StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder(256);	// Initial buffer size of 256 seems reasonable.
         while ((buffer = reader.read()) != '$') {
             sb.append((char) buffer);
         }
@@ -67,7 +67,13 @@ public class DenoboPacketSerializer implements PacketSerializer {
         final String code = queryString.get("code");
         final String body = queryString.get("body");
         
-        return new Packet(PacketCode.valueOf(Integer.parseInt(code)), body);
+        // Convert and validate the code into a PacketCode enum.
+        final PacketCode packetCode = PacketCode.valueOf(Integer.parseInt(code));
+        if (packetCode == null) {
+            throw new StreamCorruptedException("Invalid PacketCode: " + code);
+        }
+        
+        return new Packet(packetCode, body);
         
     }
     
