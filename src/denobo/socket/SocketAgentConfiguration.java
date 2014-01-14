@@ -2,8 +2,6 @@ package denobo.socket;
 
 import denobo.compression.Compressor;
 import denobo.compression.DummyCompressor;
-import denobo.crypto.CryptoAlgorithm;
-import denobo.crypto.DummyCryptoAlgorithm;
 import denobo.socket.connection.ConnectionCredentialsHandler;
 import denobo.socket.connection.Credentials;
 import denobo.socket.connection.DummyConnectionCredentialsHandler;
@@ -18,13 +16,13 @@ public class SocketAgentConfiguration {
     private int maximumConnections;
     private Credentials masterCredentials;
     private Compressor compression;
-    private CryptoAlgorithm encryption;
+    private boolean isSecure;
     private ConnectionCredentialsHandler credentialsHandler;
 
     public SocketAgentConfiguration() {
         maximumConnections = Integer.MAX_VALUE;
         compression = new DummyCompressor();
-        encryption = new DummyCryptoAlgorithm();
+        isSecure = true;
         credentialsHandler = new DummyConnectionCredentialsHandler();
     }
     
@@ -53,12 +51,12 @@ public class SocketAgentConfiguration {
         this.compression = compression;
     }
 
-    public CryptoAlgorithm getEncryption() {
-        return encryption;
+    public boolean getIsSecure() {
+        return isSecure;
     }
 
-    public void setEncryption(CryptoAlgorithm encryption) {
-        this.encryption = encryption;
+    public void setIsSecure(boolean isSecure) {
+        this.isSecure = isSecure;
     }
 
     public ConnectionCredentialsHandler getCredentialsHandler() {

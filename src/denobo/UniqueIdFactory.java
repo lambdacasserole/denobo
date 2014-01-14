@@ -1,8 +1,6 @@
 package denobo;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import denobo.crypto.Hashing;
 import java.util.Random;
 
 /**
@@ -17,42 +15,9 @@ public class UniqueIdFactory {
      */
     private static int incrementalId = 0;
         
-    /**
-     * Gets a SHA256 hash of the given string.
-     * 
-     * @param str   the string to hash
-     * @return      a SHA256 hash of the given string
-     */
-    private static String sha256(String str) {
-        
-        try {
-            
-            final MessageDigest digester = MessageDigest.getInstance("SHA-256");
-            final byte[] hash = digester.digest(str.getBytes("UTF-8"));
-            final StringBuffer hexString = new StringBuffer();
-
-            for (int i = 0; i < hash.length; i++) {
-                final String hex = Integer.toHexString(0xff & hash[i]);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-
-            return hexString.toString();
-            
-        } catch (UnsupportedEncodingException | NoSuchAlgorithmException ex) {
-            
-           System.out.println(ex.getMessage());
-           return null;
-           
-        }
-        
-    }
-    
     private static String getRandomId() {
         final Random rand = new Random();
-        return sha256(Integer.toString(rand.nextInt(2048)) 
+        return Hashing.sha256(Integer.toString(rand.nextInt(2048)) 
                 + Long.toString(System.currentTimeMillis()) 
                 + Integer.toString(incrementalId++));
     }

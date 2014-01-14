@@ -2,10 +2,12 @@ package denobo.socket.connection.state;
 
 import denobo.Message;
 import denobo.QueryString;
+import denobo.crypto.DiffieHellmanKeyGenerator;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Credentials;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
+import java.math.BigInteger;
 
 /**
 * This represents the state a connection is in when we have have initialised a
@@ -31,6 +33,7 @@ public class InitiateGreetingState extends DenoboConnectionState {
        
        final QueryString queryString = new QueryString();
        queryString.add("name", connection.getParentAgent().getName());
+       queryString.add("pubkey", connection.getPublicKey().toString());
        
        connection.send(new Packet(PacketCode.GREETINGS, queryString.toString()));
 
@@ -72,7 +75,7 @@ public class InitiateGreetingState extends DenoboConnectionState {
                 System.out.println(connection.getRemoteAddress()
                     + ":" + connection.getRemotePort() + " is asking for credentials...");
 
-                // Ask/retrieve the credentials to use
+                // Ask/retrieve the credentials to use.
                 final Credentials credentials = 
                         connection.getParentAgent().getConfiguration().getCredentialsHandler().credentialsRequested(connection);
                 
@@ -92,6 +95,20 @@ public class InitiateGreetingState extends DenoboConnectionState {
                  * All these mean we need to disconnect anyway so just let them
                  * fall through to the default.
                  */
+                
+            case BEGIN_SECURE:
+                
+                /*
+                 * We got information back from the remote agent that it wants
+                 * a secure session. Use their public key to compute the shared
+                 * secret.
+                 */
+                final QueryString securityInfo = new QueryString(packet.getBody());
+                final BigInteger remotePublicKey = new BigInteger(securityInfo.get("pubkey"));
+                connection.setSharedKey(DiffieHellmanKeyGenerator
+                        .generateSharedKey(remotePublicKey, connection.getPrivateKey()));
+                System.out.println("Connector computed shared key: " + connection.getSharedKey().toString());
+                break;
 
             case TOO_MANY_PEERS:  
 

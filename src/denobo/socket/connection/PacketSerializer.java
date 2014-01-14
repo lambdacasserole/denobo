@@ -1,5 +1,7 @@
 package denobo.socket.connection;
 
+import denobo.compression.Compressor;
+import denobo.crypto.CryptoAlgorithm;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -13,7 +15,7 @@ import java.io.Writer;
  * @author Saul Johnson, Alex Mullen
  */
 public interface PacketSerializer {
-
+    
     /**
      * Serializes a Packet object to the specified {@link BufferedWriter}.
      * 
@@ -34,5 +36,9 @@ public interface PacketSerializer {
      *                                  a packet violated consistency checks 
      */
     public Packet readPacket(Reader reader) throws IOException, StreamCorruptedException;
+    
+    public void setCompressor(Compressor compressor);
+    
+    public void setCryptoAlgorithm(CryptoAlgorithm crypto);
     
 }

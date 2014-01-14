@@ -96,8 +96,6 @@ public class SocketAgent extends Agent {
     public final Map<String, List<RoutingWorkerListener>> remoteRouteToCallbacks;
     
     
-    
-    
     /* ---------- */
     
     

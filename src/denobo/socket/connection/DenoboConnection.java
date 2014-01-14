@@ -3,6 +3,9 @@ package denobo.socket.connection;
 import denobo.Message;
 import denobo.QueryString;
 import denobo.Route;
+import denobo.crypto.DiffieHellmanKeyGenerator;
+import denobo.crypto.Hashing;
+import denobo.crypto.RC4Drop4096CryptoAlgorithm;
 import denobo.socket.SocketAgent;
 import denobo.socket.connection.state.DenoboConnectionState;
 import denobo.socket.connection.state.InitiateGreetingState;
@@ -16,6 +19,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StreamCorruptedException;
 import java.io.Writer;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.List;
@@ -105,6 +109,41 @@ public class DenoboConnection {
      */
     private Thread receiveThread;
     
+    private BigInteger privateKey;
+    
+    private BigInteger publicKey;
+    
+    private BigInteger sharedKey;
+    
+    public BigInteger getPrivateKey() {
+        return privateKey;
+    }
+    
+    public BigInteger getPublicKey() {
+        return publicKey;
+    }
+    
+    public void setSharedKey(BigInteger sharedKey) {
+        try {
+        this.sharedKey =  sharedKey;
+        RC4Drop4096CryptoAlgorithm s = new RC4Drop4096CryptoAlgorithm();
+        String cryptoKey = Hashing.sha256(sharedKey.toString());
+        byte[] cryptoKeyBytes = cryptoKey.getBytes("US-ASCII");
+        int[] cryptoKeyInts = new int[cryptoKeyBytes.length];
+        for(int i = 0; i < cryptoKeyBytes.length; i++) {
+            cryptoKeyInts[i] = cryptoKeyBytes[i];
+        }
+        s.setKey(cryptoKeyInts);
+        packetSerializer.setCryptoAlgorithm(s);
+        } catch(Exception e) {
+            
+        }
+    }
+    
+    public BigInteger getSharedKey() {
+        return sharedKey;
+    }
+    
     /**
      * A boolean flag that is used to signal {@link DenoboConnection#receiveThread} 
      * to terminate and prevent any more actions from occurring on this
@@ -167,6 +206,10 @@ public class DenoboConnection {
         connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
 
+        // Pre-generate a public/private key pair for this agent.
+        privateKey = DiffieHellmanKeyGenerator.generatePrivateKey();
+        publicKey = DiffieHellmanKeyGenerator.generatePublicKey(privateKey);
+        
         state.handleConnectionEstablished();
         
     }
@@ -176,8 +219,8 @@ public class DenoboConnection {
      * DenoboConnection.
      * 
      * @param observer  the observer to add
-     * @return          true if it was successfully added to he list of observers, 
-     *                  otherwise false
+     * @return          true if the observer was successfully added, otherwise 
+     *                  false
      */
     public boolean addObserver(DenoboConnectionObserver observer) {
         return observers.add(observer);
@@ -187,7 +230,8 @@ public class DenoboConnection {
      * Removes an observer from the list of observers for this DenoboConnection.
      * 
      * @param observer  the observer to remove
-     * @return          true if the observer to remove was found and removed, otherwise false
+     * @return          true if the observer to remove was found and removed, 
+     *                  otherwise false
      */
     public boolean removeObserver(DenoboConnectionObserver observer) {
         return observers.remove(observer);

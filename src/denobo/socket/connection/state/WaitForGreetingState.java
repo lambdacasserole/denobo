@@ -3,10 +3,12 @@ package denobo.socket.connection.state;
 import denobo.Agent;
 import denobo.Message;
 import denobo.QueryString;
+import denobo.crypto.DiffieHellmanKeyGenerator;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Credentials;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
+import java.math.BigInteger;
 
 /**
 * This represents the state a connection is in when the other end of the
@@ -50,12 +52,26 @@ public class WaitForGreetingState extends DenoboConnectionState {
                  */
                 final QueryString greetingsQueryString = new QueryString(packet.getBody());
                 final String remoteName = greetingsQueryString.get("name");
-                if(!Agent.isValidName(remoteName)) {
+                if (!Agent.isValidName(remoteName)) {
                     connection.send(new Packet(PacketCode.NO, "Your name doesn't look valid to me."));
                     connection.disconnect();
                     return;
                 }
                 connection.setRemoteAgentName(remoteName);
+                
+                /*
+                 * We public key of the connecting agent is also included in the
+                 * packet. If we're required to be secure, transmit our public
+                 * key to the connecting agent.
+                 */
+                final BigInteger remotePublicKey = new BigInteger(greetingsQueryString.get("pubkey"));
+                if (connection.getParentAgent().getConfiguration().getIsSecure()) {
+                    final QueryString replyString = new QueryString();
+                    replyString.add("pubkey", connection.getPublicKey().toString());
+                    connection.send(new Packet(PacketCode.BEGIN_SECURE, replyString.toString()));
+                }
+                connection.setSharedKey(DiffieHellmanKeyGenerator.generateSharedKey(remotePublicKey, connection.getPrivateKey()));
+                System.out.println("Reciever computed shared key: " + connection.getSharedKey().toString());
                 
                 /*
                  * Check if we have some credentials set that we require from

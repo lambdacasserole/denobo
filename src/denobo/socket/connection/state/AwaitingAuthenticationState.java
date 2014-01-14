@@ -37,7 +37,6 @@ public class AwaitingAuthenticationState extends DenoboConnectionState {
     public void handleReceivedPacket(Packet packet) {
         
         switch (packet.getCode()) {
-            
             case ACCEPTED:
 
                 System.out.println("The credentials we sent were accepted.");
