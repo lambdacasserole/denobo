@@ -12,10 +12,9 @@ import denobo.socket.connection.DenoboConnectionObserver;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This represents the state of a connection has completed the hand-shake.
@@ -25,6 +24,25 @@ import java.util.Set;
 public class AuthenticatedState extends DenoboConnectionState implements RoutingWorkerListener {
     
     /**
+     * The lock object that we use for waiting for a poke reply and notifying
+     * when we get the reply.
+     */
+    private final Object pokeLock;
+    
+    /**
+     * Indicates whether this connection has sent a poke packet and we are 
+     * expecting a poke packet back.
+     */
+    private boolean pokeSent;
+    
+    /**
+     * An indicator to the poke method that this connection received a poke 
+     * packet back.
+     */
+    private boolean pokeReturned;
+
+    
+    /**
      * Initialises a new instance of an authenticated connection state.
      * 
      * @param connection    the parent connection to this state
@@ -32,6 +50,8 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
     public AuthenticatedState(DenoboConnection connection) {
         
         super(connection);
+        
+        pokeLock = new Object();
         
         // Let observers know we've entered an authenticated state.
         for (DenoboConnectionObserver currentObserver : connection.getObservers()) {
@@ -140,12 +160,64 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 // TODO: Can we make efficiency savings with this packet code?
                 break;
                 
+            case POKE:
+
+                synchronized (pokeLock) {
+                    if (pokeSent) {
+                        pokeReturned = true;
+                        pokeLock.notify();
+                    } else {
+                        connection.send(new Packet(PacketCode.POKE));
+                    }
+                }
+                break;
+                
             default:
 
                 // TODO: Bad packet code that we weren't expecting.
                 connection.disconnect();
                 break;
         }
+    }
+
+    @Override
+    public long handleSendPoke(long timeout) throws TimeoutException {
+        
+        synchronized (pokeLock) {
+            
+            // Save the current time
+            final long startTime = System.currentTimeMillis();
+            
+            // Send a poke packet
+            pokeSent = true;
+            connection.send(new Packet(PacketCode.POKE));
+
+            // Check if we have recieved a reply poke
+            while (!pokeReturned) {
+                /*
+                 * Check if we have waited the elapsed time or longer with still
+                 * no reply.
+                 */
+                if ((System.currentTimeMillis() - startTime) >= timeout) {
+                    throw new TimeoutException();
+                }
+
+                // Go to sleep until we are notified of a reply
+                try {
+                    pokeLock.wait(timeout);
+                } catch (InterruptedException ex) { 
+                    System.out.println(ex.getMessage());
+                }
+            }
+            
+            // Reset variables
+            pokeSent = false;
+            pokeReturned = false;
+            
+            // Return how long the process took
+            return (System.currentTimeMillis() - startTime);
+        }
+        
     }
     
     @Override

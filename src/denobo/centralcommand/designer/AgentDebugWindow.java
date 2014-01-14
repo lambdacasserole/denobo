@@ -72,7 +72,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
     /**
      * Initialise a new instance AgentDebugWindow.
      *
-     * @param agentModel the Initial agentModel
+     * @param agentModel the initial agentModel
      */
     public AgentDebugWindow(Agent agentModel) {
         super();
@@ -86,12 +86,31 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         messageTable = new JTable(messageTableModel);
         messageTable.setFillsViewportHeight(true);
 
-        JPanel southPanel = new JPanel();
-        JPanel firstRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JPanel secondRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JPanel namePos = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JPanel messagePos = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JPanel boxSouthPanel = new JPanel();
+        /**
+         * South panel JPanel.
+         */
+        final JPanel southPanel = new JPanel();
+        /**
+         * The first row of the BoxLayout that uses the FlowLayout.
+         */
+        final JPanel firstRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        /**
+         * The Second row of the BoxLayout that uses the FlowLayout.
+         */
+        final JPanel secondRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        /**
+         * JLabel that shows the agentSendArea, this uses the FlowLayout.
+         */
+        final JPanel namePos = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        /**
+         * JLabel that shows the messageSendArea, this uses the FlowLayout.
+         */
+        final JPanel messagePos = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        /**
+         * BoxLayout that holds the firstRowPanel and secondRowPanel,
+         * also the position of the JLabels.
+         */
+        final JPanel boxSouthPanel = new JPanel();
         boxSouthPanel.setLayout(new BoxLayout(boxSouthPanel, BoxLayout.Y_AXIS));
 
         this.setAlwaysOnTop(true);
@@ -117,9 +136,8 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         spamButton = new JButton("Spam");
         spamButton.addActionListener(this);
         firstRowPanel.add(spamButton);
-
-        JLabel nameLabel = new JLabel("Name");
-        namePos.add(nameLabel);
+        
+        namePos.add(new JLabel("Name"));
         boxSouthPanel.add(namePos);
         boxSouthPanel.add(firstRowPanel);
 
@@ -148,8 +166,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         messageBoxScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         secondRowPanel.add(messageBoxScrollPane);
 
-        JLabel messageLabel = new JLabel("Message");
-        messagePos.add(messageLabel);
+        messagePos.add(new JLabel("Message"));
 
         boxSouthPanel.add(messagePos);
         boxSouthPanel.add(secondRowPanel);
@@ -161,18 +178,25 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
 
     }
 
+    /**
+     * Show the Debug window at the current mouse point.
+     * @param designer the designer workspace
+     * @param position the initial position
+     */
     public void showAt(NetworkDesigner designer, Point position) {
 
         agentSendArea.removeAllItems();
         for (AgentDisplayable current : designer.getAgentDisplayables()) {
-            String localName = current.getAgent().getName();
-            agentSendArea.addItem(localName);
+            agentSendArea.addItem(current.getAgent().getName());
         }
         this.setLocation(position);
         this.setVisible(true);
 
     }
 
+    /**
+     * Send the message.
+     */
     public void sendMessage() {
         messageTableModel.addRow(new Object[]{"To: " + (String) agentSendArea.getSelectedItem(),
             "mgs: " + messageSendArea.getText()});
@@ -194,7 +218,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
                 @Override
                 public void run() {
                     for (int i = 0; i < 10000000; i++) {
-                        agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText() + " " + i);
+                        agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText() + i);
                     }
                 }
             };

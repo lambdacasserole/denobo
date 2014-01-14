@@ -4,6 +4,7 @@ import denobo.Message;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
+import java.util.concurrent.TimeoutException;
 
 /**
 * Represents an abstract state that a DenoboConnection can be in.
@@ -47,6 +48,27 @@ public abstract class DenoboConnectionState {
 
        connection.send(new Packet(PacketCode.SEND_MESSAGE, message.serialize()));
 
+   }
+   /**
+    * Sends a POKE packet to the remote peer connected to this connection which 
+    * should reply with one back.
+    * <p>
+    * This process is measured to give an indicator to how healthy the connection
+    * to this peer is. The lower the number, the faster packets get there and
+    * the faster they are getting processed.
+    * 
+    * @param timeout   the maximum time to wait for a reply in milliseconds.
+    * @return          the total round time it taken for us to send a packet
+    *                  and receive one back in milliseconds or 0 could be
+    *                  returned if the current state does not allow a POKE to be
+    *                  sent.
+    * @throws TimeoutException     if we did not receive a reply before the 
+    *                              specified timeout.
+    */
+   public long handleSendPoke(long timeout) throws TimeoutException {
+       
+       return 0;
+       
    }
 
 }

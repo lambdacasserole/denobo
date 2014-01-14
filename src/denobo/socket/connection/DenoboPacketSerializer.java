@@ -1,8 +1,8 @@
 package denobo.socket.connection;
 
 import denobo.QueryString;
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StreamCorruptedException;
 import java.io.Writer;
 
@@ -33,14 +33,28 @@ public class DenoboPacketSerializer implements PacketSerializer {
     }
     
     @Override
-    public Packet readPacket(BufferedReader reader) throws IOException, StreamCorruptedException {
+    public Packet readPacket(Reader reader) throws IOException, StreamCorruptedException {
         
         // Read until starting token.
-        while (reader.read() != '@') {
+        int currentCharacter;
+        do {
+            
+            // Read the next character received or block waiting
+            currentCharacter = reader.read();
+            /* 
+             * Check for the end of the stream which indicates that a
+             * connection has been closed.
+             */
+            if (currentCharacter == -1) {
+                return null;
+            }
+            
             /* 
              * Read until we hit an '@' sign.
              */
-        }
+            
+        } while (currentCharacter != '@');
+
         
         // Read string up until ending token.
         int buffer;

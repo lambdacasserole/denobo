@@ -13,6 +13,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.StreamCorruptedException;
 import java.io.Writer;
 import java.net.Socket;
@@ -81,13 +82,13 @@ public class DenoboConnection {
     private final List<DenoboConnectionObserver> observers;
 
     /**
-     * The {@link BufferedReader} object to use for efficiently reading any data 
+     * The {@link Reader} object to use for efficiently reading any data 
      * we have received from this connection.
      */
-    private final BufferedReader connectionReader;
+    private final Reader connectionReader;
     
     /**
-     * Holds a {@link BufferedWriter} object for writing to the connection's 
+     * Holds a {@link Writer} object for writing to the connection's 
      * underlying socket.
      */
     private final Writer connectionWriter;
@@ -116,24 +117,6 @@ public class DenoboConnection {
      */
     private volatile DenoboConnectionState state;
     
-    /**
-     * The lock object that we use for waiting for a poke reply and notifying
-     * when we get the reply.
-     */
-    private final Object pokeLock;
-    
-    /**
-     * Indicates whether this connection has sent a poke packet and we are 
-     * expecting a poke packet back.
-     */
-    private boolean pokeSent;
-    
-    /**
-     * An indicator to the poke method that this connection received a poke 
-     * packet back.
-     */
-    private boolean pokeReturned;
-
     
     /* ---------- */
     
@@ -151,7 +134,6 @@ public class DenoboConnection {
         this.parentAgent = parent;
         this.connection = connection;
         this.observers = new CopyOnWriteArrayList<>();
-        this.pokeLock = new Object();
      
         switch (initialState) {
             
@@ -183,8 +165,7 @@ public class DenoboConnection {
         
         // Get I/O streams.
         connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        //connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-        connectionWriter = new OutputStreamWriter(connection.getOutputStream());
+        connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
 
         state.handleConnectionEstablished();
         
@@ -342,36 +323,18 @@ public class DenoboConnection {
                 if (nextPacket == null) { 
                     break;
                 }
-                
-                // We handle POKE here because they can be handled in any state
-                if (nextPacket.getCode() == PacketCode.POKE) {
-                    
-                    synchronized (pokeLock) {
-                        if (pokeSent) {
-                            pokeReturned = true;
-                            pokeLock.notify();
-                        } else {
-                            send(new Packet(PacketCode.POKE));
-                        }
-                    }
-                    
-                } else {
-                
-                    state.handleReceivedPacket(nextPacket);
-                    
-                }
+
+                state.handleReceivedPacket(nextPacket);
                 
             }
             
         } catch (StreamCorruptedException ex) {
             
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
+            System.out.println("The stream was corrupted whilst receiving: " + ex.getMessage());
             
         } catch (IOException ex) {
             
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
+            System.out.println("I/O exception whilst receving data: " + ex.getMessage());
             
         }
         
@@ -459,7 +422,9 @@ public class DenoboConnection {
     public void send(Packet packet) {
 
         try {
-            packetSerializer.writePacket(connectionWriter, packet);
+            synchronized (connection) {
+                packetSerializer.writePacket(connectionWriter, packet);
+            }
         } catch (IOException ex) {
             // TODO: Handle exception.
             System.out.println(ex.getMessage());        
@@ -483,40 +448,8 @@ public class DenoboConnection {
      */
     public long poke(long timeout) throws TimeoutException {
 
-        synchronized (pokeLock) {
-            
-            // Save the current time
-            final long startTime = System.currentTimeMillis();
-            
-            // Send a poke packet
-            pokeSent = true;
-            send(new Packet(PacketCode.POKE));
-
-            // Check if we have recieved a reply poke
-            while (!pokeReturned) {
-                /*
-                 * Check if we have waited the elapsed time or longer with still
-                 * no reply.
-                 */
-                if ((System.currentTimeMillis() - startTime) >= timeout) {
-                    throw new TimeoutException();
-                }
-
-                // Go to sleep until we are notified of a reply
-                try {
-                    pokeLock.wait(timeout);
-                } catch (InterruptedException ex) { 
-                    System.out.println(ex.getMessage());
-                }
-            }
-            
-            // Reset variables
-            pokeSent = false;
-            pokeReturned = false;
-            
-            // Return how long the process took
-            return (System.currentTimeMillis() - startTime);
-        }
+        return state.handleSendPoke(timeout);
+        
     }
     
     /**

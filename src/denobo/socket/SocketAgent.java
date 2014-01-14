@@ -68,12 +68,6 @@ public class SocketAgent extends Agent {
     private Thread acceptThread;
 
     /**
-     * A status variable we use to indicate that 
-     * {@link SocketAgent#acceptThread} should abort.
-     */
-    private volatile boolean shutdownAcceptThread;
-
-    /**
      * A status variable we use to indicate that this SocketAgent is 
      * advertising.
      */
@@ -279,8 +273,8 @@ public class SocketAgent extends Agent {
      * Stops this SocketAgent from accepting anymore connection requests.
      */
     public void stopAdvertising() {
-       
-        shutdownAcceptThread = true;
+
+        advertising = false;
  
         // First prevent anyone else from connecting.
         if (serverSocket != null) {
@@ -299,10 +293,7 @@ public class SocketAgent extends Agent {
                 System.out.println(ex.getMessage());
             }
         }
-       
-        shutdownAcceptThread = false;
-        advertising = false;
-       
+
         /*
          * Notify any observers that this SocketAgent has stopped advertising
          * if it was previously advertising
@@ -322,13 +313,16 @@ public class SocketAgent extends Agent {
      */
     private void acceptConnectionsLoop() {
 
-        while (!shutdownAcceptThread) {
+        while (advertising) {
             try {
 
                 final Socket acceptedSocket = serverSocket.accept();
                 if (connectionsPermits.tryAcquire()) {
                     
-                    final DenoboConnection acceptedConnection = new DenoboConnection(this, acceptedSocket, DenoboConnection.InitialState.WAIT_FOR_GREETING);
+                    final DenoboConnection acceptedConnection = 
+                            new DenoboConnection(this, acceptedSocket, 
+                            DenoboConnection.InitialState.WAIT_FOR_GREETING);
+                    
                     acceptedConnection.addObserver(connectionObserver);  
                     connections.add(acceptedConnection);
 
@@ -513,7 +507,8 @@ public class SocketAgent extends Agent {
      *                              SocketAgent instance
      * @param listeners             the listeners to notify if a route is found
      */
-    public void routeToRemote(String destinationAgentName, Route localRoute, List<RoutingWorkerListener> listeners) {
+    public void routeToRemote(String destinationAgentName, Route localRoute, 
+            List<RoutingWorkerListener> listeners) {
         
         remoteRouteToCallbacks.put(destinationAgentName, listeners);
         
@@ -619,7 +614,9 @@ public class SocketAgent extends Agent {
             branches.add(SocketAgent.this);
         
             final Undertaker undertaker = new Undertaker(branches, 
-                    Arrays.asList(new String[] {SocketAgent.this.getName(), connection.getRemoteAgentName()}));
+                    Arrays.asList(new String[] {SocketAgent.this.getName(), 
+                        connection.getRemoteAgentName()}));
+            
             undertaker.undertakeAsync();
 
             
