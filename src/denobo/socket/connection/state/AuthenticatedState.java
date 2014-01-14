@@ -76,7 +76,7 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                  * If we are the agent in question, we don't need to spawn a
                  * routing worker at all.
                  */
-                if(connection.getParentAgent().getName().equals(destinationName)) {
+                if (connection.getParentAgent().getName().equals(destinationName)) {
                     localRoute.append(connection.getParentAgent().getName());
                     this.routeCalculationSucceeded(destinationName, localRoute);
                     return;
@@ -112,24 +112,12 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 queryString = new QueryString(packet.getBody());
                 
                 // Get the set of agents that have already been visited.
-                final String combinedVisitedAgents = queryString.get("visitedagents");
+                final Set<String> visitedAgents = queryString.getAsSet("visitedagents");
                 
                 // Get the list of invalidated agent names
-                final String combinedInvalidatedAgents = queryString.get("invalidatedagents");
+                final List<String> invalidatedAgents = queryString.getAsList("invalidatedagents");
                 
-                // Check if there was no previously visited agents
-                final Set<String> visitedAgentsNames = new HashSet<>();
-                if (combinedVisitedAgents != null) {
-                    final String[] splitVisitedAgents = combinedVisitedAgents.split(";");
-                    visitedAgentsNames.addAll(Arrays.asList(splitVisitedAgents));                 
-                }
-                
-                final List<String> invalidatedAgentsNames = new ArrayList<>();
-                if (combinedInvalidatedAgents != null) {
-                    final String[] splitInvalidatedAgents = combinedInvalidatedAgents.split(";");
-                    invalidatedAgentsNames.addAll(Arrays.asList(splitInvalidatedAgents));                 
-                }
-                
+
                 /*
                  * Add this SocketAgent instance as a branch for the Undertaker
                  * to crawl along.
@@ -142,7 +130,7 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                  * network.
                  */
                 final Undertaker undertaker = 
-                        new Undertaker(branches, invalidatedAgentsNames, visitedAgentsNames);
+                        new Undertaker(branches, invalidatedAgents, visitedAgents);
                 undertaker.undertakeAsync();
                 
                 break;

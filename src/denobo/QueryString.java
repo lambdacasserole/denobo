@@ -1,8 +1,13 @@
 package denobo;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents a query string.
@@ -133,6 +138,48 @@ public class QueryString {
      */
     public void add(String key, String value) {
         map.put(key, htmlEncode(value));
+    }
+    
+    /**
+     * Adds a key-value pair to the query string where the value is a 
+     * collection.
+     * 
+     * @param key   the key part of the new entry
+     * @param value the value part of the new entry
+     */
+    public void addAsCollection(String key, Collection<String> value) {
+        final StringBuilder vals = new StringBuilder();
+        for (String str : value) {
+            vals.append(htmlEncode(str)).append(";");
+        }
+        vals.deleteCharAt(vals.length() - 1);
+        map.put(key, htmlEncode(vals.toString()));
+    }
+    
+    /**
+     * Gets the value associated with the specified key as a list.
+     * 
+     * @param key   the key for which to get the associated value
+     * @return      the value associated with the specified key as a list
+     */
+    public List<String> getAsList(String key) {
+        final String listString = htmlDecode(map.get(key));
+        final String[] array = listString.split(";");
+        final ArrayList<String> list = new ArrayList<>();
+        for (String current : array) {
+            list.add(htmlDecode(current));
+        }
+        return list;
+    }
+    
+    /**
+     * Gets the value associated with the specified key as a set.
+     * 
+     * @param key   the key for which to get the associated value
+     * @return      the value associated with the specified key as a set
+     */
+    public Set<String> getAsSet(String key) {
+        return new HashSet(getAsList(key));
     }
     
     @Override

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StreamCorruptedException;
+import java.io.Writer;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.List;
@@ -89,7 +90,7 @@ public class DenoboConnection {
      * Holds a {@link BufferedWriter} object for writing to the connection's 
      * underlying socket.
      */
-    private final BufferedWriter connectionWriter;
+    private final Writer connectionWriter;
 
     /**
      * Holds the {@link PacketSerializer} used to read and write to and from 
@@ -182,7 +183,8 @@ public class DenoboConnection {
         
         // Get I/O streams.
         connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+        //connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+        connectionWriter = new OutputStreamWriter(connection.getOutputStream());
 
         state.handleConnectionEstablished();
         
@@ -454,7 +456,7 @@ public class DenoboConnection {
      * 
      * @param packet    the packet to send
      */
-    public synchronized void send(Packet packet) {
+    public void send(Packet packet) {
 
         try {
             packetSerializer.writePacket(connectionWriter, packet);
@@ -551,28 +553,9 @@ public class DenoboConnection {
         
         final QueryString query = new QueryString();
 
-        
-        // Build a string of all visited agents seperated by a semi-colon
-        StringBuilder sb = new StringBuilder();
-        int i = 0;
-        for (String invalidatedAgentName : invalidatedAgentNames) {
-            sb.append(invalidatedAgentName);
-            sb.append((++i < invalidatedAgentNames.size()) ? ";" : "");
-        }
-        query.add("invalidatedagents", sb.toString());
-        
+        query.addAsCollection("invalidatedagents", invalidatedAgentNames);
+        query.addAsCollection("visitedagents", visitedNodes);
 
-        // Build a string of all visited agents seperated by a semi-colon
-        sb = new StringBuilder();
-        i = 0;
-        for (String visitedNodeName : visitedNodes) {
-            sb.append(visitedNodeName);
-            sb.append((++i < visitedNodes.size()) ? ";" : "");
-        }
-        query.add("visitedagents", sb.toString());
-
-        
-        System.out.println(query.toString());
         send(new Packet(PacketCode.INVALIDATE_AGENTS, query.toString()));
         
     }

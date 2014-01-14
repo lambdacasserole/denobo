@@ -514,8 +514,8 @@ public class Agent implements RoutingWorkerListener {
         }
 
         // Create message and attach route
-        final Message message = new Message(route, data);    
-            
+        final Message message = new Message(route, data);
+        
         // The first entry in the routing queue is this agent. Discard this entry.
         message.getRoute().next();
 

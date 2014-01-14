@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
+import java.io.Writer;
 
 /**
  * An interface for serializing {@link Packet} objects.
@@ -19,7 +20,7 @@ public interface PacketSerializer {
      * @param packet        the Packet to serialize
      * @throws IOException  if an I/O error occurs
      */
-    public void writePacket(BufferedWriter writer, Packet packet) throws IOException;
+    public void writePacket(Writer writer, Packet packet) throws IOException;
     
     /**
      * Deserializes a Packet object from the specified {@link BufferedReader}.
