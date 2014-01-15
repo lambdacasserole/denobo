@@ -22,7 +22,7 @@ public class SocketAgentConfiguration {
     public SocketAgentConfiguration() {
         maximumConnections = Integer.MAX_VALUE;
         compression = new DummyCompressor();
-        isSecure = true;
+        isSecure = false;
         credentialsHandler = new DummyConnectionCredentialsHandler();
     }
     

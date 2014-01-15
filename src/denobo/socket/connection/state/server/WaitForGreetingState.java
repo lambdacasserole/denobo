@@ -63,9 +63,19 @@ public class WaitForGreetingState extends DenoboConnectionState {
                 connection.setRemoteAgentName(remoteName);
                 
                 /*
-                 * We public key of the connecting agent is also included in the
-                 * packet. If we're required to be secure, transmit our public
-                 * key to the connecting agent.
+                 * Set the compression on the connecting agent and afterwards
+                 * on ourselves. Everything up to this point has been
+                 * uncompressed.
+                 */
+                final QueryString setCompressionString = new QueryString();
+                setCompressionString.add("name", connection.getParentAgent().getConfiguration().getCompression().getName());
+                connection.send(new Packet(PacketCode.SET_COMPRESSION, setCompressionString.toString()));
+                connection.setCompressor(connection.getParentAgent().getConfiguration().getCompression());
+        
+                /*
+                 * The public key of the connecting agent is also included in 
+                 * the packet. If we're required to be secure, transmit our 
+                 * public key to the connecting agent.
                  */
                 final BigInteger remotePublicKey = new BigInteger(greetingsQueryString.get("pubkey"));
                 if (connection.getParentAgent().getConfiguration().getIsSecure()) {

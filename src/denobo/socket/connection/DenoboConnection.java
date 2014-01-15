@@ -3,6 +3,7 @@ package denobo.socket.connection;
 import denobo.Message;
 import denobo.QueryString;
 import denobo.Route;
+import denobo.compression.Compressor;
 import denobo.crypto.DiffieHellmanKeyGenerator;
 import denobo.crypto.RC4Drop4096CryptoAlgorithm;
 import denobo.socket.SocketAgent;
@@ -185,7 +186,7 @@ public class DenoboConnection {
         // Get I/O streams.
         connectionReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         connectionWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-
+        
         // Pre-generate a public/private key pair for this agent.
         privateKey = DiffieHellmanKeyGenerator.generatePrivateKey();
         publicKey = DiffieHellmanKeyGenerator.generatePublicKey(privateKey);
@@ -274,6 +275,17 @@ public class DenoboConnection {
         final RC4Drop4096CryptoAlgorithm crypto = new RC4Drop4096CryptoAlgorithm();
         crypto.setKey(DiffieHellmanKeyGenerator.generateEncryptionKey(sharedKey));
         packetSerializer.setCryptoAlgorithm(crypto);
+    }
+    
+    /**
+     * Sets the compressor used for compressing transmitted packets.
+     * 
+     * @param compressor    the compressor to use for compressing transmitted
+     *                      packets.
+     */
+    public void setCompressor(Compressor compressor) {
+        System.out.println("Switching to compressor: " + compressor.getName());
+        packetSerializer.setCompressor(compressor);
     }
     
     /**

@@ -20,7 +20,7 @@ import java.util.List;
  * 
  * @author Saul Johnson
  */
-public class BasicCompressor implements Compressor {
+public class BasicCompressor extends Compressor {
     
     @Override
     public byte[] compress(byte[] data) {
@@ -178,6 +178,16 @@ public class BasicCompressor implements Compressor {
             return null;
             
         }
+    }
+
+    @Override
+    public String getName() {
+        return "basic";
+    }
+
+    @Override
+    protected Compressor create() {
+        return new BasicCompressor();
     }
     
 }

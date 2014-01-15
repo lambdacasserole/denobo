@@ -5,7 +5,7 @@ package denobo.compression;
  * 
  * @author Saul Johnson
  */
-public class DummyCompressor implements Compressor {
+public class DummyCompressor extends Compressor {
 
     @Override
     public byte[] compress(byte[] data) {
@@ -15,6 +15,16 @@ public class DummyCompressor implements Compressor {
     @Override
     public byte[] decompress(byte[] data) {
         return data;
+    }
+
+    @Override
+    public String getName() {
+        return "none";
+    }
+
+    @Override
+    protected Compressor create() {
+        return new DummyCompressor();
     }
     
 }

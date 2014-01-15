@@ -3,6 +3,7 @@ package denobo.socket.connection.state.client;
 import denobo.socket.connection.state.client.AwaitingAuthenticationState;
 import denobo.Message;
 import denobo.QueryString;
+import denobo.compression.Compressor;
 import denobo.crypto.DiffieHellmanKeyGenerator;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Credentials;
@@ -111,6 +112,17 @@ public class InitiateGreetingState extends DenoboConnectionState {
                 connection.setSharedKey(DiffieHellmanKeyGenerator
                         .generateSharedKey(remotePublicKey, connection.getPrivateKey()));
                 System.out.println("Connector computed shared key: " + connection.getSharedKey().toString());
+                break;
+                
+            case SET_COMPRESSION:
+                
+                /*
+                 * We got information back from the remote agent about what type
+                 * of compression it wants to use.
+                 */
+                final QueryString compressionInfo = new QueryString(packet.getBody());
+                final Compressor requiredCompressor = Compressor.instantiate(compressionInfo.get("name"));
+                connection.setCompressor(requiredCompressor);
                 break;
 
             case TOO_MANY_PEERS:  

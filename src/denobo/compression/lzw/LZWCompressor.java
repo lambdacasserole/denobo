@@ -3,7 +3,6 @@ package denobo.compression.lzw;
 import denobo.compression.Compressor;
 import denobo.compression.checksum.BSDChecksum;
 import denobo.compression.checksum.Checksum;
-import denobo.compression.lzw.LZWDictionary;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,7 +14,7 @@ import javax.xml.bind.DatatypeConverter;
  * 
  * @author Saul Johnson
  */
-public class LZWCompressor implements Compressor {
+public class LZWCompressor extends Compressor {
 
     /**
      * Returns the specified integer as a hex string at least two characters long.
@@ -180,6 +179,16 @@ public class LZWCompressor implements Compressor {
             return null;
             
         }
+    }
+
+    @Override
+    public String getName() {
+        return "lzw";
+    }
+
+    @Override
+    protected Compressor create() {
+        return new LZWCompressor();
     }
     
 }
