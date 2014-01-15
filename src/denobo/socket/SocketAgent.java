@@ -8,6 +8,7 @@ import denobo.Route;
 import denobo.RoutingWorkerListener;
 import denobo.Undertaker;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -357,6 +358,18 @@ public class SocketAgent extends Agent {
         }
         
     }
+    
+    /**
+     * Connects this {@link SocketAgent} to another SocketAgent on the same local
+     * machine through a socket.
+     * 
+     * @param portNumber    the port number the remote agent is listening on
+     * @return              true if the connection was successfully made,
+     *                      otherwise false
+     */
+    public boolean addConnection(int portNumber) {
+        return addConnection(InetAddress.getLoopbackAddress().getHostAddress(), portNumber);
+    }
 
     /**
      * Connects this {@link SocketAgent} to a another SocketAgent through a
@@ -495,6 +508,11 @@ public class SocketAgent extends Agent {
          * from any connections.
          */ 
         removeConnections();
+        
+        /*
+         * Cleanup data
+         */
+        observers.clear();
         
         // Superclass shutdown code can now execute.
         super.shutdown();

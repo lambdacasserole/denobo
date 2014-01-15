@@ -84,6 +84,7 @@ public class CreateAgentDialog {
         maxConnectionsField = new JTextField("10", 3);
         startAdvertisingCheckBox = new JCheckBox("Start Advertising", false);
         passwordField = new JPasswordField(10);
+
         encryptionComboBox = new JComboBox<>(new String[] {"RC4"});
         compressionComboBox = new JComboBox<>(new String[] {"LZW"});
         

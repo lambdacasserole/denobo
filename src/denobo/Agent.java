@@ -83,10 +83,10 @@ public class Agent implements RoutingWorkerListener {
     public final RoutingTable routingTable;
     
     /**
-     * A list of {@link MessageHandler} objects observing Messages passed to the 
+     * A list of {@link MessageListener} objects observing Messages passed to the 
      * agent.
      */
-    private final List<MessageHandler> handlers;
+    private final List<MessageListener> listeners;
     
     /**
      * The timer instance that will execute a task on a scheduled interval and 
@@ -146,7 +146,7 @@ public class Agent implements RoutingWorkerListener {
         // Initialise lists, maps and queues.
         messageQueue = new LinkedBlockingQueue<>();
         connectedAgents = new CopyOnWriteArrayList<>();
-        handlers = new CopyOnWriteArrayList<>();
+        listeners = new CopyOnWriteArrayList<>();
         
         routingTable = new RoutingTable();
         dispatchMap = Collections.synchronizedMap(new HashMap<String, List<String>>());
@@ -189,24 +189,24 @@ public class Agent implements RoutingWorkerListener {
     }
     
     /**
-     * Adds a {@link MessageHandler} to listen for messages passed to this
+     * Adds a {@link MessageListener} to listen for messages passed to this
      * Agent.
      *
-     * @param handler   the {@link MessageHandler} to add as an observer
+     * @param listener   the {@link MessageListener} to add as an observer
      */
-    public void addMessageHandler(MessageHandler handler) {
-        handlers.add(Objects.requireNonNull(handler, "The message handler "
+    public void addMessageListener(MessageListener listener) {
+        listeners.add(Objects.requireNonNull(listener, "The message handler "
                 + "to add cannot be null."));
     }
 
     /**
-     * Removes a {@link MessageHandler} that is currently listening for messages
+     * Removes a {@link MessageListener} that is currently listening for messages
      * passed to this agent.
      *
-     * @param handler the {@link MessageHandler} to remove as an observer
+     * @param listener the {@link MessageListener} to remove as an observer
      */
-    public void removeMessageHandler(MessageHandler handler) {
-        handlers.remove(Objects.requireNonNull(handler, "The message handler "
+    public void removeMessageListener(MessageListener listener) {
+        listeners.remove(Objects.requireNonNull(listener, "The message handler "
                 + "to remove cannot be null."));
     }
     
@@ -486,7 +486,7 @@ public class Agent implements RoutingWorkerListener {
                 System.out.println("Executor service shutdown was interrupted. "
                     + "Some queued messages may not have been processed.");
             }
-        }    
+        }
 
         final ArrayList<Agent> branches = new ArrayList<>(connectedAgents.size());
         final ArrayList<String> agentNames = new ArrayList<>(connectedAgents.size());
@@ -506,7 +506,16 @@ public class Agent implements RoutingWorkerListener {
         final Undertaker undertaker = new Undertaker(branches, agentNames);
         undertaker.undertakeAsync();
         
+        // Stop the scheduled dispatch cleaner task then clean the dispatch
         dispatchCleanupTimer.cancel();
+        
+        // Clear all data.
+        messageQueue.clear();
+        connectedAgents.clear();
+        awaitingRoutingMap.clear();
+        dispatchMap.clear();
+        routingTable.clear();
+        listeners.clear();
 
     }
 
@@ -634,6 +643,10 @@ public class Agent implements RoutingWorkerListener {
 
                 System.out.println("Found " + waitingMessages.size() + " messages waiting.");
 
+                /* 
+                 * Make sure no else can modify the list in case they acquired it
+                 * somehow.
+                 */
                 synchronized (waitingMessages) {
                     // Send all waiting messages.
                     for (String current : waitingMessages) {
@@ -741,26 +754,23 @@ public class Agent implements RoutingWorkerListener {
          * multiple threads.
          */
         
-        // Handled flag.
-        boolean wasHandled = false;
-        
         /* 
-         * Let any handlers know of the message received even though it may
+         * Let any listeners know of the message received even though it may
          * not be intended for us.
          */
-        for (MessageHandler handler : handlers) {
+        for (MessageListener handler : listeners) {
             handler.messageIntercepted(this, message);
         }
         
         /* 
          * If this Agent is the intended recipient of the message, alert each
-         * registered message handler.
+         * registered message listener.
          */
         if (message.getRecipient().equals(this.getName())) {
-            for (MessageHandler handler : handlers) {
+            for (MessageListener handler : listeners) {
                 handler.messageRecieved(this, message);
             }
-            wasHandled = true;
+            return true;
         } else {
             
             // Otherwise, forward to next Agent in route.
@@ -768,13 +778,14 @@ public class Agent implements RoutingWorkerListener {
             for (Agent current : connectedAgents) {
                 if (current.getName().equals(nextRecipient)) {
                     current.queueMessage(message);
-                    wasHandled = true;
+                    return true;
                 }
             }
             
         }
         
-        return wasHandled;
+        // We did not handle the message if execution gets to here so return false
+        return false;
         
     }
 

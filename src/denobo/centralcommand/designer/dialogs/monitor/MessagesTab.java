@@ -2,7 +2,7 @@ package denobo.centralcommand.designer.dialogs.monitor;
 
 import denobo.Agent;
 import denobo.Message;
-import denobo.MessageHandler;
+import denobo.MessageListener;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -62,7 +62,7 @@ public class MessagesTab extends JPanel {
         final JScrollPane messageTableScrollPane = new JScrollPane(messageTable);
         this.add(messageTableScrollPane, BorderLayout.CENTER);
         
-        agent.addMessageHandler(new MessageHandler() {
+        agent.addMessageListener(new MessageListener() {
 
             @Override
             public void messageIntercepted(Agent agent, final Message message) {

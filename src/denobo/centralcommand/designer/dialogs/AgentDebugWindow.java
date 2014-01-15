@@ -2,7 +2,7 @@ package denobo.centralcommand.designer.dialogs;
 
 import denobo.Agent;
 import denobo.Message;
-import denobo.MessageHandler;
+import denobo.MessageListener;
 import denobo.centralcommand.DenoboWindow;
 import denobo.centralcommand.designer.AgentDisplayable;
 import denobo.centralcommand.designer.NetworkDesigner;
@@ -34,7 +34,7 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
-public class AgentDebugWindow extends DenoboWindow implements ActionListener, MessageHandler {
+public class AgentDebugWindow extends DenoboWindow implements ActionListener, MessageListener {
 
     /**
      * New instances of this agent.
@@ -91,7 +91,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         super();
         this.agentModel = agentModel;
 
-        agentModel.addMessageHandler(this);
+        agentModel.addMessageListener(this);
 
         this.setLayout(new BorderLayout());
         this.setTitle("Debug Window [" + agentModel.getName() + "]");
