@@ -1,6 +1,7 @@
 package denobo.compression;
 
 import denobo.FileIO;
+import denobo.compression.lzw.LZWCompressor;
 import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;

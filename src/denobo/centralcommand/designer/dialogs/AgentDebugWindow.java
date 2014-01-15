@@ -1,9 +1,11 @@
-package denobo.centralcommand.designer;
+package denobo.centralcommand.designer.dialogs;
 
 import denobo.Agent;
 import denobo.Message;
 import denobo.MessageHandler;
 import denobo.centralcommand.DenoboWindow;
+import denobo.centralcommand.designer.AgentDisplayable;
+import denobo.centralcommand.designer.NetworkDesigner;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -24,6 +26,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -241,4 +244,29 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
     @Override
     public void messageIntercepted(Agent agent, Message message) {
     }
+    
+    
+    
+    /**
+     *
+     * @author Lee Oliver
+     */
+    private class DebugAgentTableModel extends DefaultTableModel {
+
+        /**
+         * Initialise a new instance of DebugAgentTableModelold.
+         */
+        public DebugAgentTableModel() {
+            super(new Object[]{"Name", "Message"}, 0);
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+        
+    }
+    
 }
+
+

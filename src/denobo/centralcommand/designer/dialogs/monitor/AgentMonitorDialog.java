@@ -32,7 +32,7 @@ public class AgentMonitorDialog {
         // Create and configure the dialog
         dialog = new JDialog();
         dialog.setLayout(new BorderLayout());
-        dialog.setTitle(agent.getName() + " Monitor");
+        dialog.setTitle("Monitor [" + agent.getName() + "]");
         dialog.setResizable(true);
         dialog.setAlwaysOnTop(true);
         dialog.setModalityType(ModalityType.MODELESS);

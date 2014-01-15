@@ -4,17 +4,20 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
 /**
+ * Represents a Network Design tab.
  *
  * @author Alex Mullen
  */
 public class NetworkDesignTab extends JPanel {
     
+    /**
+     * The current unique tab number.
+     */
     private static int tabNumber = 0;
-    
-    public static int nextTabNumber() {
-        return tabNumber++;
-    }
-    
+
+    /**
+     * Initialises an instance of a NetworkDesignTab.
+     */
     public NetworkDesignTab() {
         
         super();
@@ -23,8 +26,16 @@ public class NetworkDesignTab extends JPanel {
 
         final NetworkDesigner designer = new NetworkDesigner();
         this.add(designer, BorderLayout.CENTER);
-
-        //this.add(new AgentPropertiesDialog().tabHolder, BorderLayout.EAST);
+        
+    }
+    
+    /**
+     * Returns the next unique tab number.
+     * 
+     * @return the next unique tab number
+     */
+    public static int nextTabNumber() {
+        return tabNumber++;
     }
     
 }

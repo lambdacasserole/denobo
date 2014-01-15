@@ -238,7 +238,7 @@ public class AgentPropertiesDialog {
             
         }
         
-        dialog.setTitle(agent.getName() + " Properties");
+        dialog.setTitle("Properties [" + agent.getName() + "]");
         dialog.setLocation(position);
         dialog.setVisible(true);
         

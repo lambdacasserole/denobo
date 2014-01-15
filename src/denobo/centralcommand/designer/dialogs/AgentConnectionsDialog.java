@@ -311,7 +311,7 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         
 
         
-        dialog.setTitle(agentModel.getAgent().getName() + " Connections");
+        dialog.setTitle("Connections [" + agentModel.getAgent().getName() + "]");
         dialog.setLocation(position);
         dialog.setVisible(true);
         

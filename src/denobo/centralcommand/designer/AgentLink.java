@@ -10,10 +10,27 @@ import java.awt.Graphics;
  */
 public class AgentLink {
     
+    /**
+     * The first agent that forms this link.
+     */
     public final AgentDisplayable agent1;
+    
+    /**
+     * The second agent that forms this link.
+     */
     public final AgentDisplayable agent2;
-    private final Color lineColour = Color.BLACK;
+    
+    /**
+     * The colour of the line that visually represents the link.
+     */
+    private static final Color LINE_COLOUR = Color.BLACK;
 
+    /**
+     * Instantiates a new AgentLink between two agents.
+     * 
+     * @param agent1    the first agent in the link
+     * @param agent2    the second agent in the link
+     */
     public AgentLink(AgentDisplayable agent1, AgentDisplayable agent2) {
         this.agent1 = agent1;
         this.agent2 = agent2;
@@ -28,9 +45,7 @@ public class AgentLink {
      *                  false is returned.
      */
     public boolean contains(AgentDisplayable agent) {
-        
         return (this.agent1 == agent || this.agent2 == agent);
-        
     }
     
     /**
@@ -42,17 +57,21 @@ public class AgentLink {
      *                      otherwise false is returned.
      */
     public boolean contains(AgentDisplayable agent1, AgentDisplayable agent2) {
-        
-        return (this.agent1 == agent1 || this.agent2 == agent1) 
-                &&
-               (this.agent1 == agent2 || this.agent2 == agent2);
-        
+        return (contains(agent1) && contains(agent2));
     }
     
+    /**
+     * Breaks the link between the two agents that form this link.
+     */
     public void breakLink() {
         agent1.getAgent().disconnectAgent(agent2.getAgent());
     }
     
+    /**
+     * Renders this link to the specified Graphics context.
+     * 
+     * @param g the Graphics context
+     */
     public void draw(Graphics g) {
         
         final int sourceX = (agent1.getBounds().x + (agent1.getBounds().width / 2));
@@ -61,7 +80,7 @@ public class AgentLink {
         final int destX = (agent2.getBounds().x + (agent2.getBounds().width / 2));
         final int destY = (agent2.getBounds().y + (agent2.getBounds().height / 2));
         
-        g.setColor(lineColour);
+        g.setColor(LINE_COLOUR);
         g.drawLine(sourceX, sourceY, destX, destY);
         
     }

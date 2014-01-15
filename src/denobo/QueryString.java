@@ -163,12 +163,8 @@ public class QueryString {
      * @return      the value associated with the specified key as a list
      */
     public List<String> getAsList(String key) {
-        final String listString = htmlDecode(map.get(key));
-        final String[] array = listString.split(";");
-        final ArrayList<String> list = new ArrayList<>();
-        for (String current : array) {
-            list.add(htmlDecode(current));
-        }
+        final List<String> list = new ArrayList<>();
+        putInCollection(key, list);
         return list;
     }
     
@@ -179,7 +175,24 @@ public class QueryString {
      * @return      the value associated with the specified key as a set
      */
     public Set<String> getAsSet(String key) {
-        return new HashSet(getAsList(key));
+        final Set set = new HashSet<>();
+        putInCollection(key, set);
+        return set;
+    }
+    
+    /**
+     * Gets the value associated with the specified key and puts it in the 
+     * specified Collection.
+     * 
+     * @param key           the key for which to get the associated value
+     * @param collection    the collection in which to put the value associated
+     *                      with the specified key
+     */
+    public void putInCollection(String key, Collection<String> collection) {
+        final String listString = htmlDecode(map.get(key));
+        for (String current : listString.split(";")) {
+            collection.add(htmlDecode(current));
+        }
     }
     
     @Override

@@ -504,15 +504,15 @@ public class NetworkDesigner extends JComponent implements ActionListener {
 
                 if (agentToAdd instanceof SocketAgent) {
                           
-                    agents.add(new SocketAgentDisplayable(agentToAdd, 
-                                lastMenuClickPosition.x - (AgentDisplayable.width / 2), 
-                                lastMenuClickPosition.y - (AgentDisplayable.height / 2)));
+                    agents.add(new SocketAgentDisplayable((SocketAgent) agentToAdd, 
+                                lastMenuClickPosition.x - (AgentDisplayable.WIDTH / 2), 
+                                lastMenuClickPosition.y - (AgentDisplayable.HEIGHT / 2)));
                 
                 } else {
                     
                     agents.add(new AgentDisplayable(agentToAdd, 
-                                lastMenuClickPosition.x - (AgentDisplayable.width / 2), 
-                                lastMenuClickPosition.y - (AgentDisplayable.height / 2)));
+                                lastMenuClickPosition.x - (AgentDisplayable.WIDTH / 2), 
+                                lastMenuClickPosition.y - (AgentDisplayable.HEIGHT / 2)));
 
                 }
 
