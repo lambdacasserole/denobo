@@ -89,8 +89,8 @@ public class Undertaker implements Runnable {
          * it again.
          */
         visitedAgentNames.add(agent.getName());     
-            
-        System.out.println("undertaking on agent: " + agent.getName());
+        
+        System.out.println("Undertaking on agent: " + agent.getName());
         
         /*
          * Remember any SocketAgent's we will visit later.
@@ -113,7 +113,7 @@ public class Undertaker implements Runnable {
                 continue;
             }
 
-            // Continue crawling the network
+            // Continue crawling the network.
             undertake(currentAgent);
             
         }
@@ -129,7 +129,7 @@ public class Undertaker implements Runnable {
         }
         
         /*
-         * Go through any found SocketAgent's and tell their connections to
+         * Go through any found SocketAgents and tell their connections to
          * crawl their local networks and invalidate the link between the
          * specified two agents.
          */

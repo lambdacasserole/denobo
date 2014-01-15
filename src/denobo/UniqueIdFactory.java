@@ -15,6 +15,11 @@ public class UniqueIdFactory {
      */
     private static int incrementalId = 0;
         
+    /**
+     * Returns a randomly-generated ID string.
+     * 
+     * @return  a random ID string
+     */
     private static String getRandomId() {
         final Random rand = new Random();
         return Hashing.sha256(Integer.toString(rand.nextInt(2048)) 
@@ -22,6 +27,11 @@ public class UniqueIdFactory {
                 + Integer.toString(incrementalId++));
     }
     
+    /**
+     *Returns a random ID string that is likely to be globally unique.
+     * 
+     * @return  a random ID string that is likely to be globally unique.
+     */
     public static String getId() {
         return getRandomId();
     }
