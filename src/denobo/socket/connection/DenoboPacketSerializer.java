@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StreamCorruptedException;
 import java.io.Writer;
+import java.util.Objects;
 import javax.xml.bind.DatatypeConverter;
 
 /**
@@ -19,11 +20,22 @@ import javax.xml.bind.DatatypeConverter;
  */
 public class DenoboPacketSerializer implements PacketSerializer {
 
-    private CryptoAlgorithm cryptoAlgorithm;
+    /**
+     * The encryption algorithm used for packet I/O.
+     */
+    private CryptoAlgorithm crypto;
+    
+    /**
+     * The compression algorithm used for packet I/O.
+     */
     private Compressor compressor;
     
+    /**
+     * Initialises a new instance of a packet serialiser designed to work with
+     * the Denobo protocol.
+     */
     public DenoboPacketSerializer() {
-        cryptoAlgorithm = new DummyCryptoAlgorithm();
+        crypto = new DummyCryptoAlgorithm();
         compressor = new DummyCompressor();
     }
     
@@ -38,8 +50,9 @@ public class DenoboPacketSerializer implements PacketSerializer {
         queryString.add("code", String.valueOf(packet.getCode().toInt()));
         queryString.add("body", packet.getBody());
         
-        // Encrypt.
-        final byte[] ciphertext = cryptoAlgorithm.encrypt(queryString.toString().getBytes("US-ASCII"));
+        // Compress and encrypt.
+        final byte[] compressedText = compressor.compress(queryString.toString().getBytes("US-ASCII"));
+        final byte[] ciphertext = crypto.encrypt(compressedText);
         final String byteString = DatatypeConverter.printBase64Binary(ciphertext);
         
         // Write packet.
@@ -61,6 +74,7 @@ public class DenoboPacketSerializer implements PacketSerializer {
             
             // Read the next character received or block waiting
             currentCharacter = reader.read();
+            
             /* 
              * Check for the end of the stream which indicates that a
              * connection has been closed.
@@ -81,21 +95,21 @@ public class DenoboPacketSerializer implements PacketSerializer {
         while ((buffer = reader.read()) != '$') {
             sb.append((char) buffer);
         }
-        System.out.println("RAW INPUT: " + sb.toString());
         
-        // Decrypt encrypted bytes.
+        // Decrypt and decompress.
         final byte[] ciphertext = DatatypeConverter.parseBase64Binary(sb.toString());
-        final byte[] plaintext = cryptoAlgorithm.decrypt(ciphertext);
+        final byte[] compressedText = crypto.decrypt(ciphertext);
+        final byte[] plaintext = compressor.decompress(compressedText);
         
         // Get query string.
         final QueryString queryString = new QueryString(new String(plaintext, "US-ASCII"));
         final String code = queryString.get("code");
         final String body = queryString.get("body");
         
-        // Convert and validate the code into a PacketCode enum.
+        // Convert and validate the code into a PacketCode value.
         final PacketCode packetCode = PacketCode.valueOf(Integer.parseInt(code));
         if (packetCode == null) {
-            throw new StreamCorruptedException("Invalid PacketCode: " + code);
+            throw new StreamCorruptedException("Invalid packet code: " + code);
         }
         
         return new Packet(packetCode, body);
@@ -104,12 +118,14 @@ public class DenoboPacketSerializer implements PacketSerializer {
 
     @Override
     public void setCompressor(Compressor compressor) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Objects.requireNonNull(crypto, "The compression algorithm cannot be null.");
+        this.compressor = compressor;
     }
 
     @Override
     public void setCryptoAlgorithm(CryptoAlgorithm crypto) {
-        cryptoAlgorithm = crypto;
+        Objects.requireNonNull(crypto, "The encryption algorithm cannot be null.");
+        this.crypto = crypto;
     }
     
 }

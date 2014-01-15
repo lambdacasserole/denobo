@@ -1,5 +1,6 @@
 package denobo.crypto;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.Random;
 
@@ -30,7 +31,7 @@ public class DiffieHellmanKeyGenerator {
     
     /**
      * Returns a random 1568-bit integer that represents a private 
-     * Diffie-Hellman key.
+     * Diffie-Wellman key.
      * 
      * @return  a random large integer
      */
@@ -65,4 +66,28 @@ public class DiffieHellmanKeyGenerator {
         return publicKey.modPow(privateKey, SHARED_LARGE_PRIME);
     }
 
+    /**
+     * Generates an array of integers for use as a key with certain 
+     * {@link CryptoAlgorithm} implementations (for example 
+     * {@link RC4CryptoAlgorithm}) using a shared secret key.
+     * 
+     * @param sharedKey the shared secret key from which to generate the array
+     * @return          an array of integers for use as a key with certain 
+     *                  encryption algorithms
+     */
+    public static int[] generateEncryptionKey(BigInteger sharedKey) {
+        try {
+            final String cryptoKey = Hashing.sha256(sharedKey.toString());
+            final byte[] cryptoKeyBytes = cryptoKey.getBytes("US-ASCII");
+            final int[] cryptoKeyInts = new int[cryptoKeyBytes.length];
+            for (int i = 0; i < cryptoKeyBytes.length; i++) {
+                cryptoKeyInts[i] = cryptoKeyBytes[i];
+            }
+            return cryptoKeyInts;
+        } catch (UnsupportedEncodingException ex) {
+            System.out.println("Key generation did not support encoding: " + ex.getMessage());
+            return null;
+        }
+    }
+    
 }

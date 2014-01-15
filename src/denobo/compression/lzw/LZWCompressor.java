@@ -1,5 +1,6 @@
-package denobo.compression;
+package denobo.compression.lzw;
 
+import denobo.compression.Compressor;
 import denobo.compression.checksum.BSDChecksum;
 import denobo.compression.checksum.Checksum;
 import denobo.compression.lzw.LZWDictionary;

@@ -4,7 +4,6 @@ import denobo.Message;
 import denobo.QueryString;
 import denobo.Route;
 import denobo.crypto.DiffieHellmanKeyGenerator;
-import denobo.crypto.Hashing;
 import denobo.crypto.RC4Drop4096CryptoAlgorithm;
 import denobo.socket.SocketAgent;
 import denobo.socket.connection.state.DenoboConnectionState;
@@ -109,40 +108,21 @@ public class DenoboConnection {
      */
     private Thread receiveThread;
     
-    private BigInteger privateKey;
+    /**
+     * The private key for establishing secure sessions over this connection.
+     */
+    private final BigInteger privateKey;
     
-    private BigInteger publicKey;
+    /**
+     * The public key for establishing secure sessions over this connection.
+     */
+    private final BigInteger publicKey;
     
+    /**
+     * The shared key for encrypting transmitted packets once a secure session
+     * has been established over this connection.
+     */
     private BigInteger sharedKey;
-    
-    public BigInteger getPrivateKey() {
-        return privateKey;
-    }
-    
-    public BigInteger getPublicKey() {
-        return publicKey;
-    }
-    
-    public void setSharedKey(BigInteger sharedKey) {
-        try {
-        this.sharedKey =  sharedKey;
-        RC4Drop4096CryptoAlgorithm s = new RC4Drop4096CryptoAlgorithm();
-        String cryptoKey = Hashing.sha256(sharedKey.toString());
-        byte[] cryptoKeyBytes = cryptoKey.getBytes("US-ASCII");
-        int[] cryptoKeyInts = new int[cryptoKeyBytes.length];
-        for(int i = 0; i < cryptoKeyBytes.length; i++) {
-            cryptoKeyInts[i] = cryptoKeyBytes[i];
-        }
-        s.setKey(cryptoKeyInts);
-        packetSerializer.setCryptoAlgorithm(s);
-        } catch(Exception e) {
-            
-        }
-    }
-    
-    public BigInteger getSharedKey() {
-        return sharedKey;
-    }
     
     /**
      * A boolean flag that is used to signal {@link DenoboConnection#receiveThread} 
@@ -245,6 +225,55 @@ public class DenoboConnection {
      */
     public SocketAgent getParentAgent() {
         return parentAgent;
+    }
+    
+    /**
+     * Gets the private key used for establishing secure sessions over this 
+     * connection.
+     * 
+     * @return  the large integer that represents this connection's private key
+     */
+    public BigInteger getPrivateKey() {
+        return privateKey;
+    }
+    
+    /**
+     * Gets the public key used for establishing secure sessions over this 
+     * connection.
+     * 
+     * @return  the large integer that represents this connection's public key
+     */
+    public BigInteger getPublicKey() {
+        return publicKey;
+    }
+    
+    /**
+     * Gets the shared key for encrypting transmitted packets once a secure 
+     * session has been established over this connection.
+     * 
+     * @return  the large integer that represents the key that this connection
+     *          shares with its remote peer
+     */
+    public BigInteger getSharedKey() {
+        return sharedKey;
+    }
+    
+    /**
+     * Sets the shared key for encrypting transmitted packets once a secure 
+     * session has been established over this connection.
+     * <p>
+     * Note that this method will update the key on this side of the connection
+     * only. Calling this method on one side of the connection alone may result
+     * in the shared secret becoming lost and cause an unstable session state.
+     * 
+     * @param sharedKey the large integer to use for encrypting transmitted 
+     *                  packets 
+     */
+    public void setSharedKey(BigInteger sharedKey) {
+        this.sharedKey = sharedKey;
+        final RC4Drop4096CryptoAlgorithm crypto = new RC4Drop4096CryptoAlgorithm();
+        crypto.setKey(DiffieHellmanKeyGenerator.generateEncryptionKey(sharedKey));
+        packetSerializer.setCryptoAlgorithm(crypto);
     }
     
     /**
