@@ -1,9 +1,11 @@
-package denobo.socket.connection.state;
+package denobo.socket.connection.state.client;
 
 import denobo.Message;
 import denobo.QueryString;
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Packet;
+import denobo.socket.connection.state.AuthenticatedState;
+import denobo.socket.connection.state.DenoboConnectionState;
 
 /**
  * This represents the state where the peer who initiated the connection has

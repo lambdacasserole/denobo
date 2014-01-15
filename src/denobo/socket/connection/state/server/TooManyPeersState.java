@@ -1,8 +1,9 @@
-package denobo.socket.connection.state;
+package denobo.socket.connection.state.server;
 
 import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
+import denobo.socket.connection.state.DenoboConnectionState;
 
 /**
 * This represents the state a connection in when a peer has connected to us 

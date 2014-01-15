@@ -1,4 +1,4 @@
-package denobo.socket.connection.state;
+package denobo.socket.connection.state.server;
 
 import denobo.Message;
 import denobo.QueryString;
@@ -6,6 +6,8 @@ import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Credentials;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
+import denobo.socket.connection.state.AuthenticatedState;
+import denobo.socket.connection.state.DenoboConnectionState;
 
 /**
 * This represents the state a connection is in when the other end of the

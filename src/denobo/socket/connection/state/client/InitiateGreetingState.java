@@ -1,5 +1,6 @@
-package denobo.socket.connection.state;
+package denobo.socket.connection.state.client;
 
+import denobo.socket.connection.state.client.AwaitingAuthenticationState;
 import denobo.Message;
 import denobo.QueryString;
 import denobo.crypto.DiffieHellmanKeyGenerator;
@@ -7,6 +8,8 @@ import denobo.socket.connection.DenoboConnection;
 import denobo.socket.connection.Credentials;
 import denobo.socket.connection.Packet;
 import denobo.socket.connection.PacketCode;
+import denobo.socket.connection.state.AuthenticatedState;
+import denobo.socket.connection.state.DenoboConnectionState;
 import java.math.BigInteger;
 
 /**
