@@ -82,9 +82,9 @@ public class WaitForGreetingState extends DenoboConnectionState {
                     final QueryString replyString = new QueryString();
                     replyString.add("pubkey", connection.getPublicKey().toString());
                     connection.send(new Packet(PacketCode.BEGIN_SECURE, replyString.toString()));
+                    connection.setSharedKey(DiffieHellmanKeyGenerator.generateSharedKey(remotePublicKey, connection.getPrivateKey()));
+                    System.out.println("Reciever computed shared key: " + connection.getSharedKey().toString());
                 }
-                connection.setSharedKey(DiffieHellmanKeyGenerator.generateSharedKey(remotePublicKey, connection.getPrivateKey()));
-                System.out.println("Reciever computed shared key: " + connection.getSharedKey().toString());
                 
                 /*
                  * Check if we have some credentials set that we require from
