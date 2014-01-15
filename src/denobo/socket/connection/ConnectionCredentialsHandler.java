@@ -4,7 +4,7 @@ package denobo.socket.connection;
  * An interface that defines a way to handle a remote connection asking us for
  * some credentials.
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public interface ConnectionCredentialsHandler {
     

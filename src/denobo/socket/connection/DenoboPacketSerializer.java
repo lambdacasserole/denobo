@@ -16,7 +16,7 @@ import javax.xml.bind.DatatypeConverter;
  * An implementation of PacketSerializer for serializing {@link Packet} objects used in
  * Denobo.
  *
- * @author Saul Johnson, Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DenoboPacketSerializer implements PacketSerializer {
 

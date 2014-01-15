@@ -3,7 +3,7 @@ package denobo.compression.checksum;
 /**
  * Specifies that implementing classes support checksum computation.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public interface Checksum {
     

@@ -5,7 +5,7 @@ import denobo.Message;
 /**
  * Implemented by entities that wish to observe a {@link DenoboConnection}.
  * 
- * @author Alex Mullen, Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public interface DenoboConnectionObserver {
     

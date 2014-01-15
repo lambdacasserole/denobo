@@ -16,7 +16,7 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class ConnectionsTab extends JPanel implements SocketAgentObserver {
 

@@ -3,7 +3,7 @@ package denobo.crypto;
 /**
  * Provides RC4 stream cipher encryption/decryption.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class RC4CryptoAlgorithm implements CryptoAlgorithm {
 

@@ -28,7 +28,7 @@ import javax.swing.SwingUtilities;
 /**
  * A Multi-Agent-System network designer for Denobo.
  *
- * @author Alex Mullen, Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class NetworkDesigner extends JComponent implements ActionListener {
     
@@ -56,7 +56,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
     private final JMenuItem menuOptionRouting;
     
     // Dialogs
-    private final CreateAgentDialog createAgentDialog;
+    private CreateAgentDialog createAgentDialog;
     private final AgentPropertiesDialog agentPropertiesDialog;
     private final AgentConnectionsDialog agentConnectionsDialog;
     
@@ -144,9 +144,6 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         emptySpacePopup.add(menuOptionCreateAgent);
         
         
-        
-        
-        createAgentDialog = new CreateAgentDialog();
         agentPropertiesDialog = new AgentPropertiesDialog();
         agentConnectionsDialog = new AgentConnectionsDialog(this);
         
@@ -499,6 +496,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         
         if (e.getSource() == menuOptionCreateAgent) {
             
+            createAgentDialog = new CreateAgentDialog();
             final Agent agentToAdd = createAgentDialog.showDialog(lastMenuClickPosition);
             if (agentToAdd != null) {
 
@@ -538,7 +536,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             
         } else if (e.getSource() == menuOptionRouting) {
             
-            new AgentRoutingDialog().show(agentSelected.getAgent());
+            new AgentRoutingDialog().show(agentSelected.getAgent(), lastMenuClickPosition);
             
         } else if (e.getSource() == menuOptionProperties) {
             

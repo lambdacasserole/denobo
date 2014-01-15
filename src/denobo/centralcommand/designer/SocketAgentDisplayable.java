@@ -10,7 +10,7 @@ import javax.imageio.ImageIO;
 /**
  * Represents a SocketAgent that can be displayed and moved in a NetworkDesigner.
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class SocketAgentDisplayable extends AgentDisplayable {
 

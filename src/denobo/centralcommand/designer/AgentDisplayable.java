@@ -11,9 +11,8 @@ import java.net.URL;
 import javax.imageio.ImageIO;
 
 /**
- * Represents a Agent that can be displayed and moved in a NetworkDesigner.
- *
- * @author Alex Mullen
+ * Represents an Agent that can be displayed and moved in a NetworkDesigner.
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentDisplayable {
     

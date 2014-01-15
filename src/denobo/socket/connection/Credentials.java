@@ -6,7 +6,7 @@ import denobo.QueryString;
  * A class that represents some credentials for gaining access to a SocketAgent 
  * that has requested credentials before a session is allowed.
  *
- * @author Alex Mullen, Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Credentials {
     

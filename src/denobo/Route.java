@@ -7,7 +7,7 @@ import java.util.List;
  * Represents a route that should be taken by a message to reach its
  * destination actor.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Route {
    

@@ -12,7 +12,7 @@ import denobo.socket.connection.state.DenoboConnectionState;
  * submitted some credentials as a reply to a 102 (CREDENTIALS_PLZ) packet and
  * is waiting for authentication.
  * 
- * @author Alex Mullen, Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AwaitingAuthenticationState extends DenoboConnectionState {
 

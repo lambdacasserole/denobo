@@ -4,6 +4,7 @@ import java.util.Objects;
 
 /**
  * Represents a word.
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Word {
 

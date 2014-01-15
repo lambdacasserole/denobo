@@ -30,8 +30,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 /**
+ * This class represents the debug window for an agent.
  *
- * @author Lee Oliver
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentDebugWindow extends DenoboWindow implements ActionListener, MessageHandler {
 
@@ -39,14 +40,17 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      * New instances of this agent.
      */
     private final Agent agentModel;
+
     /**
      * Instances of a send button.
      */
     private final JButton sendButton;
+
     /**
      * Instances of a clear button.
      */
     private final JButton clearButton;
+
     /**
      * Used for spamming tons of messages. TODO: Delete when not needed anymore.
      */
@@ -56,19 +60,23 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      * Used for spam. TODO: deleted when finished with.
      */
     private Thread spamThread;
+
     /**
      * Instances of a text area for the agent name.
      */
     private final JComboBox agentSendArea;
+
     /**
      * Instances of a text area for the message.
      */
     private final JTextArea messageSendArea;
+
     /**
      * Instances of a table that will display the messages that are sent and
      * received.
      */
     private final JTable messageTable;
+
     /**
      * Instances of the debug table model.
      */
@@ -91,30 +99,12 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         messageTable = new JTable(messageTableModel);
         messageTable.setFillsViewportHeight(true);
 
-        /**
-         * South panel JPanel.
-         */
+        //JPanels for the south layout.
         final JPanel southPanel = new JPanel();
-        /**
-         * The first row of the BoxLayout that uses the FlowLayout.
-         */
         final JPanel firstRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        /**
-         * The Second row of the BoxLayout that uses the FlowLayout.
-         */
         final JPanel secondRowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        /**
-         * JLabel that shows the agentSendArea, this uses the FlowLayout.
-         */
         final JPanel namePos = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        /**
-         * JLabel that shows the messageSendArea, this uses the FlowLayout.
-         */
         final JPanel messagePos = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        /**
-         * BoxLayout that holds the firstRowPanel and secondRowPanel,
-         * also the position of the JLabels.
-         */
         final JPanel boxSouthPanel = new JPanel();
         boxSouthPanel.setLayout(new BoxLayout(boxSouthPanel, BoxLayout.Y_AXIS));
 
@@ -141,7 +131,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         spamButton = new JButton("Spam");
         spamButton.addActionListener(this);
         firstRowPanel.add(spamButton);
-        
+
         stopSpamButton = new JButton("Stop Spam");
         stopSpamButton.addActionListener(new ActionListener() {
             @Override
@@ -153,7 +143,6 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         });
         firstRowPanel.add(stopSpamButton);
 
-        
         namePos.add(new JLabel("Name"));
         boxSouthPanel.add(namePos);
         boxSouthPanel.add(firstRowPanel);
@@ -174,6 +163,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
 
             @Override
             public void keyReleased(KeyEvent e) {
+                //Press enter to send the message.
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     sendMessage();
                 }
@@ -192,13 +182,12 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         this.setPreferredSize(new Dimension(this.getPreferredSize().width, 300));
         this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         this.pack();
-        
-        
 
     }
 
     /**
      * Show the Debug window at the current mouse point.
+     *
      * @param designer the designer workspace
      * @param position the initial position
      */
@@ -247,7 +236,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
                 }
             };
             spamThread.start();
-        }
+        }//
 
     }
 
@@ -265,12 +254,11 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
     @Override
     public void messageIntercepted(Agent agent, Message message) {
     }
-    
-    
-    
+
     /**
+     * This class represents the table model for the debug window.
      *
-     * @author Lee Oliver
+     * @author Lee Oliver, Saul Johnson, Alex Mullen
      */
     private class DebugAgentTableModel extends DefaultTableModel {
 
@@ -285,9 +273,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         public boolean isCellEditable(int row, int column) {
             return false;
         }
-        
+
     }
-    
+
 }
-
-

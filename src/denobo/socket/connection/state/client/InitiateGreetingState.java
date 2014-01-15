@@ -20,7 +20,7 @@ import java.math.BigInteger;
 * It is our responsibility to send a GREETINGS packet to them to initiate  a 
 * session.
 *
-* @author Alex Mullen
+* @author Saul Johnson, Alex Mullen, Lee Oliver
 */
 public class InitiateGreetingState extends DenoboConnectionState {
 
@@ -133,8 +133,6 @@ public class InitiateGreetingState extends DenoboConnectionState {
                 break;
 
             case NO:
-
-            case NOT_A_SERVER:
 
             default:
 

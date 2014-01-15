@@ -18,7 +18,7 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class MessagesTab extends JPanel {
     

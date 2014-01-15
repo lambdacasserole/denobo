@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * Represents a query string.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class QueryString {
 

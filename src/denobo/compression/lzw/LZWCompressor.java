@@ -12,7 +12,7 @@ import javax.xml.bind.DatatypeConverter;
 /**
  * A compressor that uses LZW coding to compress a set of bytes.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class LZWCompressor extends Compressor {
 

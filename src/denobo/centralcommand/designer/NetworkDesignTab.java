@@ -6,7 +6,7 @@ import javax.swing.JPanel;
 /**
  * Represents a Network Design tab.
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class NetworkDesignTab extends JPanel {
     

@@ -5,7 +5,7 @@ import java.util.HashMap;
 /**
  * Represents a bidirectional mapping dictionary used for LZW compression.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class LZWDictionary {
     

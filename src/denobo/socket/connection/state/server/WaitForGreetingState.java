@@ -20,7 +20,7 @@ import java.math.BigInteger;
 * This side of the connection needs to wait for a GREETINGS packet from the 
 * other end before a session is allowed.
 *
-* @author Alex Mullen
+* @author Saul Johnson, Alex Mullen, Lee Oliver
 */
 public class WaitForGreetingState extends DenoboConnectionState {
 

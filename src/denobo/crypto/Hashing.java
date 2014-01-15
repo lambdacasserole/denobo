@@ -6,7 +6,7 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  *
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Hashing {
     

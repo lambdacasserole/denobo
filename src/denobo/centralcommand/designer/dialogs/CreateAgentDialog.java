@@ -28,7 +28,7 @@ import javax.swing.JTextField;
 /**
  * A dialog for choosing an agent to add into the network designer.
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class CreateAgentDialog {
     

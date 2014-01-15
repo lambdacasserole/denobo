@@ -36,7 +36,7 @@ import javax.swing.border.TitledBorder;
 /**
  * A dialog for displaying all the other agents connected to an agent.
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentConnectionsDialog implements SocketAgentObserver {
     

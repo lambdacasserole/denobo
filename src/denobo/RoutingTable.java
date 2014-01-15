@@ -9,7 +9,7 @@ import java.util.Map;
  * Represents a table of destination actors and optimal routes that should be
  * taken by messages to reach them.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class RoutingTable {
     

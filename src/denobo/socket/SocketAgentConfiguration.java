@@ -9,7 +9,7 @@ import denobo.socket.connection.DummyConnectionCredentialsHandler;
 /**
  * A class for holding all the configuration options for a SocketAgent.
  *
- * @author Alex Mullen, Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class SocketAgentConfiguration {
 

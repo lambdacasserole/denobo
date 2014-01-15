@@ -4,7 +4,7 @@ package denobo.socket.connection;
  * Represents a ConnectionCredentialsHandler that will always refuse to give
  * credentials.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DummyConnectionCredentialsHandler implements ConnectionCredentialsHandler {
 

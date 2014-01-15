@@ -14,7 +14,7 @@ import javax.swing.Timer;
 /**
  * Represents the program splash screen.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class SplashScreen extends DenoboWindow {
         

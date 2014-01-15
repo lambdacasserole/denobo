@@ -3,7 +3,7 @@ package denobo.centralcommand.designer;
 /**
  * A specialised event listener designed to listen for events raised by a NetworkDesigner control.
  * 
- * @author      Saul Johnson <M2082166@tees.ac.uk>, Edited for use for Denobo by Alex Mullen
+ * @author      Saul Johnson, Alex Mullen, Lee Oliver
  * @version     1.0
  * @since       2013-03-17
  */

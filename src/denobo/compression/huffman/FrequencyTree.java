@@ -3,7 +3,7 @@ package denobo.compression.huffman;
 /**
  * Represents a Huffman tree of frequencies.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class FrequencyTree extends Node {
 

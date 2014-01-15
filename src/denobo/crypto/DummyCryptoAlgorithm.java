@@ -3,7 +3,7 @@ package denobo.crypto;
 /**
  * A non-functioning crypto algorithm that neither encrypts nor decrypts data.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DummyCryptoAlgorithm implements CryptoAlgorithm {
 

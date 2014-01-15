@@ -11,7 +11,7 @@ import javax.swing.JTabbedPane;
 /**
  * A dialog for monitoring all activity happening on an agent.
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentMonitorDialog {
     

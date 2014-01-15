@@ -7,7 +7,7 @@ import javax.swing.JComponent;
 /**
  * A component capable of displaying an image.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class ImagePanel extends JComponent {
    

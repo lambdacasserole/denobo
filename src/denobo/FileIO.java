@@ -12,7 +12,7 @@ import java.nio.file.Paths;
  * Offers basic helper methods for reading and writing bytes and text to and 
  * from files.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class FileIO {
     

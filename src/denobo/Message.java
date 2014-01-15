@@ -4,7 +4,7 @@ package denobo;
  * Represents a message passed between Actors in a multi-agent system in order
  * to communicate with one another.
  * 
- * @author Saul Johnson, Lee Oliver, Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Message {
 

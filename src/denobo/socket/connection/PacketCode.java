@@ -7,7 +7,7 @@ import java.util.Map;
  * An enum that represents a {@link Packet} code that describes the type of 
  * Packet it is.
  * 
- * @author Lee Oliver, Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public enum PacketCode {
 
@@ -31,7 +31,6 @@ public enum PacketCode {
     
     NO                  (400),
     TOO_MANY_PEERS      (401),
-    NOT_A_SERVER        (402),     // Redundant?
     NO_CREDENTIALS      (403),
     BAD_CREDENTIALS     (404),
     UNSUPPORTED         (405);

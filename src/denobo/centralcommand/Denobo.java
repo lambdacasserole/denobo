@@ -5,7 +5,7 @@ import javax.swing.SwingUtilities;
 /**
  * The main class for the Denobo Central Command software.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Denobo {
     

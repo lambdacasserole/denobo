@@ -9,7 +9,7 @@ import java.util.concurrent.TimeoutException;
 /**
 * Represents an abstract state that a DenoboConnection can be in.
 *
-* @author Alex Mullen, Saul Johnson
+* @author Saul Johnson, Alex Mullen, Lee Oliver
 */
 public abstract class DenoboConnectionState {
 

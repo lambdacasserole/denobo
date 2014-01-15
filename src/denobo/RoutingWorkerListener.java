@@ -4,7 +4,7 @@ package denobo;
  * Implemented by classes that wish to be notified when a {link RoutingWorker}
  * finishes calculating the optimal route to an agent.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public interface RoutingWorkerListener {
     

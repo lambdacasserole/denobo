@@ -3,12 +3,13 @@ package denobo.centralcommand.designer.dialogs;
 import denobo.Agent;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Point;
 import javax.swing.JDialog;
 import javax.swing.JTextArea;
 
 /**
  *
- * @author Alex
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentRoutingDialog {
     
@@ -29,12 +30,13 @@ public class AgentRoutingDialog {
         
     }
     
-    public void show(Agent agent) {
+    public void show(Agent agent, Point position) {
         
         dialog.setTitle("Router Data [" + agent.getName() + "]");
         area.setText(agent.routingTable.toString());
+        dialog.setLocation(position);
         dialog.setAlwaysOnTop(true);
-        dialog.setPreferredSize(new Dimension(250, 250));
+        dialog.setSize(new Dimension(250, 250));
         dialog.setVisible(true);
         
     }

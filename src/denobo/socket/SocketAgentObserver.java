@@ -6,7 +6,7 @@ import denobo.socket.connection.DenoboConnection;
  * An observer interface that has to be implemented by any class that wants to 
  * receive events from a {@link SocketAgent}.
  *
- * @author Alex Mullen
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public interface SocketAgentObserver {
     

@@ -3,7 +3,7 @@ package denobo.compression;
 /**
  * A non-functioning compressor that neither compresses nor decompresses data.
  * 
- * @author Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DummyCompressor extends Compressor {
 

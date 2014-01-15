@@ -19,7 +19,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * This represents the state of a connection has completed the hand-shake.
  *
- * @author Alex Mullen, Saul Johnson
+ * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AuthenticatedState extends DenoboConnectionState implements RoutingWorkerListener {
     

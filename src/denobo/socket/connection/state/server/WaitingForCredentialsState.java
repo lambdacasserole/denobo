@@ -14,7 +14,7 @@ import denobo.socket.connection.state.DenoboConnectionState;
 * connection initiated the connection and we need some valid credentials
 * before we will let them proceed any further.
 * 
-* @author Alex Mullen
+* @author Saul Johnson, Alex Mullen, Lee Oliver
 */
 public class WaitingForCredentialsState extends DenoboConnectionState {
 
