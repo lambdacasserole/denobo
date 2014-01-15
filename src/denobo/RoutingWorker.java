@@ -115,8 +115,7 @@ public class RoutingWorker implements Runnable {
         }
 
         // For each agent connected to our originator.
-        final List<Agent> connections = agent.getConnectedAgents();
-        for (Agent current : connections) {
+        for (Agent current : agent.getConnectedAgents()) {
 
             // An optimal route will never take us through the same node twice.
             if (route.has(current)) {
@@ -131,10 +130,8 @@ public class RoutingWorker implements Runnable {
             if (current.getName().equals(destination)) {
                 routes.add(newQueue);
             } else {
-                
                 // Otherwise continue recursing through the tree.
                 route(current, newQueue);
-                
             }
             
         }

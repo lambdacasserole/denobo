@@ -8,6 +8,7 @@ import denobo.centralcommand.designer.AgentDisplayable;
 import denobo.centralcommand.designer.NetworkDesigner;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -50,6 +51,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      * Used for spamming tons of messages. TODO: Delete when not needed anymore.
      */
     private final JButton spamButton;
+    private final JButton stopSpamButton;
     /**
      * Used for spam. TODO: deleted when finished with.
      */
@@ -140,6 +142,18 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         spamButton.addActionListener(this);
         firstRowPanel.add(spamButton);
         
+        stopSpamButton = new JButton("Stop Spam");
+        stopSpamButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                if (spamThread != null) {
+                    spamThread.interrupt();
+                }
+            }
+        });
+        firstRowPanel.add(stopSpamButton);
+
+        
         namePos.add(new JLabel("Name"));
         boxSouthPanel.add(namePos);
         boxSouthPanel.add(firstRowPanel);
@@ -175,9 +189,11 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         boxSouthPanel.add(secondRowPanel);
 
         southPanel.add(boxSouthPanel);
-
+        this.setPreferredSize(new Dimension(this.getPreferredSize().width, 300));
         this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         this.pack();
+        
+        
 
     }
 
@@ -222,6 +238,11 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
                 public void run() {
                     for (int i = 0; i < 10000000; i++) {
                         agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText() + i);
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException ex) {
+                            break;
+                        }
                     }
                 }
             };

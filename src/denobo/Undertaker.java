@@ -105,8 +105,7 @@ public class Undertaker implements Runnable {
         }
 
         // For each agent connected to the current agent.
-        final List<Agent> connections = agent.getConnectedAgents();
-        for (Agent currentAgent : connections) {
+        for (Agent currentAgent : agent.getConnectedAgents()) {
             
             // Make sure we don't visit an already visited agent again.
             if (visitedAgentNames.contains(currentAgent.getName())) {
@@ -131,7 +130,7 @@ public class Undertaker implements Runnable {
         /*
          * Go through any found SocketAgents and tell their connections to
          * crawl their local networks and invalidate the link between the
-         * specified two agents.
+         * specified agents.
          */
         for (SocketAgent currentSocketAgent : visitedSocketAgents) {
             currentSocketAgent.invalidateRemote(invalidatedAgentNames, visitedAgentNames);
