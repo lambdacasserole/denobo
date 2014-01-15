@@ -4,7 +4,6 @@ import boris.utils.ArgList;
 import denobo.Agent;
 import denobo.Message;
 import denobo.MessageHandler;
-import denobo.MessageListener;
 import denobo.socket.SocketAgent;
 import java.awt.*;
 import java.io.IOException;
