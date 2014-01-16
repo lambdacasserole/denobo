@@ -1,6 +1,7 @@
 package denobo.centralcommand.designer.dialogs;
 
 import denobo.Agent;
+import denobo.compression.Compressor;
 import denobo.socket.SocketAgent;
 import denobo.socket.SocketAgentConfiguration;
 import denobo.socket.connection.Credentials;
@@ -46,7 +47,6 @@ public class CreateAgentDialog {
     private final JLabel portLabel = new JLabel("Port:");
     private final JLabel maxConnectionsLabel = new JLabel("Maximum Connections:");
     private final JLabel passwordLabel = new JLabel("Password:");
-    private final JLabel encryptionLabel = new JLabel("Encryption:");
     private final JLabel compressionLabel = new JLabel("Compression:");
     
     // Controls for agents with socket capababilities
@@ -55,7 +55,7 @@ public class CreateAgentDialog {
     private final JTextField maxConnectionsField;
     private final JCheckBox startAdvertisingCheckBox;
     private final JPasswordField passwordField;
-    private final JComboBox<String> encryptionComboBox;
+    private final JCheckBox encryptionCheckBox;
     private final JComboBox<String> compressionComboBox;
     
     private final JButton createButton;
@@ -85,8 +85,8 @@ public class CreateAgentDialog {
         startAdvertisingCheckBox = new JCheckBox("Start Advertising", false);
         passwordField = new JPasswordField(10);
 
-        encryptionComboBox = new JComboBox<>(new String[] {"RC4"});
-        compressionComboBox = new JComboBox<>(new String[] {"LZW"});
+        encryptionCheckBox = new JCheckBox("Use Encryption", false);
+        compressionComboBox = new JComboBox<>(new String[] {"none", "basic", "lzw"});
         
         createButton = new JButton("Create");
         cancelButton = new JButton("Cancel");
@@ -136,8 +136,7 @@ public class CreateAgentDialog {
         contentPanel.add(passwordRow);
         
         final JPanel encryptionRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        encryptionRow.add(encryptionLabel);
-        encryptionRow.add(encryptionComboBox);
+        encryptionRow.add(encryptionCheckBox);
         contentPanel.add(encryptionRow);
         
         final JPanel compressionRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -261,14 +260,13 @@ public class CreateAgentDialog {
         portLabel.setEnabled(enable);
         maxConnectionsLabel.setEnabled(enable);
         passwordLabel.setEnabled(enable);
-        encryptionLabel.setEnabled(enable);
         compressionLabel.setEnabled(enable);
         
         startAdvertisingCheckBox.setEnabled(enable);
         portField.setEditable(enable);
         maxConnectionsField.setEditable(enable);
         passwordField.setEditable(enable);
-        encryptionComboBox.setEnabled(enable);
+        encryptionCheckBox.setEnabled(enable);
         compressionComboBox.setEnabled(enable);
 
     }
@@ -369,19 +367,25 @@ public class CreateAgentDialog {
             
             agentConfig.setMaximumConnections(Integer.parseInt(maxConnectionsField.getText()));
             agentConfig.setCredentialsHandler(new CredentialsPromptDialog());
-            String passwordSet = String.valueOf(passwordField.getPassword());
+            final String passwordSet = String.valueOf(passwordField.getPassword());
             if (!passwordSet.isEmpty()) {
                 agentConfig.setCredentials(new Credentials(null, passwordSet));
             }
+            agentConfig.setIsSecure(encryptionCheckBox.isSelected());
+            agentConfig.setCompression(
+                    Compressor.instantiate((String) compressionComboBox.getSelectedItem()));
             
-            final SocketAgent newSocketAgent = new SocketAgent(agentNameField.getText(), cloneableCheckBox.isSelected(), agentConfig);
+            final SocketAgent newSocketAgent = new SocketAgent(agentNameField.getText(), 
+                    cloneableCheckBox.isSelected(), agentConfig);
             
             if (startAdvertisingCheckBox.isSelected()) {
                 
                 try {
                     newSocketAgent.startAdvertising(Integer.parseInt(portField.getText()));
                 } catch (IOException e) {
-                     JOptionPane.showMessageDialog(dialog, "The socket agent was unable to start advertising.\n\n" + e.getMessage(), "Error!", JOptionPane.ERROR_MESSAGE);
+                     JOptionPane.showMessageDialog(dialog, 
+                             "The socket agent was unable to start advertising.\n\n" 
+                                     + e.getMessage(), "Error!", JOptionPane.ERROR_MESSAGE);
                 }
 
             }

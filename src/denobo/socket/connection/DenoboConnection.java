@@ -435,7 +435,7 @@ public class DenoboConnection {
 
         // TODO: Make this method block until it is completely finished.
         
-        // If we're already disconnected, don't try again. (Not purely thread safe)
+        // If we're already disconnected, don't try again.
         if (disconnected) { return; }
 
         // Specify that we're now disconnected.

@@ -15,6 +15,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -50,8 +51,8 @@ public class AgentPropertiesDialog {
     private final JButton stopAdvertisingButton;
     private final JButton startAdvertisingButton;
     private final JTextField advertisePortField;
-    private final JComboBox<String> encryptionComboBox;
-    private final JComboBox<String> compressionComboBox;
+    private final JCheckBox encryptionCheckBox;
+    private final JLabel compressionTypeLabel;
     
     // Controls for the dialog
     private final JButton okButton;
@@ -87,8 +88,11 @@ public class AgentPropertiesDialog {
         stopAdvertisingButton = new JButton("Stop Advertising");
         startAdvertisingButton = new JButton("Start Advertising");
         advertisePortField = new JTextField("4757", 5);
-        encryptionComboBox = new JComboBox<>(new String[] {"None", "RC4"});
-        compressionComboBox = new JComboBox<>(new String[] {"None", "LZW"});
+        
+        encryptionCheckBox = new JCheckBox("", false);
+        encryptionCheckBox.setEnabled(false);
+        
+        compressionTypeLabel = new JLabel("none");
         
         okButton = new JButton("OK");
         applyButton = new JButton("Apply");
@@ -155,12 +159,12 @@ public class AgentPropertiesDialog {
         
         final JPanel encryptionOptionRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         encryptionOptionRow.add(new JLabel("Encryption:"));
-        encryptionOptionRow.add(encryptionComboBox);
+        encryptionOptionRow.add(encryptionCheckBox);
         socketContentPanel.add(encryptionOptionRow);
         
         final JPanel compressionOptionRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         compressionOptionRow.add(new JLabel("Compression:"));
-        compressionOptionRow.add(compressionComboBox);
+        compressionOptionRow.add(compressionTypeLabel);
         socketContentPanel.add(compressionOptionRow);
         
         socketContentPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -280,10 +284,7 @@ public class AgentPropertiesDialog {
             stopAdvertisingButton.setEnabled(true);
             startAdvertisingButton.setEnabled(false);
             advertisePortField.setEditable(false);
-            
-            //encryptionComboBox
-            //compressionComboBox
-            
+
         } else {
             
             advertisingStatusLabel.setForeground(Color.BLACK);
@@ -292,11 +293,11 @@ public class AgentPropertiesDialog {
             stopAdvertisingButton.setEnabled(false);
             startAdvertisingButton.setEnabled(true);
             advertisePortField.setEditable(true);
-
-            //encryptionComboBox
-            //compressionComboBox
             
         }
+        
+        encryptionCheckBox.setSelected(socketAgent.getConfiguration().getIsSecure());
+        compressionTypeLabel.setText(socketAgent.getConfiguration().getCompression().getName());
 
     }
     
