@@ -11,23 +11,89 @@ import java.util.Map;
  */
 public enum PacketCode {
 
+    /**
+     * Sent by the local peer to the remote peer to begin the session.
+     */
     GREETINGS           (100),
+    
+    /**
+     * Sent by the remote peer to the local peer to signal the end of
+     * handshaking/initialisation and enter the live session.
+     */
     ACCEPTED            (101),
+    
+    /**
+     * Sent by the remote peer to request authentication credentials from the
+     * local peer.
+     */
     CREDENTIALS_PLZ     (102),
+    
+    /**
+     * Sent by the local peer in response to a 102 (CREDENTIALS_PLZ) code to
+     * offer up its username and password for authentication.
+     */
     CREDENTIALS         (103),
     
+    /**
+     * Sent by the remote peer during handshaking/initialisation to set the
+     * compression scheme on the connection.
+     */
     SET_COMPRESSION     (200),
+    
+    /**
+     * Sent by the remote peer during handshaking/initialisation to specify
+     * that the connection should be encrypted.
+     */
     BEGIN_SECURE        (201),
     
+    /**
+     * Sent by a peer to transmit a message over the connection.
+     */
     SEND_MESSAGE        (300),
+    
+    /**
+     * Sent by a peer to test the health of a remote agent/connection.
+     */
     POKE                (301),
+    
+    /**
+     * Sent by a peer to request a route to a remote agent.
+     */
     ROUTE_TO            (302),
+    
+    /**
+     * Sent by a peer in reply to a 302 (ROUTE_TO) packet to pass back a route
+     * to an agent once calculated.
+     */
     ROUTE_FOUND         (303),
+    
+    /**
+     * Sent by a peer to specify that a set of agents are no longer valid in
+     * routing tables.
+     */
     INVALIDATE_AGENTS   (304),
     
+    /**
+     * A generic error code that can be sent by either peer.
+     */
     NO                  (400),
+    
+    /**
+     * Sent by the remote peer, specifying that the agent has reached its peer
+     * limit before disconnecting.
+     */
     TOO_MANY_PEERS      (401),
+    
+    /**
+     * Sent by the local peer in response to a 102 (CREDENTIALS_PLZ) packet to
+     * specify that we don't have any credentials to provide.
+     */
     NO_CREDENTIALS      (402),
+    
+    /**
+     * Sent by the remote peer in response to a 103 (CREDENTIALS) packet
+     * indicating that the credentials provided were not acceptable.
+     */
     BAD_CREDENTIALS     (403);
 
     /**
@@ -77,4 +143,5 @@ public enum PacketCode {
     public static PacketCode valueOf(int code) {
         return CODE_MAP.get(code);
     }
+    
 }

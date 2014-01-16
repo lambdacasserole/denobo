@@ -80,7 +80,7 @@ public class Agent implements RoutingWorkerListener {
     /**
      * The routing table for this Agent.
      */
-    public final RoutingTable routingTable;
+    private final RoutingTable routingTable;
     
     /**
      * A list of {@link MessageListener} objects observing Messages passed to the 
@@ -221,6 +221,15 @@ public class Agent implements RoutingWorkerListener {
         return name;
     }
 
+    /**
+     * Gets this agent's routing table.
+     * 
+     * @return  this agent's routing table
+     */
+    public RoutingTable getRoutingTable() {
+        return routingTable;
+    }
+    
     /**
      * Gets whether or not this Agent is cloneable.
      *
@@ -729,7 +738,6 @@ public class Agent implements RoutingWorkerListener {
      * @param agentName the name of the agent to invalidate
      */
     public void invalidateAgentName(String agentName) {
-        System.out.println("invalidateAgent " + agentName + " from " + name);
         routingTable.invalidateAgent(agentName);
     }
     

@@ -65,8 +65,6 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
 
         QueryString queryString;
         
-        System.out.println(packet.getCode() + ": " + packet.getBody());
-        
         // Process packet according to status code.
         switch(packet.getCode()) {
             
@@ -172,7 +170,9 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 // TODO: Bad packet code that we weren't expecting.
                 connection.disconnect();
                 break;
+                
         }
+        
     }
 
     @Override

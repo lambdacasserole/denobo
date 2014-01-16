@@ -85,15 +85,10 @@ public class SocketAgent extends Agent {
      */
     private final SocketAgentConfiguration configuration;
 
-    
-    
-    
-        
     /**
      * A map of RoutingWorkerListener instances that we notify if we find a 
      * remote route to a destination.
      */
-    // TODO: We can't be having this being public
     public final Map<String, List<RoutingWorkerListener>> remoteRouteToCallbacks;
     
     
@@ -177,6 +172,16 @@ public class SocketAgent extends Agent {
      */
     public SocketAgentConfiguration getConfiguration() {
         return configuration;
+    }
+    
+    /**
+     * Gets a map of RoutingWorkerListener instances that we notify if we find a 
+     * remote route to a destination.
+     * 
+     * @return  a map of RoutingWorkerListener instances
+     */
+    public Map<String, List<RoutingWorkerListener>> getRemoteRouteToCallbacks() {
+        return remoteRouteToCallbacks;
     }
 
     /**
@@ -343,7 +348,7 @@ public class SocketAgent extends Agent {
                     
                     // Tell them there we cannot accept them because we have too
                     // many peers already connected.
-                    new DenoboConnection(this, acceptedSocket, 
+                    final DenoboConnection throwawayConnection = new DenoboConnection(this, acceptedSocket, 
                             DenoboConnection.InitialState.TOO_MANY_PEERS);
                     
                 }
@@ -351,7 +356,7 @@ public class SocketAgent extends Agent {
             } catch (IOException ex) {
                 
                 // TODO: Handle exception.
-                System.out.println("acceptConnectionsLoop: " + ex.getMessage());
+                System.out.println("Connection acceptor socket threw an IOException: " + ex.getMessage());
                 
             }
             
@@ -614,8 +619,8 @@ public class SocketAgent extends Agent {
         @Override
         public void connectionAuthenticated(DenoboConnection connection) {
 
-            System.out.println(connection.getRemoteAddress() + ":" 
-                    + connection.getRemotePort() + " Authenticated");
+            System.out.println("Authenticated remote agent at - [" + connection.getRemoteAddress() + ":" 
+                    + connection.getRemotePort() + "]");
             
         }
 

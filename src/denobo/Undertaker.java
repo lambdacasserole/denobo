@@ -90,8 +90,6 @@ public class Undertaker implements Runnable {
          */
         visitedAgentNames.add(agent.getName());     
         
-        System.out.println("Undertaking on agent: " + agent.getName());
-        
         /*
          * Remember any SocketAgent's we will visit later.
          */

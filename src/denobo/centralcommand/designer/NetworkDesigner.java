@@ -481,7 +481,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
 
         } else if (e.getSource() == menuOptionMonitor) {
             
-            agentSelected.getMonitorDialog().show(agentSelected.getBounds().getLocation());
+            agentSelected.getMonitorDialog().showAt(agentSelected.getBounds().getLocation());
             
         } else if (e.getSource() == menuOptionDebugWindow) {
                     

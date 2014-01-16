@@ -125,7 +125,7 @@ public class LZWCompressor extends Compressor {
         } catch (IOException ex) {
             
             // TODO: Handle exception.
-            System.out.println("Could not compress data.");
+            System.out.println("Could not compress data: " + ex.getMessage());
             return null;
             
         }

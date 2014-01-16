@@ -31,7 +31,7 @@ public class AgentRoutingDialog {
     public void show(Agent agent, Point position) {
         
         dialog.setTitle("Router Data [" + agent.getName() + "]");
-        area.setText(agent.routingTable.toString());
+        area.setText(agent.getRoutingTable().toString());
         dialog.setLocation(position);
         dialog.setAlwaysOnTop(true);
         dialog.setSize(new Dimension(250, 250));

@@ -63,29 +63,13 @@ public class AgentMonitorDialog extends DenoboDialog {
     }
     
     /**
-     * Makes this dialog window visible.
-     */
-    @Override
-    public void show() {
-        this.setVisible(true);
-    }
-    
-    /**
      * Makes this dialog window visible at the specified position.
      * 
      * @param position  the position to place the dialog window
      */
-    public void show(Point position) {
+    public void showAt(Point position) {
         this.setLocation(position);
-        this.show();
-    }
-    
-    /**
-     * Hides this dialog window.
-     */
-    @Override
-    public void hide() {
-        this.dispose();
+        this.setVisible(true);
     }
     
 }

@@ -95,7 +95,6 @@ public class DenoboPacketSerializer implements PacketSerializer {
         while ((buffer = reader.read()) != '$') {
             sb.append((char) buffer);
         }
-        System.out.println("Recieved raw input on socket: " + sb.toString());
         
         // Decrypt and decompress.
         final byte[] ciphertext = DatatypeConverter.parseBase64Binary(sb.toString());
