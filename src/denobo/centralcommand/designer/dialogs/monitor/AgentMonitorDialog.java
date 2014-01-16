@@ -1,11 +1,11 @@
 package denobo.centralcommand.designer.dialogs.monitor;
 
 import denobo.Agent;
+import denobo.centralcommand.DenoboDialog;
 import denobo.socket.SocketAgent;
 import java.awt.BorderLayout;
 import java.awt.Dialog.ModalityType;
 import java.awt.Point;
-import javax.swing.JDialog;
 import javax.swing.JTabbedPane;
 
 /**
@@ -16,9 +16,8 @@ import javax.swing.JTabbedPane;
 public class AgentMonitorDialog {
     
     private final Agent agent;
-    private final JDialog dialog;
+    private final DenoboDialog dialog;
     private final JTabbedPane tabHolder;
-
 
     /**
      * Creates an instance of a new AgentMonitorDialog for an agent.
@@ -30,7 +29,7 @@ public class AgentMonitorDialog {
         this.agent = agent;
         
         // Create and configure the dialog
-        dialog = new JDialog();
+        dialog = new DenoboDialog();
         dialog.setLayout(new BorderLayout());
         dialog.setTitle("Monitor [" + agent.getName() + "]");
         dialog.setResizable(true);

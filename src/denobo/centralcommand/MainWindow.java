@@ -17,11 +17,7 @@ import javax.swing.JTabbedPane;
  * @author Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class MainWindow extends DenoboWindow {
-        
-    private final JTabbedPane tabHolder;
-    private final JMenuItem networkDesignItem;
-    private final JMenuItem exitItem;
-    
+      
     /**
      * Initialises the program main window.
      */
@@ -29,21 +25,26 @@ public class MainWindow extends DenoboWindow {
         
         super();
         
+        // Set window title.
         this.setTitle("Denobo Central Command");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLayout(new BorderLayout());
         
-        tabHolder = new JTabbedPane();
+        // Add tabbed MDI pane.
+        final JTabbedPane tabHolder = new JTabbedPane();
         tabHolder.setPreferredSize(new Dimension(640, 480));
         this.add(tabHolder, BorderLayout.CENTER);
         
+        // Add menu bar.
         final JMenuBar menuBar = new JMenuBar();
         this.setJMenuBar(menuBar);
         
+        // Add "File" menu.
         final JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         
-        networkDesignItem = new JMenuItem("New Network Design");
+        // Add "New Network Design" item.
+        final JMenuItem networkDesignItem = new JMenuItem("New Network Design");
         networkDesignItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -52,7 +53,8 @@ public class MainWindow extends DenoboWindow {
         });
         fileMenu.add(networkDesignItem);
         
-        exitItem = new JMenuItem("Exit");
+        // Add "Exit" item.
+        final JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
