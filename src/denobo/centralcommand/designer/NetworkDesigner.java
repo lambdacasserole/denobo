@@ -28,24 +28,25 @@ import javax.swing.SwingUtilities;
 /**
  * A Multi-Agent-System network designer for Denobo.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class NetworkDesigner extends JComponent implements ActionListener {
     
     // Gridline constants.
     private final int gridSpacing = 15;
-    private final Color gridLineColor = new Color(0, 0, 0, 25);      // 0xF0F4F5    
+    private final Color gridLineColor = new Color(0, 0, 0, 25); // 0xF0F4F5    
     
     // Selection line constants.
     private final Color selectionBoundingBoxColor = new Color(0, 0, 0, 100);
     private final float[] selectionBoundingBoxDash = new float[] {2.0f};
-    private final BasicStroke selectionBoundingBoxStroke = new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10.0f, selectionBoundingBoxDash, 0.0f);
+    private final BasicStroke selectionBoundingBoxStroke = new BasicStroke(1.0f, 
+            BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10.0f, selectionBoundingBoxDash, 0.0f);
    
-    // Menu for right-clicking on empty space
+    // Menu for right-clicking on empty space.
     private final JPopupMenu emptySpacePopup;
     private final JMenuItem menuOptionCreateAgent;
     
-    // Menu for right-clicking on a agent
+    // Menu for right-clicking on a agent.
     private final JPopupMenu agentSelectedPopup;
     private final JMenuItem menuOptionLink;
     private final JMenuItem menuOptionsConnections;
@@ -55,27 +56,33 @@ public class NetworkDesigner extends JComponent implements ActionListener {
     private final JMenuItem menuOptionDelete;
     private final JMenuItem menuOptionRouting;
     
-    // Dialogs
+    // Dialogs.
     private CreateAgentDialog createAgentDialog;
     private final AgentPropertiesDialog agentPropertiesDialog;
     private final AgentConnectionsDialog agentConnectionsDialog;
     
-    // Collections to hold the data for this designer
+    // Collections to hold the data for this designer.
     private final List<AgentDisplayable> agents;
     private final List<AgentLink> agentLinks;
     private final List<DesignerEventListener> designerEventListeners;
     
-    // State data to save in-between events
+    // State data to save in-between events.
     private Point lastMenuClickPosition;
-    private Point selectedComponentDragOffset;    // The offset of the cursor relative to the initial click on a component before dragging.
+    /* 
+     * The offset of the cursor relative to the initial click on a component 
+     * before dragging.
+     */
+    private Point selectedComponentDragOffset;
     private NetworkDesignerState state;
     private AgentDisplayable agentSelected;
     private boolean isSelectedAgentTryingToLink;
     
-    private boolean showGrid = true; // Whether or not the grid (and snap-to-grid features) are currently enabled.
+    /**
+     * Whether or not the grid (and snap-to-grid features) are currently enabled.
+     */
+    private boolean showGrid = true;
 
-    
-    
+    @SuppressWarnings("LeakingThisInConstructor")
     public NetworkDesigner() {
 
         super();
@@ -85,19 +92,6 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         agents = new ArrayList<>();
         agentLinks = new ArrayList<>();
         designerEventListeners = new ArrayList<>();
-        
-        
-//        this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteSelectedAgent");
-//        this.getActionMap().put("deleteSelectedAgent", new AbstractAction() {
-//
-//            @Override
-//            public void actionPerformed(ActionEvent ae) {
-//                removeSelectedAgent();
-//            }
-//            
-//        });
-//        
-        
         
         agentSelectedPopup = new JPopupMenu();
         
@@ -135,21 +129,16 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         menuOptionProperties.addActionListener(this);
         agentSelectedPopup.add(menuOptionProperties);
         
-
-        
         emptySpacePopup = new JPopupMenu();
         
         menuOptionCreateAgent = new JMenuItem("Create Agent");
         menuOptionCreateAgent.addActionListener(this);
         emptySpacePopup.add(menuOptionCreateAgent);
         
-        
         agentPropertiesDialog = new AgentPropertiesDialog();
         agentConnectionsDialog = new AgentConnectionsDialog(this);
         
-        
         state = new DefaultState();
-        
         
         this.addMouseListener(new MouseListener() {
             
@@ -276,8 +265,10 @@ public class NetworkDesigner extends JComponent implements ActionListener {
      */
     private AgentDisplayable getAgentAt(Point point) {
         
-        // Start at the end of the array since the agents at the end will be the
-        // ones that are rendered last, thus are on top.
+        /* 
+         * Start at the end of the array since the agents at the end will be the
+         * ones that are rendered last, thus are on top.
+         */
         for (int i = (agents.size() - 1); i >= 0; i--) {
             if (agents.get(i).getBounds().contains(point)) {
                 return agents.get(i);
@@ -457,40 +448,6 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         
     }
     
-//    
-//    /**
-//     * Nudges the selected component in the specified direction by the size of one grid square, or by 1 pixel if grid is not enabled.
-//     *
-//     * @param nudgeType The direction in which to nudge the component.
-//     */
-//    public void nudgeSelectedComponent(int nudgeType) {
-//        
-//        if(!isComponentSelected()) { // Abort if no component selected.
-//            return;
-//        }
-//        
-//        int xOffset = 0;
-//        int yOffset = 0;
-//        
-//        if(showGrid) { // If the grid is shown, nudge by the grid spacing in the specified direction.
-//            xOffset = (nudgeType == NUDGE_LEFT ? -gridSpacing : (nudgeType == NUDGE_RIGHT ? gridSpacing : 0));
-//            yOffset = (nudgeType == NUDGE_UP ? -gridSpacing : (nudgeType == NUDGE_DOWN ? gridSpacing : 0));
-//        }
-//        else { // If the grid is not shown, nudge by 1 pixel in the specified direction.
-//            xOffset = (nudgeType == NUDGE_LEFT ? -1 : (nudgeType == NUDGE_RIGHT ? 1 : 0));
-//            yOffset = (nudgeType == NUDGE_UP ? -1 : (nudgeType == NUDGE_DOWN ? 1 : 0));
-//        }
-//        
-//        // Move selected component.
-//        PlaceableComponent currentComponent = getSelectedComponent();
-//        currentComponent.setLocation(currentComponent.getX() + xOffset, currentComponent.getY() + yOffset);
-//        
-//        this.repaint(); // Repaint to show changes.
-//        
-//    }
-    
-    
-    
     @Override
     public void actionPerformed(ActionEvent e) {
         
@@ -583,7 +540,6 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             final int y = agentSelected.getBounds().y + (agentSelected.getBounds().height / 2);
             
             g.setColor(Color.black);
-            // TODO: NPE when mouse is behind something
             g.drawLine(x, y, this.getMousePosition().x, this.getMousePosition().y);
             
         }
@@ -623,8 +579,6 @@ public class NetworkDesigner extends JComponent implements ActionListener {
         paintComponent((Graphics2D) g); // We need Graphics2D for advanced drawing methods.
 
     }
-    
-    ////////////////////////////////////////////////////////////////////////////
     
     /**
      * A class that represents a state that a NetworkDesigner object can be in.

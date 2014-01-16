@@ -19,7 +19,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * This represents the state of a connection has completed the hand-shake.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AuthenticatedState extends DenoboConnectionState implements RoutingWorkerListener {
     
@@ -137,7 +137,6 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 // Get the list of invalidated agent names
                 final List<String> invalidatedAgents = queryString.getAsList("invalidatedagents");
                 
-
                 /*
                  * Add this SocketAgent instance as a branch for the Undertaker
                  * to crawl along.
@@ -155,13 +154,9 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 
                 break;
                 
-            case ROUTE_NOT_FOUND:
-                
-                // TODO: Can we make efficiency savings with this packet code?
-                break;
-                
             case POKE:
 
+                // Send poke code synchronously.
                 synchronized (pokeLock) {
                     if (pokeSent) {
                         pokeReturned = true;

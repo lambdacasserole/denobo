@@ -1,4 +1,4 @@
 /**
- * Package contains the client side state of the connection for denobo.
+ * Contains client side connection state classes for the core Denobo API.
  */
 package denobo.socket.connection.state.client;

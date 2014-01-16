@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * Represents a sequence of bits.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class BitSequence {
 

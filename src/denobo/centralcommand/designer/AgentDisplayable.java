@@ -12,7 +12,10 @@ import javax.imageio.ImageIO;
 
 /**
  * Represents an Agent that can be displayed and moved in a NetworkDesigner.
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * 
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
+ * @see     NetworkDesigner
+ * @see     Agent
  */
 public class AgentDisplayable {
     
@@ -22,12 +25,12 @@ public class AgentDisplayable {
     private static BufferedImage agentImage;
     
     /**
-     * The HEIGHT of the image.
+     * The height of the image.
      */
     public static final int HEIGHT = 75;
     
     /**
-     * The WIDTH of the image.
+     * The width of the image.
      */
     public static final int WIDTH = 75;
 
@@ -51,8 +54,6 @@ public class AgentDisplayable {
      * The attached monitor window for this agent.
      */
     private final AgentMonitorDialog monitorDialog;
-    
-    
     
     static {
         /*
@@ -131,4 +132,5 @@ public class AgentDisplayable {
     public String toString() {
         return agent.getName();
     }
+    
 }

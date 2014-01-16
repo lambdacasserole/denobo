@@ -14,7 +14,7 @@ import javax.swing.JTabbedPane;
 /**
  * Represents the program main window.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class MainWindow extends DenoboWindow {
       

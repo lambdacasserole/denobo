@@ -9,12 +9,21 @@ import java.util.concurrent.TimeoutException;
 /**
 * Represents an abstract state that a DenoboConnection can be in.
 *
-* @author Saul Johnson, Alex Mullen, Lee Oliver
+* @author   Saul Johnson, Alex Mullen, Lee Oliver
 */
 public abstract class DenoboConnectionState {
 
+    /**
+     * The connection this state is associated with.
+     */
     protected final DenoboConnection connection;
     
+    /**
+     * Abstract constructor for a state that a {@link DenoboConnection} can be 
+     * in.
+     * 
+     * @param connection    the connection this state is associated with
+     */
     public DenoboConnectionState(DenoboConnection connection) {
         this.connection = connection;
     }
@@ -67,7 +76,8 @@ public abstract class DenoboConnectionState {
     */
    public long handleSendPoke(long timeout) throws TimeoutException {
        
-       return 0;
+       // By default, return -1 to indicate no poke was sent.
+       return -1;
        
    }
 

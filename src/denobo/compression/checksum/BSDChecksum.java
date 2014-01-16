@@ -4,7 +4,7 @@ package denobo.compression.checksum;
  * A checksum calculator that uses the BSD checksum algorithm to produce a 
  * 1-byte checksum for a set of data.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class BSDChecksum implements Checksum {
 

@@ -7,7 +7,7 @@ import java.util.List;
  * Represents a route that should be taken by a message to reach its
  * destination actor.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Route {
    
@@ -20,6 +20,10 @@ public class Route {
      * The position we're currently at in our route.
      */
     private int position;
+    
+    
+    /* ---------- */
+    
     
     /**
      * Initialises a new instance of a route.
@@ -47,6 +51,10 @@ public class Route {
     public Route(Route route) {
         this.route = new ArrayList(route.getActorList());
     }
+    
+    
+    /* ---------- */
+    
     
     /**
      * Gets the list of actors that underlies this instance.

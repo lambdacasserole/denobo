@@ -3,7 +3,7 @@ package denobo.compression.huffman;
 /**
  * Represents a table of prefix-codes used in Huffman compression.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class PrefixCodeTable {
     

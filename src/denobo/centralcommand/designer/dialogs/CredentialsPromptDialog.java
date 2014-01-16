@@ -18,7 +18,7 @@ import javax.swing.JPasswordField;
  * A dialog that will appear whenever a connection request requires some
  * credentials before a session can occur.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class CredentialsPromptDialog implements ConnectionCredentialsHandler {
 

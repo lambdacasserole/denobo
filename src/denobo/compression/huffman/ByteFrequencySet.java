@@ -6,7 +6,7 @@ import java.io.File;
 /**
  * Represents a set of byte occurrence frequencies.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class ByteFrequencySet {
    

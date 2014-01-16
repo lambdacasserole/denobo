@@ -14,7 +14,7 @@ import javax.swing.Timer;
 /**
  * Represents the program splash screen.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class SplashScreen extends DenoboWindow {
         
@@ -54,26 +54,28 @@ public class SplashScreen extends DenoboWindow {
     }
     
     @Override
-    public void setVisible(boolean b) {
+    public void setVisible(boolean visible) {
         
-        super.setVisible(b);
-        if (b) {
+        super.setVisible(visible);
+        if (visible) {
             
             final Timer timer = new Timer(SPLASH_DELAY, new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
+                    
                     // Show main window.
                     final MainWindow mainWnd = new MainWindow();
                     mainWnd.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     mainWnd.setVisible(true);
                     setVisible(false);
+                    
                 }
             });
             
-            // We only want the timer to run once
+            // We only want the timer to run once.
             timer.setRepeats(false);
             
-            // Start the timer
+            // Start the timer.
             timer.start();
 
         }

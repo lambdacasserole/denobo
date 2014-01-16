@@ -6,7 +6,7 @@ import java.awt.Graphics;
 /**
  * Represents a visual link between two AgentDisplayable instances.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentLink {
     
@@ -40,9 +40,9 @@ public class AgentLink {
     /**
      * Determines whether this AgentLink contains an agent.
      * 
-     * @param agent     The agent to check whether it is contained in the link.
-     * @return          true if the agent is contained within the link, otherwise
-     *                  false is returned.
+     * @param agent the agent to check whether it is contained in the link
+     * @return      true if the agent is contained within the link, 
+     *              otherwise false
      */
     public boolean contains(AgentDisplayable agent) {
         return (this.agent1 == agent || this.agent2 == agent);
@@ -51,10 +51,10 @@ public class AgentLink {
     /**
      * Determines whether 2 agents are contained in this AgentLink.
      * 
-     * @param agent1        The first agent.
-     * @param agent2        The second agent.
-     * @return              true if both agents are contained within the link,
-     *                      otherwise false is returned.
+     * @param agent1    the first agent
+     * @param agent2    the second agent
+     * @return          true if both agents are contained within the link,
+     *                  otherwise false
      */
     public boolean contains(AgentDisplayable agent1, AgentDisplayable agent2) {
         return (contains(agent1) && contains(agent2));
@@ -68,9 +68,9 @@ public class AgentLink {
     }
     
     /**
-     * Renders this link to the specified Graphics context.
+     * Renders this link to the specified graphics context.
      * 
-     * @param g the Graphics context
+     * @param g the graphics context
      */
     public void draw(Graphics g) {
         

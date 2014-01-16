@@ -31,7 +31,7 @@ import java.util.concurrent.TimeoutException;
  * Represents a bidirectional communication line between two {@link SocketAgent} 
  * instances.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DenoboConnection {
 

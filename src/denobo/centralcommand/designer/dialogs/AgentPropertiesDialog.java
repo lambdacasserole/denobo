@@ -30,7 +30,7 @@ import javax.swing.SwingConstants;
 /**
  * A dialog for displaying the properties of an Agent.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentPropertiesDialog {
     

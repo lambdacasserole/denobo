@@ -3,7 +3,7 @@ package denobo.crypto;
 /**
  * Specifies that implementing classes support data encryption and decryption.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public interface CryptoAlgorithm {
     

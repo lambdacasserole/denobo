@@ -15,8 +15,10 @@ import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
 
 /**
- *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * Represents the "Connections" tab within an agent monitor dialog.
+ * 
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
+ * @see     AgentMonitorDialog
  */
 public class ConnectionsTab extends JPanel implements SocketAgentObserver {
 

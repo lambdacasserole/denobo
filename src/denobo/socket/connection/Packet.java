@@ -3,7 +3,7 @@ package denobo.socket.connection;
 /**
  * Represents a packet of data passed between DenoboConnection objects.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Packet {
         

@@ -1,6 +1,5 @@
 package denobo.socket.connection.state.server;
 
-import denobo.socket.connection.state.server.WaitingForCredentialsState;
 import denobo.Agent;
 import denobo.Message;
 import denobo.QueryString;
@@ -24,6 +23,11 @@ import java.math.BigInteger;
 */
 public class WaitForGreetingState extends DenoboConnectionState {
 
+    /**
+     * Initialises a new instance of a "Wait for Greeting" connection state.
+     * 
+     * @param connection    the parent connection to this state
+     */
     public WaitForGreetingState(DenoboConnection connection) {
        super(connection);
     }

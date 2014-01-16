@@ -36,7 +36,7 @@ import javax.swing.border.TitledBorder;
 /**
  * A dialog for displaying all the other agents connected to an agent.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentConnectionsDialog implements SocketAgentObserver {
     
@@ -91,7 +91,6 @@ public class AgentConnectionsDialog implements SocketAgentObserver {
         localConnectionList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         localConnectionList.setLayoutOrientation(JList.VERTICAL);
         localConnectionList.setVisibleRowCount(10);
-        //localConnectionList.setCellRenderer(new AgentDisplayableListCellRenderer());
         
 
         removeLocalConnectionButton = new JButton("Remove");

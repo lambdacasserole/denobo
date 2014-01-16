@@ -1,4 +1,4 @@
 /**
- * Package contains the cryptography classes for denobo.
+ * Contains classes relating to encryption in the Denobo software.
  */
 package denobo.crypto;

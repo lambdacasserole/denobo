@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * A compressor that uses plain Huffman coding to compress a set of bytes.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class BasicCompressor extends Compressor {
     

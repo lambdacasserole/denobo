@@ -8,21 +8,19 @@ import javax.swing.JDialog;
 import javax.swing.JTextArea;
 
 /**
- *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * A dialog for displaying the current routing table for an agent.
+ * 
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentRoutingDialog {
     
     private final JDialog dialog;
     private final JTextArea area;
     
-    
-    
     public AgentRoutingDialog() {
         
         dialog = new JDialog();
         dialog.setLayout(new BorderLayout());
-        
         
         area = new JTextArea();
         

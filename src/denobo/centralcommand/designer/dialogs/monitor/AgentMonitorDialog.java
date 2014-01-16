@@ -11,12 +11,18 @@ import javax.swing.JTabbedPane;
 /**
  * A dialog for monitoring all activity happening on an agent.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
-public class AgentMonitorDialog {
+public class AgentMonitorDialog extends DenoboDialog {
     
+    /**
+     * The agent this dialog is monitoring.
+     */
     private final Agent agent;
-    private final DenoboDialog dialog;
+    
+    /**
+     * The tabbed pane that holds the tabs in this dialog.
+     */
     private final JTabbedPane tabHolder;
 
     /**
@@ -26,64 +32,60 @@ public class AgentMonitorDialog {
      */
     public AgentMonitorDialog(Agent agent) {
         
+        super();
         this.agent = agent;
         
-        // Create and configure the dialog
-        dialog = new DenoboDialog();
-        dialog.setLayout(new BorderLayout());
-        dialog.setTitle("Monitor [" + agent.getName() + "]");
-        dialog.setResizable(true);
-        dialog.setAlwaysOnTop(true);
-        dialog.setModalityType(ModalityType.MODELESS);
+        // Create and configure the dialog.
+        this.setLayout(new BorderLayout());
+        this.setTitle("Monitor [" + agent.getName() + "]");
+        this.setResizable(true);
+        this.setAlwaysOnTop(true);
+        this.setModalityType(ModalityType.MODELESS);
         
-        // Create the tab holder and add it to the dialog
+        // Create the tab holder and add it to the dialog.
         tabHolder = new JTabbedPane();
-        dialog.add(tabHolder, BorderLayout.CENTER);
+        this.add(tabHolder, BorderLayout.CENTER);
         
         
-        // Add the "Messages" tab
+        // Add the "Messages" tab.
         tabHolder.addTab("Messages", new MessagesTab(agent));
         
-        // Only create and add a "Connections" tab if the Agent is a SocketAgent.
+        /* 
+         * Only create and add a "Connections" tab if the Agent is a 
+         * SocketAgent.
+         */
         if (agent instanceof SocketAgent) {
             tabHolder.addTab("Connections", new ConnectionsTab((SocketAgent) agent));
         }
 
-        
-        dialog.pack();
+        this.pack();
         
     }
-    
-
     
     /**
      * Makes this dialog window visible.
      */
+    @Override
     public void show() {
-
-        dialog.setVisible(true);
-        
+        this.setVisible(true);
     }
     
     /**
      * Makes this dialog window visible at the specified position.
      * 
-     * @param position      The position to place the dialog window.
+     * @param position  the position to place the dialog window
      */
     public void show(Point position) {
-        
-        dialog.setLocation(position);
+        this.setLocation(position);
         this.show();
-        
     }
     
     /**
      * Hides this dialog window.
      */
+    @Override
     public void hide() {
-        
-        dialog.dispose();
-        
+        this.dispose();
     }
     
 }

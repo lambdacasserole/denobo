@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 /**
  * Represents a unit test for {@link BasicCompressor}.
  * 
- * @author Saul Johnson
+ * @author  Saul Johnson
  */
 public class BasicCompressorTest {
     

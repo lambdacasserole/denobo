@@ -12,7 +12,7 @@ import java.io.Writer;
 /**
  * An interface for serializing {@link Packet} objects.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public interface PacketSerializer {
     

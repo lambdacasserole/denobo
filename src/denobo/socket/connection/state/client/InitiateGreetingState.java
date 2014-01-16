@@ -1,6 +1,5 @@
 package denobo.socket.connection.state.client;
 
-import denobo.socket.connection.state.client.AwaitingAuthenticationState;
 import denobo.Message;
 import denobo.QueryString;
 import denobo.compression.Compressor;
@@ -20,10 +19,15 @@ import java.math.BigInteger;
 * It is our responsibility to send a GREETINGS packet to them to initiate  a 
 * session.
 *
-* @author Saul Johnson, Alex Mullen, Lee Oliver
+* @author   Saul Johnson, Alex Mullen, Lee Oliver
 */
 public class InitiateGreetingState extends DenoboConnectionState {
 
+    /**
+     * Initialises a new instance of an "Initiate Greeting" connection state.
+     * 
+     * @param connection    the parent connection to this state
+     */
     public InitiateGreetingState(DenoboConnection connection) {
         super(connection);
     }

@@ -8,7 +8,7 @@ import javax.swing.JDialog;
 /**
  * Represents a dialog used in the the program.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DenoboDialog extends JDialog {
     

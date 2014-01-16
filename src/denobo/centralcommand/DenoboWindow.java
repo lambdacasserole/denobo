@@ -8,7 +8,7 @@ import javax.swing.JFrame;
 /**
  * Represents a window used in the the program.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DenoboWindow extends JFrame {
     

@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 /**
  * Represents an agent acting as part of a multi-agent system.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Agent implements RoutingWorkerListener {
 
@@ -101,6 +101,7 @@ public class Agent implements RoutingWorkerListener {
     
     /* ---------- */
     
+    
     /**
      * The value in milliseconds at which point we consider that a route
      * calculation has timed out.
@@ -118,7 +119,7 @@ public class Agent implements RoutingWorkerListener {
      */
     private static final Pattern VALID_NAME_REGEX = Pattern.compile("^[a-zA-Z]{1}[a-zA-Z0-9_]*$");
     
-
+    
     /* ---------- */
     
     
@@ -177,6 +178,7 @@ public class Agent implements RoutingWorkerListener {
     
     
     /* ---------- */
+    
     
     /**
      * Validates a potential agent name.

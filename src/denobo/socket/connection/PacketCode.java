@@ -7,7 +7,7 @@ import java.util.Map;
  * An enum that represents a {@link Packet} code that describes the type of 
  * Packet it is.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public enum PacketCode {
 
@@ -16,24 +16,19 @@ public enum PacketCode {
     CREDENTIALS_PLZ     (102),
     CREDENTIALS         (103),
     
-    CHANGE_CONFIRMED    (200),
-    SET_COMPRESSION     (201),
-    BEGIN_SECURE        (202),
-    CONFIRM_SECURE      (203),
-    END_SECURE          (204),
+    SET_COMPRESSION     (200),
+    BEGIN_SECURE        (201),
     
     SEND_MESSAGE        (300),
     POKE                (301),
     ROUTE_TO            (302),
     ROUTE_FOUND         (303),
-    ROUTE_NOT_FOUND     (304),
-    INVALIDATE_AGENTS   (305),
+    INVALIDATE_AGENTS   (304),
     
     NO                  (400),
     TOO_MANY_PEERS      (401),
-    NO_CREDENTIALS      (403),
-    BAD_CREDENTIALS     (404),
-    UNSUPPORTED         (405);
+    NO_CREDENTIALS      (402),
+    BAD_CREDENTIALS     (403);
 
     /**
      * The actual code number of this PacketCode.
@@ -45,12 +40,12 @@ public enum PacketCode {
      * number as the key so that we can efficiently retrieve a PacketCode enum
      * from a code number.
      */
-    private final static Map<Integer, PacketCode> codeMap;
+    private final static Map<Integer, PacketCode> CODE_MAP;
     
     static {
-        codeMap = new HashMap<>();
+        CODE_MAP = new HashMap<>();
         for (PacketCode currentCode : PacketCode.values()) {
-            codeMap.put(currentCode.toInt(), currentCode);
+            CODE_MAP.put(currentCode.toInt(), currentCode);
         }
     }
     
@@ -80,6 +75,6 @@ public enum PacketCode {
      *              code
      */
     public static PacketCode valueOf(int code) {
-        return codeMap.get(code);
+        return CODE_MAP.get(code);
     }
 }

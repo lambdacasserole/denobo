@@ -29,7 +29,7 @@ import javax.swing.JTextField;
 /**
  * A dialog for choosing an agent to add into the network designer.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class CreateAgentDialog {
     
@@ -369,7 +369,7 @@ public class CreateAgentDialog {
             agentConfig.setCredentialsHandler(new CredentialsPromptDialog());
             final String passwordSet = String.valueOf(passwordField.getPassword());
             if (!passwordSet.isEmpty()) {
-                agentConfig.setCredentials(new Credentials(null, passwordSet));
+                agentConfig.setMasterCredentials(new Credentials(null, passwordSet));
             }
             agentConfig.setIsSecure(encryptionCheckBox.isSelected());
             agentConfig.setCompression(

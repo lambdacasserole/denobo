@@ -6,7 +6,7 @@ import java.util.Random;
 /**
  * A factory class to create locally unique identifier strings.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class UniqueIdFactory {
     
@@ -28,7 +28,7 @@ public class UniqueIdFactory {
     }
     
     /**
-     *Returns a random ID string that is likely to be globally unique.
+     * Returns a random ID string that is likely to be globally unique.
      * 
      * @return  a random ID string that is likely to be globally unique.
      */

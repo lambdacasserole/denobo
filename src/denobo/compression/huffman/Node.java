@@ -3,7 +3,7 @@ package denobo.compression.huffman;
 /**
  * Represents a node in a Huffman tree.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Node {
     

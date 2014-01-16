@@ -11,10 +11,15 @@ import denobo.socket.connection.state.DenoboConnectionState;
 * so we'll gracefully accept their connection request and tell them that we've 
 * reached the peer limit.
 *
-* @author Saul Johnson, Alex Mullen, Lee Oliver
+* @author   Saul Johnson, Alex Mullen, Lee Oliver
 */
 public class TooManyPeersState extends DenoboConnectionState {
 
+    /**
+     * Initialises a new instance of a "Too Many Peers" connection state.
+     * 
+     * @param connection    the parent connection to this state
+     */
     public TooManyPeersState(DenoboConnection connection) {
         super(connection);
     }

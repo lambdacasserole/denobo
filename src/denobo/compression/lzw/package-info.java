@@ -1,4 +1,4 @@
 /**
- * Package contains the LZW compression for denobo.
+ * Contains classes relating to LZW Compression in the Denobo software.
  */
 package denobo.compression.lzw;

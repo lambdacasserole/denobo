@@ -14,7 +14,7 @@ import java.util.Set;
  * every entry in every routing table that contained either one of the agents that
  * were involved in the link that no longer exists.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Undertaker implements Runnable {
 

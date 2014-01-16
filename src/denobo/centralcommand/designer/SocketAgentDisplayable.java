@@ -35,7 +35,7 @@ public class SocketAgentDisplayable extends AgentDisplayable {
     }
     
     /**
-     * Initialised a new instance of a SocketAgentDisplayable.
+     * Initialises a new instance of a SocketAgentDisplayable.
      * 
      * @param agent the underlying socket agent
      * @param x     the x coordinate position

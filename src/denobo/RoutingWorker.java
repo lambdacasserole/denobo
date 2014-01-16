@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 /**
  * Represents a worker that will calculate the optimal route to an actor.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class RoutingWorker implements Runnable {
 
@@ -52,6 +52,10 @@ public class RoutingWorker implements Runnable {
      */
     private final Route initialRoute;
     
+    
+    /* ---------- */
+    
+    
     /**
      * Initialises a new instance of a routing worker.
      * 
@@ -75,6 +79,10 @@ public class RoutingWorker implements Runnable {
         this.initialRoute = initialRoute;
         listeners = new ArrayList<>();
     }
+    
+    
+    /* ---------- */
+    
     
     /**
      * Adds a listener to this routing worker.

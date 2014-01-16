@@ -12,12 +12,12 @@ import denobo.socket.connection.state.DenoboConnectionState;
  * submitted some credentials as a reply to a 102 (CREDENTIALS_PLZ) packet and
  * is waiting for authentication.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AwaitingAuthenticationState extends DenoboConnectionState {
 
     /**
-     * Initialises a new instance of an awaiting authenticated connection state.
+     * Initialises a new instance of an "Awaiting Authentication" connection state.
      * 
      * @param connection    the parent connection to this state
      */
@@ -44,7 +44,6 @@ public class AwaitingAuthenticationState extends DenoboConnectionState {
                 System.out.println("The credentials we sent were accepted.");
 
                 final QueryString acceptedQueryString = new QueryString(packet.getBody());
-  
                 connection.setRemoteAgentName(acceptedQueryString.get("name"));
                 connection.setState(new AuthenticatedState(connection));
                 break;

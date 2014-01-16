@@ -1,4 +1,4 @@
 /**
- * Package contains the compression classes for denobo.
+ * Contains classes relating to data compression in the Denobo software.
  */
 package denobo.compression;

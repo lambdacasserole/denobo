@@ -32,7 +32,7 @@ import javax.swing.table.DefaultTableModel;
 /**
  * This class represents the debug window for an agent.
  *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class AgentDebugWindow extends DenoboWindow implements ActionListener, MessageListener {
 
@@ -55,7 +55,12 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      * Used for spamming tons of messages. TODO: Delete when not needed anymore.
      */
     private final JButton spamButton;
+    
+    /**
+     * Used for ceasing to spam tons of messages.
+     */
     private final JButton stopSpamButton;
+    
     /**
      * Used for spam. TODO: deleted when finished with.
      */
@@ -87,7 +92,9 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
      *
      * @param agentModel the initial agentModel
      */
+    @SuppressWarnings("LeakingThisInConstructor")
     public AgentDebugWindow(Agent agentModel) {
+        
         super();
         this.agentModel = agentModel;
 
@@ -236,7 +243,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
                 }
             };
             spamThread.start();
-        }//
+        }
 
     }
 

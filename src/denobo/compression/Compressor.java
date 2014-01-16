@@ -5,7 +5,7 @@ import denobo.compression.lzw.LZWCompressor;
 /**
  * Specifies that implementing classes support data compression and decompression.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public abstract class Compressor {
     

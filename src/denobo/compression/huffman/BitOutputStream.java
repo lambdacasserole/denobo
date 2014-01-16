@@ -3,7 +3,7 @@ package denobo.compression.huffman;
 /**
  * Represents a stream of bits with write capabilities.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class BitOutputStream {
     

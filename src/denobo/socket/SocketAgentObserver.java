@@ -68,4 +68,5 @@ public interface SocketAgentObserver {
      * @param port          the port address of the remote host
      */
     public void connectionAddSucceeded(SocketAgent agent, DenoboConnection connection, String hostname, int port);
+
 }

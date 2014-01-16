@@ -1,4 +1,4 @@
 /**
- * Package contains the connection classes for denobo.
+ * Contains classes relating to socket connections within the core Denobo API.
  */
 package denobo.socket.connection;

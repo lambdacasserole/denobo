@@ -7,7 +7,7 @@ import java.util.Random;
 /**
  * A helper class for generating keys based on a Diffie-Hellman key exchange.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DiffieHellmanKeyGenerator {
     

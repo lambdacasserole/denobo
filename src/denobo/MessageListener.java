@@ -4,7 +4,7 @@ package denobo;
  * Represents a message listener that can be used to listen for Messages passed 
  * to and through an agent.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public interface MessageListener {
 

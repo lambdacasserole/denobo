@@ -3,9 +3,7 @@ package denobo.centralcommand.designer;
 /**
  * Represents an event raised by a NetworkDesigner control.
  *
- * @author      Saul Johnson, Alex Mullen, Lee Oliver
- * @version     1.0
- * @since       2013-03-17
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class DesignerEvent {
 
@@ -13,7 +11,6 @@ public class DesignerEvent {
      * The AgentDisplayable that triggered the event.
      */
     private final AgentDisplayable source;
-    
     
     /**
      * Initialises a new instance of a designer event.

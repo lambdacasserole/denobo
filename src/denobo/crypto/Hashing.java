@@ -5,13 +5,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * Contains helper methods for cryptographic hashing.
+ * 
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Hashing {
     
-     /**
-     * Gets a SHA256 hash of the given string.
+    /**
+     * Gets the SHA256 hash of the given string.
      * 
      * @param str   the string to hash
      * @return      a SHA256 hash of the given string

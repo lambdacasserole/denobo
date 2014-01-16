@@ -17,8 +17,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 /**
- *
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * Represents the "Messages" tab within an agent monitor dialog.
+ * 
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class MessagesTab extends JPanel {
     

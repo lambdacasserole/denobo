@@ -19,8 +19,10 @@ import denobo.socket.connection.state.DenoboConnectionState;
 public class WaitingForCredentialsState extends DenoboConnectionState {
 
     /**
+     * Initialises a new instance of a state in which the server is waiting for
+     * the client to provide credentials.
      * 
-     * @param connection 
+     * @param connection    the connection associated with the state
      */
     public WaitingForCredentialsState(DenoboConnection connection) {
         super(connection);

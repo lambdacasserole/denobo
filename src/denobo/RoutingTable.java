@@ -9,7 +9,7 @@ import java.util.Map;
  * Represents a table of destination actors and optimal routes that should be
  * taken by messages to reach them.
  * 
- * @author Saul Johnson, Alex Mullen, Lee Oliver
+ * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class RoutingTable {
     
@@ -18,12 +18,20 @@ public class RoutingTable {
      */
     private final Map<String, Route> table;
     
+    
+    /* ---------- */
+    
+    
     /**
      * Initialises a new instance of a routing table.
      */
     public RoutingTable() {
         table = Collections.synchronizedMap(new HashMap<String, Route>());
     }
+    
+    
+    /* ---------- */
+    
     
     /**
      * Gets whether or not this routing table contains an entry to reach the 
