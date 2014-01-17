@@ -20,29 +20,65 @@ import javax.swing.table.DefaultTableModel;
  * Represents the "Messages" tab within an agent monitor dialog.
  * 
  * @author  Saul Johnson, Alex Mullen, Lee Oliver
+ * @see     AgentMonitorDialog
  */
 public class MessagesTab extends JPanel {
     
-    // The filter options for the filter combo box
-    private static final String receivedFilterOptionName = "Received";
-    private static final String interceptedFilterOptionName = "Intercepted";
+    /**
+     * The filter option for showing only received messages in the filter combo
+     * box.
+     */
+    private static final String RECEIVED_FILTER_OPTION_NAME = "Received";
     
+    /**
+     * The filter option for showing only intercepted messages in the filter
+     * combo box.
+     */
+    private static final String INTERCEPTED_FILTER_OPTION_NAME = "Intercepted";
+    
+    /**
+     * The list that contains all messages received.
+     */
     private final MessageTableModel messagesReceivedTableModel;
+    
+    /**
+     * The list that contains all messages intercepted.
+     */
     private final MessageTableModel messagesInterceptedTableModel;
     
+    /**
+     * The table this uses to display messages.
+     */
     private final JTable messageTable;
+    
+    /**
+     * The button used for clearing the current selected table.
+     */
     private final JButton clearMessageTableButton;
+    
+    /**
+     * The combo box for choosing what messages to display.
+     */
     private final JComboBox<String> messagesFilterComboBox;
     
+    /**
+     * The agent we are observing messages for.
+     */
     private final Agent agentModel;
 
     
+    /**
+     * Initialises a new MessagesTab to display a list of messages that an Agent
+     * instance has received.
+     * 
+     * @param agent     the Agent instance
+     */
     public MessagesTab(Agent agent) {
         
         this.agentModel = agent;
 
         // Instantiate "Messages" tab controls
-        messagesFilterComboBox = new JComboBox<>(new String[] {receivedFilterOptionName, interceptedFilterOptionName});
+        messagesFilterComboBox = new JComboBox<>(new String[] {RECEIVED_FILTER_OPTION_NAME, INTERCEPTED_FILTER_OPTION_NAME});
         clearMessageTableButton = new JButton("Clear");
         
         messagesReceivedTableModel = new MessageTableModel();
@@ -126,10 +162,10 @@ public class MessagesTab extends JPanel {
         
         switch (messagesFilterComboBox.getSelectedItem().toString()) {
             
-            case receivedFilterOptionName:
+            case RECEIVED_FILTER_OPTION_NAME:
                 return messagesReceivedTableModel;
                 
-            case interceptedFilterOptionName:
+            case INTERCEPTED_FILTER_OPTION_NAME:
                 return messagesInterceptedTableModel;
                 
             default:
@@ -168,7 +204,7 @@ public class MessagesTab extends JPanel {
     private class MessageTableModel extends DefaultTableModel {
 
         /**
-         * Creates a new instance of MessageTableModel for displaying Message
+         * Creates a new instance of a MessageTableModel for displaying Message
          * objects.
          */
         public MessageTableModel() {

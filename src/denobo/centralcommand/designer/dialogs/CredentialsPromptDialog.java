@@ -22,12 +22,30 @@ import javax.swing.JPasswordField;
  */
 public class CredentialsPromptDialog implements ConnectionCredentialsHandler {
 
+    /**
+     * The underlying JDialog this uses to display itself.
+     */
     private final JDialog dialog;
+    
+    /**
+     * The password text field for entering the password into.
+     */
     private final JPasswordField passwordField;
+    
+    /**
+     * The "OK" button that submits the password then closes this dialog.
+     */
     private final JButton okButton;
     
+    /**
+     * The Credentials object to return when this dialog closes.
+     */
     private Credentials credentialsToReturn;
     
+    
+    /**
+     * Creates a new CredentialsPromptDialog.
+     */
     public CredentialsPromptDialog() {
         
         dialog = new JDialog();

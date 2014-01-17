@@ -33,48 +33,158 @@ import javax.swing.SwingUtilities;
 public class NetworkDesigner extends JComponent implements ActionListener {
     
     // Gridline constants.
+    
+    /**
+     * The number of pixels each grid line is separated by.
+     */
     private final int gridSpacing = 15;
-    private final Color gridLineColor = new Color(0, 0, 0, 25); // 0xF0F4F5    
+    
+    /**
+     * The colour of each grid line.
+     */
+    private final Color gridLineColor = new Color(0, 0, 0, 25);   
+    
     
     // Selection line constants.
+    
+    /**
+     * The colour of the selection box that appears around a selected agent.
+     */
     private final Color selectionBoundingBoxColor = new Color(0, 0, 0, 100);
+    
+    /**
+     * The dash to use for creating a dash effect for the selection box border.
+     */
     private final float[] selectionBoundingBoxDash = new float[] {2.0f};
+    
+    /**
+     * The stroke to use for rendering the selection box around a selected agent.
+     */
     private final BasicStroke selectionBoundingBoxStroke = new BasicStroke(1.0f, 
             BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10.0f, selectionBoundingBoxDash, 0.0f);
    
+    
     // Menu for right-clicking on empty space.
+    
+    /**
+     * The pop-up menu that appears when some empty space is right-clicked on. 
+     */
     private final JPopupMenu emptySpacePopup;
+    
+    /**
+     * The menu option for "Create Agent".
+     */
     private final JMenuItem menuOptionCreateAgent;
     
+    
     // Menu for right-clicking on a agent.
+    
+    /**
+     * The pop-up menu that appears when an agent is right-clicked on.
+     */
     private final JPopupMenu agentSelectedPopup;
+    
+    /**
+     * The menu option for "Link" for linking agents.
+     */
     private final JMenuItem menuOptionLink;
+    
+    /**
+     * The menu option for "Connections" for displaying the connections dialog.
+     */
     private final JMenuItem menuOptionsConnections;
+    
+    /**
+     * The menu option for "Properties" for displaying the properties dialog for
+     * an agent.
+     */
     private final JMenuItem menuOptionProperties;
+    
+    /**
+     * The menu option for "Monitor" for displaying the monitor window.
+     */
     private final JMenuItem menuOptionMonitor;
+    
+    /**
+     * The menu option for "Debug Window" for displaying the debug window.
+     */
     private final JMenuItem menuOptionDebugWindow;
+    
+    /**
+     * The menu option for "Delete" for deleting an agent.
+     */
     private final JMenuItem menuOptionDelete;
+    
+    /**
+     * The menu option for "Routing" for displaying the routing window.
+     */
     private final JMenuItem menuOptionRouting;
     
+    
     // Dialogs.
+    
+    /**
+     * The dialog to display for creating an agent.
+     */
     private CreateAgentDialog createAgentDialog;
+    
+    /**
+     * The dialog for displaying the properties of an agent.
+     */
     private final AgentPropertiesDialog agentPropertiesDialog;
+    
+    /**
+     * The dialog for displaying and managing the connections to an agent.
+     */
     private final AgentConnectionsDialog agentConnectionsDialog;
     
+    
     // Collections to hold the data for this designer.
+    
+    /**
+     * The list of AgentDisplayable instances currently on this designer.
+     */
     private final List<AgentDisplayable> agents;
+    
+    /**
+     * The list of AgentLink instances currently on this designer.
+     */
     private final List<AgentLink> agentLinks;
+    
+    /**
+     * The list of DesignerEventListeners that are observing this designer.
+     */
     private final List<DesignerEventListener> designerEventListeners;
     
+    
     // State data to save in-between events.
+    
+    /**
+     * The last right-click position so we know where to place agents in the
+     * designer on creation of one.
+     */
     private Point lastMenuClickPosition;
-    /* 
+    
+    /** 
      * The offset of the cursor relative to the initial click on a component 
      * before dragging.
      */
     private Point selectedComponentDragOffset;
+    
+    /**
+     * The current state this designer is in.
+     */
     private NetworkDesignerState state;
+    
+    /**
+     * The current agent that is selected or null if none are selected.
+     */
     private AgentDisplayable agentSelected;
+    
+    /**
+     * Holds whether the selected agent is currently in "link" mode where a link
+     * is being dragged from it.
+     */
     private boolean isSelectedAgentTryingToLink;
     
     /**
@@ -82,6 +192,11 @@ public class NetworkDesigner extends JComponent implements ActionListener {
      */
     private boolean showGrid = true;
 
+
+    /**
+     * Creates a new NetworkDesigner instance for designing and configuring a 
+     * network of agents.
+     */
     @SuppressWarnings("LeakingThisInConstructor")
     public NetworkDesigner() {
 
@@ -144,37 +259,27 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             
             @Override
             public void mouseClicked(MouseEvent e) {
-
                 state.handleMouseClicked(e);
-
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
-
                 state.handleMousePressed(e);
-
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-
                 state.handleMouseReleased(e);
-
             }
 
             @Override
             public void mouseEntered(MouseEvent e) {
-
                 state.handleMouseEntered(e);
-
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-
                 state.handleMouseExited(e);
-
             }
 
         });
@@ -183,16 +288,12 @@ public class NetworkDesigner extends JComponent implements ActionListener {
             
             @Override
             public void mouseDragged(MouseEvent e) {
-
                 state.handleMouseDragged(e);
-
             }
 
             @Override
             public void mouseMoved(MouseEvent e) {
-
                 state.handleMouseMoved(e);
-
             }
             
         });
@@ -329,7 +430,7 @@ public class NetworkDesigner extends JComponent implements ActionListener {
     public void removeAgent(AgentDisplayable agent) {
         
         agent.getDebugWindow().dispose();
-        agent.getMonitorDialog().hide();
+        agent.getMonitorDialog().dispose();
         
         agent.getAgent().shutdown();
         
@@ -585,12 +686,56 @@ public class NetworkDesigner extends JComponent implements ActionListener {
      */
     private abstract class NetworkDesignerState {
         
+        /**
+         * Invoked when the mouse button has been clicked (pressed and released)
+         * on the designer.
+         * 
+         * @param e     event data
+         */
         protected void handleMouseClicked(MouseEvent e) { }
+        
+        /**
+         * Invoked when a mouse button is pressed on the designer and then
+         * dragged.
+         * 
+         * @param e     event data
+         */
         protected void handleMouseDragged(MouseEvent e) { }
+        
+        /**
+         * Invoked when the mouse cursor has been moved over the designer area
+         * but no buttons have been pushed.
+         * 
+         * @param e     event data
+         */
         protected void handleMouseMoved(MouseEvent e) { }
+        
+        /**
+         * Invoked when a mouse button has been pressed on the designer area.
+         * 
+         * @param e     event data
+         */
         protected void handleMousePressed(MouseEvent e) { }
+        
+        /**
+         * Invoked when a mouse button has been released on the designer area.
+         * 
+         * @param e     event data
+         */
         protected void handleMouseReleased(MouseEvent e) { }
+        
+        /**
+         * Invoked when the mouse enters the designer area.
+         * 
+         * @param e     event data
+         */
         protected void handleMouseEntered(MouseEvent e) { }
+        
+        /**
+         * Invoked when the mouse exits the designer area.
+         * 
+         * @param e     event data
+         */
         protected void handleMouseExited(MouseEvent e) { }
         
     }

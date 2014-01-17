@@ -1,4 +1,4 @@
-package denobo.socket.connection;
+ package denobo.socket.connection;
 
 import denobo.Message;
 import denobo.QueryString;
@@ -476,8 +476,8 @@ public class DenoboConnection {
 
         } catch (IOException | InterruptedException ex) {
             
-            // TODO: Handle exception.
-            System.out.println(ex.getMessage());
+            System.out.println("Exception thrown whilst shutting down connection: " 
+                    + ex.getMessage());
             
         }
 

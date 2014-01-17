@@ -175,7 +175,7 @@ public class QueryString {
      * @return      the value associated with the specified key as a set
      */
     public Set<String> getAsSet(String key) {
-        final Set set = new HashSet<>();
+        final Set<String> set = new HashSet<>();
         putInCollection(key, set);
         return set;
     }

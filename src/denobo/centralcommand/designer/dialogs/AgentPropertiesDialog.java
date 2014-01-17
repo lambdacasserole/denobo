@@ -16,7 +16,6 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -34,30 +33,103 @@ import javax.swing.SwingConstants;
  */
 public class AgentPropertiesDialog {
     
+    /**
+     * The underlying JDialog this uses to display itself.
+     */
     private final JDialog dialog;
     
+    
     // Tab holder and tabs
+    
+    /**
+     * The pane to hold our tabs for each type of properties.
+     */
     private final JTabbedPane tabHolder;
+    
+    /**
+     * The "Socket" tab container.
+     */
     private final JPanel socketTab;
     
+    
     // Controls for general tab
+    
+    /**
+     * The text field for displaying the name of the selected agent.
+     */
     private final JTextField agentNameField;
+    
+    /**
+     * The radio button that is selected for a selected cloneable agent.
+     */
     private final JRadioButton agentCloneableRadioButton;
+    
+    /**
+     * The radio button that is selected for a selected non-cloneable agent.
+     */
     private final JRadioButton agentNonCloneableRadioButton;
     
+    
     // Controls for Socket tab
+    
+    /**
+     * The label whose text is set to "Yes" or "No" depending on whether the
+     * selected agent is currently advertising.
+     */
     private final JLabel advertisingStatusLabel;
+    
+    /**
+     * The label whose text is set to the port the selected agent is advertising
+     * on or "N/A" if it is not currently advertising.
+     */
     private final JLabel advertisingPortLabel;
+    
+    /**
+     * The button that can be clicked to stop the currently selected agent from
+     * advertising.
+     */
     private final JButton stopAdvertisingButton;
+    
+    /**
+     * The button that can be clicked to start advertising on the currently
+     * selected agent.
+     */
     private final JButton startAdvertisingButton;
+    
+    /**
+     * The text field where the port to advertise on can be entered.
+     */
     private final JTextField advertisePortField;
+    
+    /**
+     * The check box that currently only displays whether the selected agent
+     * encrypts data sent over sockets.
+     */
     private final JCheckBox encryptionCheckBox;
+    
+    /**
+     * The label that has its text set to the current compression being used on
+     * data transferred over sockets.
+     */
     private final JLabel compressionTypeLabel;
     
+    
     // Controls for the dialog
+    
+    /**
+     * The "OK" button that will simply close the dialog.
+     */
     private final JButton okButton;
+    
+    /**
+     * The "Apply" button that will save any potential property changes then
+     * close the dialog.
+     */
     private final JButton applyButton;
 
+    /**
+     * The agent to display the properties for.
+     */
     private Agent agentModel;
     
     

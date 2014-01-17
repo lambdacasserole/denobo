@@ -537,6 +537,8 @@ public class Agent implements RoutingWorkerListener {
      * @param data          the data to attach to the message
      */
     public void sendMessage(String recipientName, String data) {
+
+        Objects.requireNonNull(recipientName, "The recipient of a message cannot be null.");
         
         // If we can't send the message right away because a route is missing.
         if (!originate(recipientName, data)) {

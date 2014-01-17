@@ -95,23 +95,29 @@ public class DenoboPacketSerializer implements PacketSerializer {
         while ((buffer = reader.read()) != '$') {
             sb.append((char) buffer);
         }
-        
+
         // Decrypt and decompress.
         final byte[] ciphertext = DatatypeConverter.parseBase64Binary(sb.toString());
         final byte[] compressedText = crypto.decrypt(ciphertext);
         final byte[] plaintext = compressor.decompress(compressedText);
-        
-        // Get query string.
+
         final QueryString queryString = new QueryString(new String(plaintext, "US-ASCII"));
         final String code = queryString.get("code");
         final String body = queryString.get("body");
+
+        // Convert and validate the packet code into an integer
+        PacketCode packetCode = null;
+        try {
+            packetCode = PacketCode.valueOf(Integer.parseInt(code));
+        } catch (NumberFormatException e) {
+            throw new StreamCorruptedException("Packet code was an invalid number: " + code);
+        }
         
-        // Convert and validate the code into a PacketCode value.
-        final PacketCode packetCode = PacketCode.valueOf(Integer.parseInt(code));
+        // Make sure the packet code is recognized
         if (packetCode == null) {
             throw new StreamCorruptedException("Invalid packet code: " + code);
         }
-        
+
         return new Packet(packetCode, body);
         
     }

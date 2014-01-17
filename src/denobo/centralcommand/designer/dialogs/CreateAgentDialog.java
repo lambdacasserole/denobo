@@ -33,38 +33,121 @@ import javax.swing.JTextField;
  */
 public class CreateAgentDialog {
     
-    private static final String agentNamePrefix = "Agent";
+    /**
+     * The default name prefix to give each agent.
+     */
+    private static final String AGENT_NAME_PREFIX = "Agent";
+    
+    /**
+     * The counter that increments on each agent creation that we append to the
+     * end of the default agent name prefix to form a unique agent name.
+     */
     private static int agentNameCounter = 1;
 
+    /**
+     * The underlying JDialog this uses to display itself.
+     */
     private final JDialog dialog;
     
+    
     // Controls for every agent type
+    
+    /**
+     * The text field for entering the name of the agent.
+     */
     private final JTextField agentNameField;
+    
+    /**
+     * The check box for choosing whether the agent will be cloneable or not.
+     */
     private final JCheckBox cloneableCheckBox;
   
+    
     // Labels for socket configuration controls. Saving a reference to them so
     // we can enable and disable them.
+    
+    /**
+     * The label for labelling the port text field.
+     */
     private final JLabel portLabel = new JLabel("Port:");
+    
+    /**
+     * The label for labelling the maximum connections text field.
+     */
     private final JLabel maxConnectionsLabel = new JLabel("Maximum Connections:");
+    
+    /**
+     * The label for labelling the password text field.
+     */
     private final JLabel passwordLabel = new JLabel("Password:");
+    
+    /**
+     * The label for labelling for compression drop down list.
+     */
     private final JLabel compressionLabel = new JLabel("Compression:");
     
+    
     // Controls for agents with socket capababilities
-    private final JCheckBox socketFunctionalityCheckBox;    
+    
+    /**
+     * The check box for choosing whether the current agent will have socket
+     * functionality.
+     */
+    private final JCheckBox socketFunctionalityCheckBox;
+    
+    /**
+     * The text field for entering what port this agent will advertise on.
+     */
     private final JTextField portField;
+    
+    /**
+     * The text field for entering the maximum number of connections the agent
+     * will allow.
+     */
     private final JTextField maxConnectionsField;
+    
+    /**
+     * The check box for choosing whether the agent will initially start
+     * advertising once constructed.
+     */
     private final JCheckBox startAdvertisingCheckBox;
+    
+    /**
+     * The password text field for entering the password used to protect the
+     * agent from connections who don't know the password.
+     */
     private final JPasswordField passwordField;
+    
+    /**
+     * The check box for choosing whether the agent will encrypt data transmitted
+     * over sockets.
+     */
     private final JCheckBox encryptionCheckBox;
+    
+    /**
+     * The combo box for choosing what compression to use for compressing data
+     * transmitted over sockets.
+     */
     private final JComboBox<String> compressionComboBox;
     
+    /**
+     * The button used for creating the agent and closing this dialog.
+     */
     private final JButton createButton;
+    
+    /**
+     * The button used for cancelling the current agent creation then closing
+     * this dialog.
+     */
     private final JButton cancelButton;
     
+    /**
+     * The created agent to return once the create button was clicked.
+     */
     private Agent agentToReturn;
     
     /**
-     * Creates an instance of AddAgentDialog.
+     * Creates a new CreateAgentDialog instance.
      */
     public CreateAgentDialog() {
 
@@ -77,7 +160,7 @@ public class CreateAgentDialog {
         
         // Instantiate controls
         agentNameField = new JTextField(12);
-        agentNameField.setText(agentNamePrefix + agentNameCounter);
+        agentNameField.setText(AGENT_NAME_PREFIX + agentNameCounter);
         cloneableCheckBox = new JCheckBox("Cloneable", false);
         socketFunctionalityCheckBox = new JCheckBox("Enable Socket Functionality", false);
         portField = new JTextField("4757", 4);
@@ -172,7 +255,7 @@ public class CreateAgentDialog {
         
         dialog.setLocation(position);
         
-        agentNameField.setText(agentNamePrefix + agentNameCounter);
+        agentNameField.setText(AGENT_NAME_PREFIX + agentNameCounter);
         
         // Prevents us returning the previous agent in case the Close or cancel
         // button was clicked.

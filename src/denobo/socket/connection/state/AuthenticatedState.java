@@ -167,7 +167,7 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 
             default:
 
-                // TODO: Bad packet code that we weren't expecting.
+                // Bad packet code that we weren't expecting.
                 connection.disconnect();
                 break;
                 
@@ -211,6 +211,7 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
             
             // Return how long the process took
             return (System.currentTimeMillis() - startTime);
+            
         }
         
     }

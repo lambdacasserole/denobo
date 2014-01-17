@@ -99,8 +99,9 @@ public class RC4CryptoAlgorithm implements CryptoAlgorithm {
         return key;
     }
     
+    // TODO: This should maybe not be synchronized at this level
     @Override
-    public byte[] encrypt(byte[] plaintext) {
+    public synchronized byte[] encrypt(byte[] plaintext) {
 
         // Key scheduling algorithm
         ksa();

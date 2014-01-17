@@ -187,7 +187,7 @@ public class RoutingWorker implements Runnable {
              * the SocketAgent. Routing is no longer our responsibility.
              */
             for (Entry<SocketAgent, Route> current : socketAgentRoutePairs.entrySet()) {
-               current.getKey().routeToRemote(destination, current.getValue(), listeners);
+                current.getKey().routeToRemote(destination, current.getValue(), listeners);
             }
             
         }

@@ -68,7 +68,7 @@ public abstract class DenoboConnectionState {
     * 
     * @param timeout   the maximum time to wait for a reply in milliseconds.
     * @return          the total round time it taken for us to send a packet
-    *                  and receive one back in milliseconds or 0 could be
+    *                  and receive one back in milliseconds or -1 could be
     *                  returned if the current state does not allow a POKE to be
     *                  sent.
     * @throws TimeoutException     if we did not receive a reply before the 

@@ -37,8 +37,19 @@ public interface PacketSerializer {
      */
     public Packet readPacket(Reader reader) throws IOException, StreamCorruptedException;
     
+    /**
+     * Sets the Compressor to use for compressing packets with this PacketSerializer.
+     * 
+     * @param compressor    the Compressor
+     */
     public void setCompressor(Compressor compressor);
     
+    /**
+     * Sets the Encryption algorithm to use for encrypting packets with this
+     * PacketSerializer.
+     * 
+     * @param crypto    the CryptoAlgorithm
+     */
     public void setCryptoAlgorithm(CryptoAlgorithm crypto);
     
 }

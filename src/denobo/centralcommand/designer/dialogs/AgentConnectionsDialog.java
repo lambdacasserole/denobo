@@ -40,29 +40,105 @@ import javax.swing.border.TitledBorder;
  */
 public class AgentConnectionsDialog implements SocketAgentObserver {
     
+    /**
+     * The underlying JDialog this uses to display itself.
+     */
     private final JDialog dialog;
     
+    /**
+     * The pane to hold our tabs: "Local" and "Remote".
+     */
     private final JTabbedPane tabHolder;
+    
+    /**
+     * The "Remote" tab container.
+     */
     private final JPanel remoteTab;
     
+    
     // Controls for local tab
+    
+    /**
+     * The list of local agents that are connected to the agent model.
+     */
     private final DefaultListModel<AgentDisplayable> localListModel;
+    
+    /**
+     * The combo box model for storing all local agents that can be connected to
+     * the agent model.
+     */
     private final DefaultComboBoxModel<AgentDisplayable> localAgentsComboModel;
+    
+    /**
+     * The List box for displaying all local agents connected to the agent model.
+     */
     private final JList<AgentDisplayable> localConnectionList;
+    
+    /**
+     * The "Add" button for adding the selected agent in the agent combo box to the
+     * agent model.
+     */
     private final JButton addLocalConnectionButton;
+    
+    /**
+     * The "Remove" button for removing the agent selection in the local connection
+     * list from the agent model.
+     */
     private final JButton removeLocalConnectionButton;
+    
+    /**
+     * The combo box for visually displaying all agents that can be linked to
+     * the agent model.
+     */
     private final JComboBox localAgentsCanAddCombo;
     
+    
     // Controls for Remote tab
+    
+    /**
+     * The list model that contains all current connected DenoboConnection
+     * instances to the agent model.
+     */
     private final DefaultListModel<DenoboConnection> remoteConnectionModel;
+    
+    /**
+     * The list box that visually displays each connected DenoboConnection.
+     */
     private final JList<DenoboConnection> remoteConnectionList;
+    
+    /**
+     * The "Disconnect" button that will disconnect all DenoboConnections from the agent model
+     * that currently selected in the list box.
+     */
     private final JButton disconnectRemoteConnectionButton;
+    
+    /**
+     * The "Connect" button that will attempt to add a new DenoboConnection to
+     * the specified host.
+     */
     private final JButton connectButton;
+    
+    /**
+     * The text field for entering the IP address or hostname to connect to.
+     */
     private final JTextField ipField;
+    
+    /**
+     * The text field for entering the remote port address to connect to.
+     */
     private final JTextField portField;
     
     
+    /**
+     * The current agent that this dialog is displaying the data for.
+     */
     private AgentDisplayable agentModel;
+    
+    /**
+     * A reference to the a NetworkDesigner instance so that this can retrieve
+     * a list of local agents have the ability to visually remove links between 
+     * agents in it.
+     */
     private final NetworkDesigner networkDesigner;
     
     

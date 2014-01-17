@@ -69,7 +69,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
     /**
      * Instances of a text area for the agent name.
      */
-    private final JComboBox agentSendArea;
+    private final JComboBox<String> agentSendArea;
 
     /**
      * Instances of a text area for the message.
@@ -121,7 +121,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         final JScrollPane messageTableScrollPane = new JScrollPane(messageTable);
         this.add(messageTableScrollPane, BorderLayout.CENTER);
 
-        agentSendArea = new JComboBox();
+        agentSendArea = new JComboBox<>();
         agentSendArea.setBorder(BorderFactory.createLineBorder(Color.black));
         agentSendArea.setEditable(true);
         firstRowPanel.add(agentSendArea);
@@ -229,11 +229,14 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
             messageTableModel.setRowCount(0);
         } else if (e.getSource() == spamButton) {
             //TODO: Delete when testing finished.
+            
+            final String spamReceipientName = (String) agentSendArea.getSelectedItem();
+            
             spamThread = new Thread() {
                 @Override
                 public void run() {
-                    for (int i = 0; i < 10000000; i++) {
-                        agentModel.sendMessage((String) agentSendArea.getSelectedItem(), messageSendArea.getText() + i);
+                    for (int i = 0; i < 100000; i++) {
+                        agentModel.sendMessage(spamReceipientName, String.valueOf(i));
                         try {
                             Thread.sleep(1);
                         } catch (InterruptedException ex) {

@@ -49,7 +49,7 @@ public class Route {
      * @param route the route to clone
      */
     public Route(Route route) {
-        this.route = new ArrayList(route.getActorList());
+        this.route = new ArrayList<>(route.getActorList());
     }
     
     

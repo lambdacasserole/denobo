@@ -6,6 +6,8 @@ import denobo.socket.connection.DenoboConnection;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -21,18 +23,52 @@ import javax.swing.table.DefaultTableModel;
  * @see     AgentMonitorDialog
  */
 public class ConnectionsTab extends JPanel implements SocketAgentObserver {
-
+    
+    /**
+     * The interval the ping column of each connection is refreshed.
+     */
+    private static final int PING_REFRESH_INTERVAL = 2000;
+    
+    /**
+     * The timer that this uses to refresh the ping of each connection at a 
+     * scheduled interval.
+     */
     private final Timer refreshTimer;
+    
+    /**
+     * The table to display the list of connections on.
+     */
     private final JTable connectionsTable;
+    
+    /**
+     * The table model that holds the list of connections to display in.
+     */
     private final ConnectionTableModel connectionsTableModel;
 
+    /**
+     * The executor service to use for managing the threads for refreshing
+     * the ping column of each connection.
+     */
+    private final ExecutorService executor;
+    
+    /**
+     * The SocketAgent instance this ConnectionsTab instance displays the data
+     * for.
+     */
     private final SocketAgent agent;
     
-    private static final int REFRESH_INTERVAL = 5000;
-
+    
+    /**
+     * Creates a new ConnectionsTab for displaying a list of connections and
+     * associated data for the specified SocketAgent instance.
+     * 
+     * @param agent     the SocketAgent instance
+     */
+    @SuppressWarnings("LeakingThisInConstructor")
     public ConnectionsTab(SocketAgent agent) {
 
         this.agent = agent;
+        this.executor = Executors.newSingleThreadExecutor();
 
         this.setLayout(new BorderLayout());
 
@@ -43,30 +79,89 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
         this.add(connectionsTableScrollPane, BorderLayout.CENTER);
 
         agent.addObserver(this);
-        refreshTable();
+        for (DenoboConnection currentConnection : agent.getConnections()) {
+            connectionsTableModel.addRow(currentConnection);
+        }
         
-        refreshTimer = new Timer(REFRESH_INTERVAL, new ActionListener() {
+        // Set up a timer to automatically refresh pings at a scheduled interval.
+        refreshTimer = new Timer(PING_REFRESH_INTERVAL, new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
-                refreshTable();
+                refreshPings();
             }
             
         });
         refreshTimer.setRepeats(true);
         refreshTimer.start();
+        
     }
     
+    /**
+     * Stops the refresh time and cleans up any resources used by this
+     * ConnectionsTab instance.
+     */
     public void dispose() {
         refreshTimer.stop();
+        executor.shutdown();
     }
 
-    private void refreshTable() {
-        
-        connectionsTableModel.setRowCount(0);
-        for (DenoboConnection currentConnection : agent.getConnections()) {
-            connectionsTableModel.addRow(currentConnection);
+    /**
+     * Refreshes the connections table.
+     */
+    private void refreshPings() {
+
+        /*
+         * Go through each connection and get the current ping on a seperate 
+         * thread to the swing so as not to block.
+         * 
+         * Updating the ping column MUST be done on the swing thread.
+         */
+        for (final DenoboConnection currentConnection : agent.getConnections()) {
+            
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        final long ping = currentConnection.poke(20000);
+                        updateConnectionPingColumn(currentConnection, ping);
+                    } catch (TimeoutException ex) {
+                        System.out.println(ex.getMessage());
+                    }
+                }
+            });
+
         }
+
+    }
+    
+    /**
+     * Updates the ping column for a connection in the connections model.
+     * 
+     * @param connection    the connection
+     * @param ping          the value to set the ping column to
+     */
+    private void updateConnectionPingColumn(final DenoboConnection connection, final long ping) {
+    
+        // Make sure we are updating within the swing thread
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+
+                /* 
+                 * Iterate through the table and find the connection where the
+                 * IP and port match then change column index 2 (the ping).
+                 */ 
+                for (int row = 0; row < connectionsTableModel.getRowCount(); row++) {
+                    if (connectionsTableModel.getValueAt(row, 0).equals(connection.getRemoteAddress())) {
+                        if (connectionsTableModel.getValueAt(row, 1).equals(connection.getRemotePort())) {
+                            connectionsTableModel.setValueAt(ping, row, 2);
+                        }
+                    }
+                }
+
+            }
+        });
         
     }
 
@@ -76,7 +171,9 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                refreshTable();
+                
+                connectionsTableModel.addRow(connection);
+
             }
         });
 
@@ -88,7 +185,9 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                refreshTable();
+                
+                connectionsTableModel.addRow(connection);
+                
             }
         });
         
@@ -100,7 +199,19 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                refreshTable();
+                
+                /* 
+                 * Iterate through the table and find the connection where the
+                 * IP and port match then remove it.
+                 */ 
+                for (int row = 0; row < connectionsTableModel.getRowCount(); row++) {
+                    if (connectionsTableModel.getValueAt(row, 0).equals(connection.getRemoteAddress())) {
+                        if (connectionsTableModel.getValueAt(row, 1).equals(connection.getRemotePort())) {
+                            connectionsTableModel.removeRow(row);
+                        }
+                    }
+                }
+                
             }
         });
         
@@ -108,25 +219,33 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
 
     @Override
     public void advertisingStarted(SocketAgent agent, int port) {
-
+        // Not needed
     }
 
     @Override
     public void advertisingStopped(SocketAgent agent, int port) {
-
+        // Not needed
     }
 
     @Override
     public void connectionAddFailed(SocketAgent agent, String hostname, int port) {
-
+        // Not needed
     }
 
+    
+    
     /**
+     * A TableModel for storing instances of DenoboConnection objects to be
+     * displayed.
      *
      * @author Alex Mullen
      */
     private class ConnectionTableModel extends DefaultTableModel {
 
+        /**
+         * Creates a new instance of a ConnectionTableModel for displaying
+         * DenoboConnection objects.
+         */
         public ConnectionTableModel() {
             super(new Object[]{"ip", "port", "ping"}, 0);
         }
@@ -137,13 +256,14 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
             return false;
         }
 
+        /**
+         * Adds a DenoboConnection into this table model as a new row.
+         * 
+         * @param connection 
+         */
         public void addRow(DenoboConnection connection) {
 
-            try {
-                this.addRow(new Object[]{connection.getRemoteAddress(), connection.getRemotePort(), connection.poke(3000)});
-            } catch (TimeoutException ex) {
-                System.out.println(ex.getMessage());
-            }
+            this.addRow(new Object[]{connection.getRemoteAddress(), connection.getRemotePort(), -1});
 
         }
 

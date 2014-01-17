@@ -14,9 +14,19 @@ import javax.swing.JTextArea;
  */
 public class AgentRoutingDialog {
     
+    /**
+     * The underlying JDialog this uses to display itself.
+     */
     private final JDialog dialog;
+    
+    /**
+     * The text area to dump the routing table output in.
+     */
     private final JTextArea area;
     
+    /**
+     * Creates a new AgentRoutingDialog.
+     */
     public AgentRoutingDialog() {
         
         dialog = new JDialog();
@@ -28,10 +38,17 @@ public class AgentRoutingDialog {
         
     }
     
+    /**
+     * Makes this AgentRoutingDialog visible and displays the routing table
+     * data for the specified Agent instance.
+     * 
+     * @param agent     the Agent
+     * @param position  the position to place this dialog
+     */
     public void show(Agent agent, Point position) {
         
-        dialog.setTitle("Router Data [" + agent.getName() + "]");
         area.setText(agent.getRoutingTable().toString());
+        dialog.setTitle("Router Data [" + agent.getName() + "]");
         dialog.setLocation(position);
         dialog.setAlwaysOnTop(true);
         dialog.setSize(new Dimension(250, 250));

@@ -68,7 +68,7 @@ public class WaitingForCredentialsState extends DenoboConnectionState {
 
            default:
 
-               // TODO: Bad status code that we weren't expecting.
+               // Bad status code that we weren't expecting.
                connection.disconnect();
        }
    }
