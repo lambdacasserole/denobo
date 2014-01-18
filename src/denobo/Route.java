@@ -49,7 +49,7 @@ public class Route {
      * Initialises a new instance of a route.
      */
     public Route() {
-        this(new ArrayList<String>(), 0);
+        this(new ArrayList(), 0);
     }
     
     /**
@@ -59,7 +59,7 @@ public class Route {
      */
     public Route(Route route) {
         requireNonNull(route, "Route to clone cannot be null.");
-        path = new ArrayList<>(route.path);
+        path = new ArrayList(route.path);
         position = route.position;
     }
     
