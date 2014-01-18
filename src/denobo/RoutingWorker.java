@@ -42,6 +42,12 @@ public class RoutingWorker implements Runnable {
     private final String destination;
     
     /**
+     * An instance of the destination actor, if found during the last routing
+     * task.
+     */
+    private Agent destinationInstance;
+    
+    /**
      * The listening observers that will be notified when optimal route
      * calculation is complete.
      */
@@ -51,6 +57,13 @@ public class RoutingWorker implements Runnable {
      * The existing route to append to.
      */
     private final Route initialRoute;
+    
+    /**
+     * If a routing worker uses backtracking, it will add a reversed copy of the
+     * route from the origin to the destination to the destination agent's 
+     * routing table, making replying to any messages more efficient.
+     */
+    private boolean usesBacktracking = false;
     
     
     /* ---------- */
@@ -63,26 +76,55 @@ public class RoutingWorker implements Runnable {
      * @param destination   the name of the destination actor
      */
     public RoutingWorker(Agent origin, String destination) {
-        this(origin, destination, new Route());
+        this(origin, destination, new Route(), true);
     }
     
     /**
      * Initialises a new instance of a routing worker.
      *
-     * @param origin        the actor from which this worker will start
-     * @param destination   the name of the destination actor
-     * @param initialRoute  the existing route to append to
+     * @param origin            the actor from which this worker will start
+     * @param destination       the name of the destination actor
+     * @param initialRoute      the existing route to append to
+     * @param usesBacktracking  whether or not this worker uses backtracking
+     * @see #getUsesBacktracking
      */
-    public RoutingWorker(Agent origin, String destination, Route initialRoute) {
+    public RoutingWorker(Agent origin, String destination, Route initialRoute, boolean usesBacktracking) {
         this.origin = origin;
         this.destination = destination;
         this.initialRoute = initialRoute;
+        this.usesBacktracking = usesBacktracking;
         listeners = new ArrayList<>();
     }
     
     
     /* ---------- */
     
+    
+    /**
+     * Gets whether or not this routing worker uses backtracking.
+     * <p>
+     * If a routing worker uses backtracking, it will add a reversed copy of the
+     * route from the origin to the destination to the destination agent's 
+     * routing table, making replying to any messages more efficient.
+     * 
+     * @return  true if this worker uses backtracking, otherwise false
+     */
+    public boolean getUsesBacktracking() {
+        return usesBacktracking;
+    }
+    
+    /**
+     * Sets whether or not this routing worker uses backtracking.
+     * <p>
+     * If a routing worker uses backtracking, it will add a reversed copy of the
+     * route from the origin to the destination to the destination agent's 
+     * routing table, making replying to any messages more efficient.
+     * 
+     * @param useBacktracking   whether or not to use backtracking
+     */
+    public void setUsesBacktracking(boolean useBacktracking) {
+        this.usesBacktracking = useBacktracking;
+    }
     
     /**
      * Adds a listener to this routing worker.
@@ -137,6 +179,7 @@ public class RoutingWorker implements Runnable {
             // If this agent is our destination, put our route into the array.
             if (current.getName().equals(destination)) {
                 routes.add(newQueue);
+                destinationInstance = current;
             } else {
                 // Otherwise continue recursing through the tree.
                 route(current, newQueue);
@@ -152,6 +195,7 @@ public class RoutingWorker implements Runnable {
         // Initialise our array of routes.
         routes = new ArrayList<>();
         socketAgentRoutePairs = new HashMap<>();
+        destinationInstance = null;
         
         // Recursively map routes to destination.
         final Route queue = new Route(initialRoute);
@@ -179,6 +223,10 @@ public class RoutingWorker implements Runnable {
             for (RoutingWorkerListener current : listeners) {
                 current.routeCalculationSucceeded(destination, shortestRoute);
             }
+            if (usesBacktracking) {
+                destinationInstance.routeCalculationSucceeded(origin.getName(), 
+                        shortestRoute.reverse());
+            }
         } else {
             
             /* 
@@ -187,7 +235,8 @@ public class RoutingWorker implements Runnable {
              * the SocketAgent. Routing is no longer our responsibility.
              */
             for (Entry<SocketAgent, Route> current : socketAgentRoutePairs.entrySet()) {
-                current.getKey().routeToRemote(destination, current.getValue(), listeners);
+                current.getKey().routeToRemote(destination, current.getValue(), 
+                        listeners, usesBacktracking);
             }
             
         }

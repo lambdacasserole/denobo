@@ -1,6 +1,7 @@
 package denobo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import static java.util.Collections.unmodifiableList;
 import java.util.List;
 import static java.util.Objects.requireNonNull;
@@ -188,6 +189,17 @@ public class Route {
      */
     public String last() {
         return isEmpty() ? null : path.get(size() - 1);
+    }
+    
+    /**
+     * Returns a reversed copy of this route.
+     * 
+     * @return  a reversed copy of this route
+     */
+    public Route reverse() {
+        final ArrayList copy = new ArrayList(path);
+        Collections.reverse(copy);
+        return new Route(copy, position);
     }
     
     /**

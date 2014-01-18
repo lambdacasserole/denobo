@@ -544,8 +544,11 @@ public class DenoboConnection {
      * @param destinationAgentName  the name of the agent to route to
      * @param localRoute            the local route taken to reach this SocketAgent
      *                              instance
+     * @param usesBacktracking      whether or not to use backtracking if a
+     *                              route is found
+     * @see                         denobo.RoutingWorker#getUsesBacktracking
      */
-    public void routeToRemote(String destinationAgentName, Route localRoute) {
+    public void routeToRemote(String destinationAgentName, Route localRoute, boolean usesBacktracking) {
         
         /* 
          * Pass the destination agent name and the route we have so far to the
@@ -554,6 +557,7 @@ public class DenoboConnection {
         final QueryString query = new QueryString();
         query.add("to", destinationAgentName);
         query.add("localroute", localRoute.serialize());
+        query.addAsBoolean("backtracks", usesBacktracking);
         
         send(new Packet(PacketCode.ROUTE_TO, query.toString()));
         

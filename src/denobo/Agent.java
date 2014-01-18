@@ -640,7 +640,9 @@ public class Agent implements RoutingWorkerListener {
         System.out.println(route.toString()); 
         
         // Remove from awaiting list.
-        awaitingRoutingMap.remove(destinationAgentName);
+        if (awaitingRoutingMap.containsKey(destinationAgentName)) {
+            awaitingRoutingMap.remove(destinationAgentName);
+        }
         
         // Add to routing table.
         routingTable.addRoute(destinationAgentName, route);

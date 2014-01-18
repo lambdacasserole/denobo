@@ -531,9 +531,12 @@ public class SocketAgent extends Agent {
      * @param localRoute            the local route taken to reach this
      *                              SocketAgent instance
      * @param listeners             the listeners to notify if a route is found
+     * @param usesBacktracking      whether or not to use backtracking if a
+     *                              route is found
+     * @see                         denobo.RoutingWorker#getUsesBacktracking
      */
     public void routeToRemote(String destinationAgentName, Route localRoute, 
-            List<RoutingWorkerListener> listeners) {
+            List<RoutingWorkerListener> listeners, boolean usesBacktracking) {
         
         remoteRouteToCallbacks.put(destinationAgentName, listeners);
         
@@ -549,7 +552,7 @@ public class SocketAgent extends Agent {
                     continue; 
                 }
 
-                currentConnection.routeToRemote(destinationAgentName, localRoute);
+                currentConnection.routeToRemote(destinationAgentName, localRoute, usesBacktracking);
             }
             
         }

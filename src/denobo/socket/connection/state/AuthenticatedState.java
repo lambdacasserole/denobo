@@ -89,6 +89,7 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 final Route localRoute = 
                         Route.deserialize(queryString.get("localroute"));                
                 final String destinationName = queryString.get("to");
+                final boolean usesBacktracking = queryString.getAsBoolean("backtracks");
                 
                 /*
                  * If we are the agent in question, we don't need to spawn a
@@ -102,7 +103,7 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 
                 // Route to destination agent.
                 final RoutingWorker worker = new RoutingWorker(this.connection.getParentAgent(), 
-                        destinationName, localRoute);
+                        destinationName, localRoute, usesBacktracking);
                 worker.addRoutingWorkerListener(this);
                 worker.mapRouteAsync();
                 break;

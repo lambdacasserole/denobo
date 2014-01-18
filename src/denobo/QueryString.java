@@ -159,7 +159,7 @@ public class QueryString {
      */
     public boolean has(String[] keys) {
         for (String current : keys) {
-            if(!map.containsKey(current)) {
+            if (!map.containsKey(current)) {
                 return false;
             }
         }
@@ -180,6 +180,17 @@ public class QueryString {
         }
         vals.deleteCharAt(vals.length() - 1);
         map.put(key, htmlEncode(vals.toString()));
+    }
+    
+    /**
+     * Adds a key-value pair to the query string where the value is a 
+     * boolean.
+     * 
+     * @param key   the key part of the new entry
+     * @param value the value part of the new entry
+     */
+    public void addAsBoolean(String key, boolean value) {
+        add(key, value ? "true" : "false");
     }
     
     /**
@@ -204,6 +215,19 @@ public class QueryString {
         final Set set = new HashSet<>();
         putInCollection(key, set);
         return set;
+    }
+    
+    /**
+     * Gets the value associated with the specified key as a boolean.
+     * <p>
+     * Keys with entries matching the string "true" are treated as true, any
+     * other strings including empty strings are treated as false.
+     * 
+     * @param key   the key for which to get the associated value
+     * @return      the value associated with the specified key as a boolean
+     */
+    public boolean getAsBoolean(String key) {
+        return get(key).equals("true");
     }
     
     /**
