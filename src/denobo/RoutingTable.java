@@ -83,6 +83,7 @@ public class RoutingTable {
     public void invalidateAgent(String agentName) {
 
         synchronized (table) {
+            
             // Remove any routes that are a destination to the given agent
             table.remove(agentName);
 
@@ -97,6 +98,7 @@ public class RoutingTable {
                     routeIterator.remove();
                 }
             }
+            
         }
 
     }
@@ -132,7 +134,7 @@ public class RoutingTable {
         
         synchronized (table) {
             for (Route currentRoute : table.values()) {
-                sb.append(currentRoute.toString()).append("\n\n");
+                sb.append(currentRoute.toString()).append("\n");
             }
         }
         

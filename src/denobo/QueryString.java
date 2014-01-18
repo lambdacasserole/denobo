@@ -141,6 +141,32 @@ public class QueryString {
     }
     
     /**
+     * Gets whether or not the query string has a key with the specified name.
+     * 
+     * @param key   the key name to check for
+     * @return      true if the key was found, otherwise false
+     */
+    public boolean has(String key) {
+        return map.containsKey(key);
+    }
+    
+    /**
+     * Gets whether or not the query string has all the keys with the specified 
+     * names.
+     * 
+     * @param keys  the key names to check for
+     * @return      true if all keys were found, otherwise false
+     */
+    public boolean has(String[] keys) {
+        for (String current : keys) {
+            if(!map.containsKey(current)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
      * Adds a key-value pair to the query string where the value is a 
      * collection.
      * 
@@ -175,7 +201,7 @@ public class QueryString {
      * @return      the value associated with the specified key as a set
      */
     public Set<String> getAsSet(String key) {
-        final Set<String> set = new HashSet<>();
+        final Set set = new HashSet<>();
         putInCollection(key, set);
         return set;
     }

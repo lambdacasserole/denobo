@@ -1,7 +1,9 @@
 package denobo;
 
 import java.util.ArrayList;
+import static java.util.Collections.unmodifiableList;
 import java.util.List;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a route that should be taken by a message to reach its
@@ -10,11 +12,17 @@ import java.util.List;
  * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Route {
-   
+    
     /**
-     * The list of actors in the route in chronological order.
+     * The list of property names used for serialising an object of this type
+     * to a query string.
      */
-    private List<String> route;
+    private static final String[] PROPERTY_NAMES = new String[] {"path", "position"};
+    
+    /**
+     * The ordered list of agent names in the route.
+     */
+    private List<String> path;
 
     /**
      * The position we're currently at in our route.
@@ -27,29 +35,32 @@ public class Route {
     
     /**
      * Initialises a new instance of a route.
+     * 
+     * @param path      the list of agent names that make up the route
+     * @param position  the current position a message is at in the route
+     */
+    private Route(List<String> path, int position) {
+        requireNonNull(path, "List of agent names cannot be null.");
+        this.path = path;
+        this.position = position;
+    }
+    
+    /**
+     * Initialises a new instance of a route.
      */
     public Route() {
-        route = new ArrayList<>();
-        position = 0;
+        this(new ArrayList<String>(), 0);
     }
     
     /**
      * Initialises a new instance of a route.
      * 
-     * @param originatingActor  the originating actor
-     */
-    public Route(Agent originatingActor) {
-        this();
-        append(originatingActor);
-    }
-    
-    /**
-     * Initialises a new instance of a route.
-     * 
-     * @param route the route to clone
+     * @param route  the route to clone
      */
     public Route(Route route) {
-        this.route = new ArrayList<>(route.getActorList());
+        requireNonNull(route, "Route to clone cannot be null.");
+        path = new ArrayList<>(route.path);
+        position = route.position;
     }
     
     
@@ -57,21 +68,22 @@ public class Route {
     
     
     /**
-     * Gets the list of actors that underlies this instance.
+     * Gets the list of agent names that underlies this instance.
      * 
-     * @return  the list of actors that underlies this instance
+     * @return  the list of agent names that underlies this instance
      */
-    public List<String> getActorList() {
-        return route;
+    public List<String> getPath() {
+        return unmodifiableList(path);
     }
     
     /**
-     * Appends an actor to the end of this route.
+     * Appends an agent to the end of this route.
      * 
-     * @param actor the actor to append
+     * @param actor the agent to append
      */
     public final void append(Agent actor) {
-        append(actor.getName());
+        requireNonNull(actor, "Agent to append cannot be null.");
+        path.add(actor.getName());
     }
     
     /**
@@ -80,7 +92,20 @@ public class Route {
      * @param name  the actor name to append
      */
     public final void append(String name) {
-        route.add(name);
+        requireNonNull(name, "Agent name to append cannot be null.");
+        if (path.contains(name)) {
+            throw new DuplicateAgentNameException(this);
+        }
+        path.add(name);
+    }
+    
+    /**
+     * Gets whether or not this route has another entry.
+     * 
+     * @return  true if the route has another entry, otherwise false
+     */
+    public boolean hasNext() {
+        return position < path.size();
     }
     
     /**
@@ -90,81 +115,79 @@ public class Route {
      * @return  the name of the next actor in the route
      */
     public String next() {
-        final String nextName = route.get(position);
-        position++;
-        return nextName;
+        if (!hasNext()) {
+            throw new EndOfRouteException(this);
+        }
+        return path.get(position++);
     }
     
     /**
-     * Returns the name of the next actor in the route without incrementing the
+     * Returns the name of the next actor in the route without incrementing its
      * position.
      * 
-     * @return  the name of the next actor in the route
+     * @return  the name of the next actor in the route or null if the end of
+     *          the route has been reached
      */
     public String peek() {
-        
-        if (position == route.size()) {
-            return null;
-        }
-        
-        return route.get(position);
-        
+        return hasNext() ? path.get(position) : null;
     }
 
     /**
-     * Checks to see if this route already contains the specified agent instance.
+     * Checks to see if this route already contains the specified agent.
      *
-     * @param agent the agent instance to check for
+     * @param agent the agent to check for
      * @return      true if the agent is in the route, otherwise false
      */
     public boolean has(Agent agent) {
-        return route.contains(agent.getName());
+        return path.contains(agent.getName());
     }
     
     /**
      * Checks to see if this route already contains the specified agent name.
      *
      * @param agentName the name of the agent to check for
-     * @return          true if the agent is in the route, otherwise false
+     * @return          true if the agent name is in the route, otherwise false
      */
     public boolean has(String agentName) {
-        return route.contains(agentName);
+        return path.contains(agentName);
     }
     
     /**
-     * Returns the number of members of this route.
+     * Returns whether or not this route is empty.
      * 
-     * @return  the number of members in the route
+     * @return  true if the route is empty, otherwise false
+     */
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+    
+    /**
+     * Returns the number of agents in this route.
+     * 
+     * @return  the number of agents in the route
      */
     public int size() {
-        return route.size();
+        return path.size();
     }
     
     /**
      * Returns the actor name at the start of the route.
      * 
-     * @return  the actor name at the start of the route
+     * @return  the actor name at the start of the route or null if the route is
+     *          empty
      */
     public String first() {
-        return route.get(0);
+        return isEmpty() ? null : path.get(0);
     }
     
     /**
      * Returns the actor name at the end of the route.
      * 
-     * @return  the actor name at the end of the route
+     * @return  the actor name at the end of the route or null if the route is
+     *          empty
      */
     public String last() {
-        return route.get(route.size() - 1);
-    }
-    
-    /**
-     * Sets the current position in the route.
-     * 
-     * @param position  the new position in the route
-     */
-    public void setPosition(int position) {
-        this.position = position;
+        return isEmpty() ? null : path.get(size() - 1);
     }
     
     /**
@@ -173,14 +196,9 @@ public class Route {
      * @return  a serialised representation of this route
      */
     public String serialize() {
-        final StringBuilder sb = new StringBuilder();
-        for (String current : route) {
-            sb.append(current).append(",");
-        }
-        if (sb.length() > 0) { sb.deleteCharAt(sb.length() - 1); }
         final QueryString queryString = new QueryString();
-        queryString.add("position", Integer.toString(position));
-        queryString.add("route", sb.toString());
+        queryString.addAsCollection(PROPERTY_NAMES[0], path);
+        queryString.add(PROPERTY_NAMES[1], Integer.toString(position));
         return queryString.toString();
     }
     
@@ -192,22 +210,29 @@ public class Route {
      */
     public static Route deserialize(String string) {
         final QueryString queryString = new QueryString(string);
-        final Route queue = new Route();
-        final String[] nameSplitter = queryString.get("route").split(",");
-        for (String current : nameSplitter) {
-            queue.append(current);
+        if (queryString.has(PROPERTY_NAMES)) {
+            try {
+                final Route route = new Route(queryString.getAsList(PROPERTY_NAMES[0]), 
+                        Integer.parseInt(queryString.get(PROPERTY_NAMES[1])));
+                return route;
+            } catch (NumberFormatException ex) {
+                throw new InvalidQueryStringException("A route could not be"
+                        + " deserialised from this query string. Invalid position.",
+                        queryString);
+            }
+        } else {
+            throw new InvalidQueryStringException("A route could not be"
+                    + " deserialised from this query string. Invalid keys.", 
+                    queryString);
         }
-        queue.setPosition(Integer.parseInt(queryString.get("position")));
-        return queue;
     }
     
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        for (String current : route) {
-            sb.append(current).append(" -> \r\n");
+        for (String current : path) {
+            sb.append(current).append(!current.equals(last()) ? " -> " : "");
         }
-        sb.append("[End of Route]");
         return sb.toString();
     }
     
