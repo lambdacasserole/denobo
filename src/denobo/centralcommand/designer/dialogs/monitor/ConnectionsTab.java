@@ -4,16 +4,14 @@ import denobo.socket.SocketAgent;
 import denobo.socket.SocketAgentObserver;
 import denobo.socket.connection.DenoboConnection;
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -30,10 +28,16 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
     private static final int PING_REFRESH_INTERVAL = 2000;
     
     /**
+     * The maximum number of milliseconds to wait for a ping reply for each
+     * connection.
+     */
+    private static final int PING_TIMEOUT = 20000;
+    
+    /**
      * The timer that this uses to refresh the ping of each connection at a 
      * scheduled interval.
      */
-    private final Timer refreshTimer;
+//    private final Timer refreshTimer;
     
     /**
      * The table to display the list of connections on.
@@ -46,10 +50,10 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
     private final ConnectionTableModel connectionsTableModel;
 
     /**
-     * The executor service to use for managing the threads for refreshing
-     * the ping column of each connection.
+     * The scheduled scheduledExecutor service to use for scheduling a thread to 
+     * refresh the ping of each connection at a scheduled interval.
      */
-    private final ExecutorService executor;
+    private final ScheduledExecutorService scheduledExecutor;
     
     /**
      * The SocketAgent instance this ConnectionsTab instance displays the data
@@ -68,7 +72,6 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
     public ConnectionsTab(SocketAgent agent) {
 
         this.agent = agent;
-        this.executor = Executors.newSingleThreadExecutor();
 
         this.setLayout(new BorderLayout());
 
@@ -83,18 +86,14 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
             connectionsTableModel.addRow(currentConnection);
         }
         
-        // Set up a timer to automatically refresh pings at a scheduled interval.
-        refreshTimer = new Timer(PING_REFRESH_INTERVAL, new ActionListener() {
-
+        // Schedule a task to automatically refresh pings at a scheduled interval.
+        scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+        scheduledExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
-            public void actionPerformed(ActionEvent ae) {
+            public void run() {
                 refreshPings();
             }
-            
-        });
-        refreshTimer.setRepeats(true);
-        refreshTimer.start();
-        
+        }, PING_REFRESH_INTERVAL, PING_REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
     }
     
     /**
@@ -102,8 +101,7 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
      * ConnectionsTab instance.
      */
     public void dispose() {
-        refreshTimer.stop();
-        executor.shutdown();
+        scheduledExecutor.shutdown();
     }
 
     /**
@@ -119,11 +117,11 @@ public class ConnectionsTab extends JPanel implements SocketAgentObserver {
          */
         for (final DenoboConnection currentConnection : agent.getConnections()) {
             
-            executor.execute(new Runnable() {
+            scheduledExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        final long ping = currentConnection.poke(20000);
+                        final long ping = currentConnection.poke(PING_TIMEOUT);
                         updateConnectionPingColumn(currentConnection, ping);
                     } catch (TimeoutException ex) {
                         System.out.println(ex.getMessage());

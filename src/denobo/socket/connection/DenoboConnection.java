@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
@@ -204,7 +205,8 @@ public class DenoboConnection {
      *                  false
      */
     public boolean addObserver(DenoboConnectionObserver observer) {
-        return observers.add(observer);
+        return observers.add(Objects.requireNonNull(observer, "The observer to "
+                + "add cannot be null."));
     }
     
     /**
@@ -215,7 +217,8 @@ public class DenoboConnection {
      *                  otherwise false
      */
     public boolean removeObserver(DenoboConnectionObserver observer) {
-        return observers.remove(observer);
+        return observers.remove(Objects.requireNonNull(observer, "The observer to "
+                + "remove cannot be null."));
     }
     
     /**

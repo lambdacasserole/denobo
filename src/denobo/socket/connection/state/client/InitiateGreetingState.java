@@ -85,7 +85,8 @@ public class InitiateGreetingState extends DenoboConnectionState {
 
                 // Ask/retrieve the credentials to use.
                 final Credentials credentials = 
-                        connection.getParentAgent().getConfiguration().getCredentialsHandler().credentialsRequested(connection);
+                        connection.getParentAgent().getConfiguration().getCredentialsHandler()
+                                .credentialsRequested(connection);
                 
                 if (credentials == null) {
                     System.out.println("We have no credentials to send, disconnecting.");
@@ -137,6 +138,12 @@ public class InitiateGreetingState extends DenoboConnectionState {
                 break;
 
             case NO:
+                
+                System.out.println("We received a NO packet: " + packet.getBody());
+                
+                /*
+                 * Fall through
+                 */
 
             default:
 

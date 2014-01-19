@@ -118,10 +118,20 @@ public class AuthenticatedState extends DenoboConnectionState implements Routing
                 final List<RoutingWorkerListener> listeners = 
                         connection.getParentAgent().remoteRouteToCallbacks.get(destinationAgent);
                 
-                // Call back on those listeners. Route calculation success.
-                final Route queue = Route.deserialize(queryString.get("route"));
-                for (RoutingWorkerListener currentListener : listeners) {
-                    currentListener.routeCalculationSucceeded(destinationAgent, queue);
+                // Make sure a listener exists
+                if (listeners != null) {
+                    // Call back on those listeners. Route calculation success.
+                    final Route queue = Route.deserialize(queryString.get("route"));
+                    for (RoutingWorkerListener currentListener : listeners) {
+                        currentListener.routeCalculationSucceeded(destinationAgent, queue);
+                    }
+                } else {
+                    /* 
+                     * We received a ROUTE_FOUND packet from this connection
+                     * for a route we never asked to find a route to so we will
+                     * just terminate the connection..
+                     */
+                    connection.disconnect();
                 }
                 break;
                 

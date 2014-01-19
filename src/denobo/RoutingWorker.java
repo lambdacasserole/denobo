@@ -223,7 +223,11 @@ public class RoutingWorker implements Runnable {
             for (RoutingWorkerListener current : listeners) {
                 current.routeCalculationSucceeded(destination, shortestRoute);
             }
-            if (usesBacktracking) {
+            /*
+             * Check if backtracking is enabled and the destination wasn't the
+             * origin.
+             */
+            if (usesBacktracking && destinationInstance != null) {
                 destinationInstance.routeCalculationSucceeded(origin.getName(), 
                         shortestRoute.reverse());
             }

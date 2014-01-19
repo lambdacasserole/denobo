@@ -9,13 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -89,14 +88,14 @@ public class Agent implements RoutingWorkerListener {
     private final List<MessageListener> listeners;
     
     /**
-     * The timer instance that will execute a task on a scheduled interval and 
-     * cleanup any messages that are awaiting for a route to be calculated where
-     * the route calculation has timed out.
+     * A ScheduledExecutorService instance that will execute a task on a scheduled 
+     * interval and cleanup any messages that are awaiting for a route to be 
+     * calculated where the route calculation has timed out.
      * <p>
      * A route calculation that has timed out should be assumed to currently not
      * exist in the network.
      */
-    private final Timer dispatchCleanupTimer;
+    private final ScheduledExecutorService dispatchCleanupExecutorService;
     
     
     /* ---------- */
@@ -106,13 +105,13 @@ public class Agent implements RoutingWorkerListener {
      * The value in milliseconds at which point we consider that a route
      * calculation has timed out.
      */
-    private static final long ROUTE_CALCULATION_TIMEOUT = 1000L;
+    private static final long ROUTE_CALCULATION_TIMEOUT = 10000L;
     
     /**
      * The interval at which any messages waiting for dispatch on a route that
      * is assumed to be inactive are cleaned up.
      */
-    private static final long DISPATCH_CLEANUP_INTERVAL = 1000L;
+    private static final long DISPATCH_CLEANUP_INTERVAL = 5000L;
     
     /**
      * The regular expression that is used to validate the names of Agents.
@@ -153,15 +152,16 @@ public class Agent implements RoutingWorkerListener {
         dispatchMap = Collections.synchronizedMap(new HashMap<String, List<String>>());
         awaitingRoutingMap = Collections.synchronizedMap(new HashMap<String, Long>());
         
-        // Initialize the dispatch cleanup task
-        dispatchCleanupTimer = new Timer(true);
-        dispatchCleanupTimer.scheduleAtFixedRate(new TimerTask() {
+        // Initialize the scheduled dispatch cleanup task
+        dispatchCleanupExecutorService = Executors.newSingleThreadScheduledExecutor();
+        dispatchCleanupExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 cleanupDispatch(ROUTE_CALCULATION_TIMEOUT);
             }
-        }, DISPATCH_CLEANUP_INTERVAL, DISPATCH_CLEANUP_INTERVAL);
+        }, DISPATCH_CLEANUP_INTERVAL, DISPATCH_CLEANUP_INTERVAL, TimeUnit.MILLISECONDS);
         
+
         // Start message processing.
         queueProcessThread();
 
@@ -427,7 +427,7 @@ public class Agent implements RoutingWorkerListener {
                         final Message message = messageQueue.take();
 
                         if (!isCloneable()) {
-
+  
                             // Handle message in this thread.
                             handleMessage(message);
 
@@ -517,8 +517,8 @@ public class Agent implements RoutingWorkerListener {
         final Undertaker undertaker = new Undertaker(branches, agentNames);
         undertaker.undertakeAsync();
         
-        // Stop the scheduled dispatch cleaner task then clean the dispatch
-        dispatchCleanupTimer.cancel();
+        // Stop the scheduled dispatch cleaner task
+        dispatchCleanupExecutorService.shutdown();
         
         // Clear all data.
         messageQueue.clear();
@@ -640,9 +640,7 @@ public class Agent implements RoutingWorkerListener {
         System.out.println(route.toString()); 
         
         // Remove from awaiting list.
-        if (awaitingRoutingMap.containsKey(destinationAgentName)) {
-            awaitingRoutingMap.remove(destinationAgentName);
-        }
+        awaitingRoutingMap.remove(destinationAgentName);
         
         // Add to routing table.
         routingTable.addRoute(destinationAgentName, route);
