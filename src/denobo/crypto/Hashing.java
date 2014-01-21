@@ -23,7 +23,7 @@ public class Hashing {
             
             final MessageDigest digester = MessageDigest.getInstance("SHA-256");
             final byte[] hash = digester.digest(str.getBytes("UTF-8"));
-            final StringBuffer hexString = new StringBuffer();
+            final StringBuilder hexString = new StringBuilder(64);
 
             for (int i = 0; i < hash.length; i++) {
                 final String hex = Integer.toHexString(0xff & hash[i]);

@@ -13,8 +13,8 @@ import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -157,17 +157,7 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
         messageSendArea = new JTextArea(3, 40);
         messageSendArea.setBorder(BorderFactory.createLineBorder(Color.black));
         messageSendArea.setLineWrap(true);
-        messageSendArea.addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                //
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                //
-            }
-
+        messageSendArea.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
                 //Press enter to send the message.
@@ -233,17 +223,27 @@ public class AgentDebugWindow extends DenoboWindow implements ActionListener, Me
             final String spamReceipientName = (String) agentSendArea.getSelectedItem();
             
             spamThread = new Thread() {
+
                 @Override
                 public void run() {
+                    
+                    final long startTime = System.currentTimeMillis();
+                    System.out.println("Spam started:");
+                    
                     for (int i = 0; i < 100000; i++) {
                         agentModel.sendMessage(spamReceipientName, String.valueOf(i));
-                        try {
-                            Thread.sleep(1);
-                        } catch (InterruptedException ex) {
-                            break;
-                        }
+                        Thread.yield();
+//                        try {
+//                            Thread.sleep(1);
+//                        } catch (InterruptedException ex) {
+//                            break;
+//                        }
                     }
+                    
+                    final long elapsedTime = (System.currentTimeMillis() - startTime);
+                    System.out.println("Spam taken: " + elapsedTime + "ms");
                 }
+
             };
             spamThread.start();
         }

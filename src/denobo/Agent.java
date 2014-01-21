@@ -77,6 +77,11 @@ public class Agent implements RoutingWorkerListener {
     private final Object shutdownLock;
     
     /**
+     * Holding this lock will hold off any messages from being dispatched.
+     */
+    private final Object messageDispatchLock;
+    
+    /**
      * The routing table for this Agent.
      */
     private final RoutingTable routingTable;
@@ -105,13 +110,13 @@ public class Agent implements RoutingWorkerListener {
      * The value in milliseconds at which point we consider that a route
      * calculation has timed out.
      */
-    private static final long ROUTE_CALCULATION_TIMEOUT = 10000L;
+    private static final long ROUTE_CALCULATION_TIMEOUT = 5000;
     
     /**
-     * The interval at which any messages waiting for dispatch on a route that
-     * is assumed to be inactive are cleaned up.
+     * The interval in milliseconds at which any messages waiting for dispatch 
+     * on a route that is assumed to be inactive are cleaned up.
      */
-    private static final long DISPATCH_CLEANUP_INTERVAL = 5000L;
+    private static final long DISPATCH_CLEANUP_INTERVAL = 10000L;
     
     /**
      * The regular expression that is used to validate the names of Agents.
@@ -138,7 +143,9 @@ public class Agent implements RoutingWorkerListener {
             throw new IllegalArgumentException("Invalid agent name.");
         }
         
+        // Lock objects
         shutdownLock = new Object();
+        messageDispatchLock = new Object();
 
         // Only construct the thread pool if cloneable.
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
@@ -148,9 +155,10 @@ public class Agent implements RoutingWorkerListener {
         connectedAgents = new CopyOnWriteArrayList<>();
         listeners = new CopyOnWriteArrayList<>();
         
+        // Initialise routing data structures
         routingTable = new RoutingTable();
-        dispatchMap = Collections.synchronizedMap(new HashMap<String, List<String>>());
-        awaitingRoutingMap = Collections.synchronizedMap(new HashMap<String, Long>());
+        dispatchMap = new HashMap<>();
+        awaitingRoutingMap = new HashMap<>();
         
         // Initialize the scheduled dispatch cleanup task
         dispatchCleanupExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -161,7 +169,6 @@ public class Agent implements RoutingWorkerListener {
             }
         }, DISPATCH_CLEANUP_INTERVAL, DISPATCH_CLEANUP_INTERVAL, TimeUnit.MILLISECONDS);
         
-
         // Start message processing.
         queueProcessThread();
 
@@ -268,22 +275,19 @@ public class Agent implements RoutingWorkerListener {
         synchronized (shutdownLock) {
             
             /* 
-             * If the Agent is shut down, don't connect. Don't allow connection
-             * of an Agent to itself.
+             * If the Agent has shut down, don't connect. Don't allow connection
+             * of an Agent to itself and don't allow an agent to be connected
+             * more than once.
              */
-            if (shutdown || agent == this) { return false; }
-            
-            // Don't allow duplicates into the list.
-            if (!connectedAgents.contains(agent)) {
-                
-                // Bidirectional registration.
-                registerConnectedAgent(agent);
-                agent.registerConnectedAgent(this);
-                
+            if (shutdown || agent == this || connectedAgents.contains(agent)) { 
+                return false; 
             }
-            
+
+            // Bidirectional registration.
+            registerConnectedAgent(agent);
+            agent.registerConnectedAgent(this);
             return true;
-            
+
         }
         
     }
@@ -540,17 +544,25 @@ public class Agent implements RoutingWorkerListener {
 
         Objects.requireNonNull(recipientName, "The recipient of a message cannot be null.");
         
-        // If we can't send the message right away because a route is missing.
-        if (!originate(recipientName, data)) {
-            
-            /*
-             * We need to route first, then send the message when the routing 
-             * worker calls back.
-             */
-            System.out.println("Awaiting routing to Agent [" + recipientName + "]...");
-            awaitRouting(recipientName, data);
-            calculateRoute(recipientName);
-            
+        /*
+         * Anyone else holding this lock will prevent any messages been dispatched
+         * or processed until it is released.
+         */
+        synchronized (messageDispatchLock) {
+
+            // If we can't send the message right away because a route is missing.
+            if (!originate(recipientName, data)) {
+
+                /*
+                 * We need to route first, then send the message when the routing 
+                 * worker calls back.
+                 */
+                System.out.println("Awaiting routing to Agent [" + recipientName + "]...");
+                awaitRouting(recipientName, data);
+                calculateRoute(recipientName);
+
+            }
+
         }
         
     }
@@ -599,14 +611,12 @@ public class Agent implements RoutingWorkerListener {
      */
     private void awaitRouting(String recipientName, String data) {
         
-        synchronized (dispatchMap) {
-            List<String> messageList = dispatchMap.get(recipientName);
-            if (messageList == null) {
-                messageList = Collections.synchronizedList(new ArrayList<String>());
-                dispatchMap.put(recipientName, messageList);
-            }
-            messageList.add(data);
+        List<String> messageList = dispatchMap.get(recipientName);
+        if (messageList == null) {
+            messageList = new ArrayList<>();
+            dispatchMap.put(recipientName, messageList);
         }
+        messageList.add(data);
 
     }
 
@@ -616,19 +626,17 @@ public class Agent implements RoutingWorkerListener {
      * 
      * @param agentName the name of the agent to route to
      */
-    public void calculateRoute(String agentName) {
+    private void calculateRoute(String agentName) {
         
         /* 
          * If we're already waiting on a route to this agent. don't start trying
          * to calculate it again.
          */
-        synchronized (awaitingRoutingMap) {
-            if (!awaitingRoutingMap.containsKey(agentName)) {
-                awaitingRoutingMap.put(agentName, Long.valueOf(System.currentTimeMillis()));
-                final RoutingWorker worker = new RoutingWorker(this, agentName);
-                worker.addRoutingWorkerListener(this);
-                worker.mapRouteAsync();                
-            }
+        if (!awaitingRoutingMap.containsKey(agentName)) {
+            awaitingRoutingMap.put(agentName, Long.valueOf(System.currentTimeMillis()));
+            final RoutingWorker worker = new RoutingWorker(this, agentName);
+            worker.addRoutingWorkerListener(this);
+            worker.mapRouteAsync();                
         }
         
     }
@@ -639,37 +647,36 @@ public class Agent implements RoutingWorkerListener {
         System.out.println("Routing to Agent [" + destinationAgentName + "] complete:");
         System.out.println(route.toString()); 
         
-        // Remove from awaiting list.
-        awaitingRoutingMap.remove(destinationAgentName);
-        
-        // Add to routing table.
-        routingTable.addRoute(destinationAgentName, route);
-        
-        /*
-         * Any messages waiting for this route are now free to be sent.
-         * Also prevent the dispatchMap from changing whilst we use it.
+        /* 
+         * Hold off any messages being dispatched until we dispatch any waiting
+         * because it might be important that any waiting messages should be 
+         * dispatched first so that the other agent receives all messages in the
+         * order they were originally sent.
          */
-        synchronized (dispatchMap) {
-            
+        synchronized (messageDispatchLock) {
+        
+            // Remove from awaiting list.
+            awaitingRoutingMap.remove(destinationAgentName);
+
+            // Add to routing table.
+            routingTable.addRoute(destinationAgentName, route);
+
+            /*
+             * Any messages waiting for this route are now free to be sent.
+             */
             final List<String> waitingMessages = dispatchMap.get(destinationAgentName);
             if (waitingMessages != null) {
 
                 System.out.println("Found " + waitingMessages.size() + " messages waiting.");
 
-                /* 
-                 * Make sure no else can modify the list in case they acquired it
-                 * somehow.
-                 */
-                synchronized (waitingMessages) {
-                    // Send all waiting messages.
-                    for (String current : waitingMessages) {
-                        originate(destinationAgentName, current);
-                    }
+                // Send all waiting messages.
+                for (String current : waitingMessages) {
+                    originate(destinationAgentName, current);
                 }
                 dispatchMap.remove(destinationAgentName);
 
             }
-            
+
         }
         
     }
@@ -686,45 +693,44 @@ public class Agent implements RoutingWorkerListener {
      */
     private void cleanupDispatch(long timeout) {
         
-        /*
-         * Go through every destination entry we are currently trying to find a
-         * route to.
-         */
-        
-        synchronized (awaitingRoutingMap) {
+        /* 
+         * Hold off any messages been dispatched so we can safely operate on any
+         * data structures used by the dispatch process.
+         */ 
+        synchronized (messageDispatchLock) {
             
+            /*
+             * Go through every destination entry we are currently trying to find a
+             * route to.
+             */
+                   
             final Iterator<Entry<String, Long>> routingEntry = 
                                             awaitingRoutingMap.entrySet().iterator();
             while (routingEntry.hasNext()) {
                 final Entry<String, Long> currentEntry = routingEntry.next();
 
-                // Make sure the dispatch map does not change.
-                synchronized (dispatchMap) {
-                    
-                    /* 
-                     * Check if the current destination to route has still not been
-                     * calculated before the specified timeout.
+                /* 
+                 * Check if the current destination to route has still not been
+                 * calculated before the specified timeout.
+                 */
+                if ((System.currentTimeMillis() - currentEntry.getValue()) >= timeout) {
+
+                    /**
+                     * The calculation to this route has timed out so we will
+                     * clear any waiting messages that were waiting to be 
+                     * dispatched to this destination
                      */
-                    if ((System.currentTimeMillis() - currentEntry.getValue()) >= timeout) {
-                        
-                        /**
-                         * The calculation to this route has timed out so we will
-                         * clear any waiting messages that were waiting to be 
-                         * dispatched to this destination
-                         */
-                        final List<String> waitingMessages = dispatchMap.get(currentEntry.getKey());
-                        if (waitingMessages != null) {
-                            System.out.println("Cleared " + waitingMessages.size() 
-                                    + " messages intended for " + currentEntry.getKey() 
-                                    + " due to routing timeout.");
-                            waitingMessages.clear();
-                            dispatchMap.remove(currentEntry.getKey());
-                        }
-
-                        // Remove the routing entry from the awaitingRoutingMap
-                        routingEntry.remove();
-
+                    final List<String> waitingMessages = dispatchMap.get(currentEntry.getKey());
+                    if (waitingMessages != null) {
+                        System.out.println("Cleared " + waitingMessages.size() 
+                                + " messages intended for " + currentEntry.getKey() 
+                                + " due to routing timeout.");
+                        waitingMessages.clear();
+                        dispatchMap.remove(currentEntry.getKey());
                     }
+
+                    // Remove the routing entry from the awaitingRoutingMap
+                    routingEntry.remove();
 
                 }
 
