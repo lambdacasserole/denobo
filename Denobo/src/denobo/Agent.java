@@ -120,6 +120,9 @@ public class Agent implements RoutingWorkerListener {
     
     /**
      * The regular expression that is used to validate the names of Agents.
+     * <p>
+     * Agent names cannot be null, must be alphanumeric and must start with a 
+     * letter. Underscores are allowed.
      */
     private static final Pattern VALID_NAME_REGEX = Pattern.compile("^[a-zA-Z]{1}[a-zA-Z0-9_]*$");
     
@@ -135,14 +138,11 @@ public class Agent implements RoutingWorkerListener {
      */
     public Agent(String name, boolean cloneable) {
 
-        /* 
-         * Agent names cannot be null, must be alphanumeric must start with a 
-         * letter. Underscores are allowed.
-         */
+        // Check that the agent name is non-null and valid.
         this.name = Objects.requireNonNull(name, "The name of the Agent cannot"
                 + " be null.");
         if (!isValidName(name)) {
-            throw new IllegalArgumentException("Invalid agent name.");
+            throw new IllegalArgumentException("Invalid agent name '" + name + "'.");
         }
         
         // Lock objects.
@@ -196,6 +196,7 @@ public class Agent implements RoutingWorkerListener {
      * @return      true if the agent name is valid, otherwise false
      */
     public static boolean isValidName(String name) {
+        if (name == null) { return false; }
         return VALID_NAME_REGEX.matcher(name).matches();
     }
     
@@ -344,7 +345,8 @@ public class Agent implements RoutingWorkerListener {
      * @return true if the agent was successfully registered, otherwise false
      */
     private boolean registerConnectedAgent(Agent agent) {
-        return connectedAgents.add(agent);
+        return connectedAgents.add(Objects.requireNonNull(agent, 
+                "Cannot register a connection to a null agent."));
     }
 
     /**
@@ -783,7 +785,7 @@ public class Agent implements RoutingWorkerListener {
         }
         
         /* 
-         * If this Agent is the intended recipient of the message, alert each
+         * If this agent is the intended recipient of the message, alert each
          * registered message listener.
          */
         if (message.getRecipient().equals(this.getName())) {
@@ -793,7 +795,7 @@ public class Agent implements RoutingWorkerListener {
             return true;
         } else {
             
-            // Otherwise, forward to next Agent in route.
+            // Otherwise, forward to next agent in route.
             final String nextRecipient = message.getRoute().next();
             for (Agent current : connectedAgents) {
                 if (current.getName().equals(nextRecipient)) {
@@ -804,8 +806,10 @@ public class Agent implements RoutingWorkerListener {
             
         }
         
-        // We did not handle the message if execution gets to here so return
-        // false.
+        /* 
+        * We did not handle the message if execution gets to here so return
+        * false.
+        */
         return false;
         
     }

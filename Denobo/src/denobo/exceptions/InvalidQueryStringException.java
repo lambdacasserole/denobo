@@ -1,4 +1,6 @@
-package denobo;
+package denobo.exceptions;
+
+import denobo.QueryString;
 
 /**
  * Represents a generic error encountered when a query string undergoing parsing

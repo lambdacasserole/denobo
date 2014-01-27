@@ -1,4 +1,6 @@
-package denobo;
+package denobo.exceptions;
+
+import denobo.Route;
 
 /**
  * Represents a generic error encountered during routing.

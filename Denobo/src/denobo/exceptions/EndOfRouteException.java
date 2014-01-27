@@ -1,4 +1,6 @@
-package denobo;
+package denobo.exceptions;
+
+import denobo.Route;
 
 /**
  * Represents an error encountered when a caller attempts to get the next agent 

@@ -1,5 +1,8 @@
-package denobo;
+ package denobo;
 
+import denobo.exceptions.DuplicateAgentNameException;
+import denobo.exceptions.InvalidQueryStringException;
+import denobo.exceptions.EndOfRouteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import static java.util.Collections.unmodifiableList;
@@ -42,6 +45,10 @@ public class Route {
      */
     private Route(List<String> path, int position) {
         requireNonNull(path, "List of agent names cannot be null.");
+        if (position < 0 || position >= path.size()) {
+            throw new IllegalArgumentException("Route position must be non-negative"
+                    + " and less than the size of the route.");
+        }
         this.path = path;
         this.position = position;
     }

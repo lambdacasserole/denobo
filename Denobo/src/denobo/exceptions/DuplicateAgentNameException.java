@@ -1,4 +1,6 @@
-package denobo;
+package denobo.exceptions;
+
+import denobo.Route;
 
 /**
  * Represents an error caused when duplicate agent names are encountered during 
@@ -27,7 +29,7 @@ public class DuplicateAgentNameException extends RoutingException {
      * @param route the route that raised the exception
      */
     public DuplicateAgentNameException(Route route) {
-        this("Couldn't get next node in route because its end has been reached.", route);
+        this("Route contains illegal duplicate agent names.", route);
     }
     
 }

@@ -88,6 +88,7 @@ public class RC4CryptoAlgorithm implements CryptoAlgorithm {
      */
     public void setKey(int[] key) {
         this.key = key;
+        ksa();
     }
    
     /**
@@ -103,9 +104,6 @@ public class RC4CryptoAlgorithm implements CryptoAlgorithm {
     @Override
     public synchronized byte[] encrypt(byte[] plaintext) {
 
-        // Key scheduling algorithm
-        ksa();
-        
         // Drop bytes.
         final int[] dropArr = new int[drop];
         prga(dropArr);

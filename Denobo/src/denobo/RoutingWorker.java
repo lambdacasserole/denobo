@@ -1,5 +1,6 @@
 package denobo;
 
+import denobo.exceptions.RouteToSelfException;
 import denobo.socket.SocketAgent;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,7 +71,7 @@ public class RoutingWorker implements Runnable {
     
     
     /**
-     * Initialises a new instance of a routing worker.
+     * Initialises a new instance of a routing worker that uses backtracking.
      * 
      * @param origin        the actor from which this worker will start
      * @param destination   the name of the destination actor
@@ -99,6 +100,14 @@ public class RoutingWorker implements Runnable {
     
     /* ---------- */
     
+    /**
+     * Gets the agent instance that spawned this routing worker.
+     * 
+     * @return  the agent instance that spawned this routing worker
+     */
+    public Agent getOrigin() {
+        return origin;
+    }
     
     /**
      * Gets whether or not this routing worker uses backtracking.
@@ -197,15 +206,18 @@ public class RoutingWorker implements Runnable {
         socketAgentRoutePairs = new HashMap<>();
         destinationInstance = null;
         
+        /* 
+         * Check if we're trying to route to ourself because this is illegal
+         * and should not be happening in the first place.
+         */
+        if (origin.getName().equals(destination)) {
+            throw new RouteToSelfException(this);
+        }
+        
         // Recursively map routes to destination.
         final Route queue = new Route(initialRoute);
-        queue.append(origin);
-        
-        if (origin.getName().equals(destination)) {
-            routes.add(queue);
-        } else {
-            route(origin, queue);
-        }
+        queue.append(origin);    
+        route(origin, queue);
         
         // Get shortest route from all possible routes.        
         Route shortestRoute = null;
