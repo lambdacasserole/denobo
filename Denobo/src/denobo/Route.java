@@ -45,10 +45,6 @@ public class Route {
      */
     private Route(List<String> path, int position) {
         requireNonNull(path, "List of agent names cannot be null.");
-        if (position < 0 || position >= path.size()) {
-            throw new IllegalArgumentException("Route position must be non-negative"
-                    + " and less than the size of the route.");
-        }
         this.path = path;
         this.position = position;
     }
