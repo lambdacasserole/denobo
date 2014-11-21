@@ -6,7 +6,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 
 /**
- * Represents a dialog used in the the program.
+ * Represents a dialog used in the program.
  * 
  * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
