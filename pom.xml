@@ -42,6 +42,11 @@
             <artifactId>checkers</artifactId>
             <version>v1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.lambdacasserole</groupId>
+            <artifactId>mayo</artifactId>
+            <version>v1.0</version>
+        </dependency>
     </dependencies>
 
 </project>
