@@ -10,7 +10,7 @@ public interface DiffieHellmanKeyProvider {
 
     /**
      * Returns a random 1568-bit byte array that represents a private Diffie-Hellman key.
-     * @return  a random large integer
+     * @return  a random 1568-bit byte array
      */
     byte[] generatePrivateKey();
 
