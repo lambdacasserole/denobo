@@ -10,7 +10,6 @@ public interface EncryptionProvider {
 
     /**
      * Returns an encrypted version of the specified byte array.
-     *
      * @param plaintext the plaintext bytes to encrypt
      * @return  an encrypted version of specified byte array
      */
@@ -18,7 +17,6 @@ public interface EncryptionProvider {
 
     /**
      * Returns a decrypted version of the specified byte array.
-     *
      * @param ciphertext    the ciphertext bytes to decrypt
      * @return  an encrypted version of specified byte array
      */
