@@ -6,12 +6,13 @@ import com.sauljohnson.denobo.compression.CompressionProvider;
 import com.sauljohnson.denobo.compression.CompressionProviderFactory;
 import com.sauljohnson.denobo.encryption.DiffieHellmanKeyProvider;
 import com.sauljohnson.denobo.encryption.MayoDiffieHellmanKeyProvider;
-import com.sauljohnson.denobo.socket.connection.DenoboConnection;
 import com.sauljohnson.denobo.socket.connection.Credentials;
+import com.sauljohnson.denobo.socket.connection.DenoboConnection;
 import com.sauljohnson.denobo.socket.connection.Packet;
 import com.sauljohnson.denobo.socket.connection.PacketCode;
 import com.sauljohnson.denobo.socket.connection.state.AuthenticatedState;
 import com.sauljohnson.denobo.socket.connection.state.DenoboConnectionState;
+
 import java.math.BigInteger;
 
 /**

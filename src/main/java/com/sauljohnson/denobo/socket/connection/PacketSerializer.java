@@ -3,12 +3,7 @@ package com.sauljohnson.denobo.socket.connection;
 import com.sauljohnson.denobo.compression.CompressionProvider;
 import com.sauljohnson.denobo.encryption.EncryptionProvider;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StreamCorruptedException;
-import java.io.Writer;
+import java.io.*;
 
 /**
  * An interface for serializing {@link Packet} objects.

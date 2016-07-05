@@ -1,8 +1,8 @@
 package com.sauljohnson.denobo.encryption;
 
-import java.math.BigInteger;
-
 import com.sauljohnson.mayo.DiffieHellmanKeyGenerator;
+
+import java.math.BigInteger;
 
 /**
  * A Diffie-Hellman key provider that uses the Mayo library.

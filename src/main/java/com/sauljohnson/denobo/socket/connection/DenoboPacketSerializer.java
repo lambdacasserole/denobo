@@ -6,12 +6,12 @@ import com.sauljohnson.denobo.compression.NoopCompressionProvider;
 import com.sauljohnson.denobo.encryption.EncryptionProvider;
 import com.sauljohnson.denobo.encryption.NoopEncryptionProvider;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StreamCorruptedException;
 import java.io.Writer;
 import java.util.Objects;
-import javax.xml.bind.DatatypeConverter;
 
 /**
  * An implementation of PacketSerializer for serializing {@link Packet} objects used in

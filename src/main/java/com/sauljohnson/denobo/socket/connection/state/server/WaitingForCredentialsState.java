@@ -2,8 +2,8 @@ package com.sauljohnson.denobo.socket.connection.state.server;
 
 import com.sauljohnson.denobo.Message;
 import com.sauljohnson.denobo.QueryString;
-import com.sauljohnson.denobo.socket.connection.DenoboConnection;
 import com.sauljohnson.denobo.socket.connection.Credentials;
+import com.sauljohnson.denobo.socket.connection.DenoboConnection;
 import com.sauljohnson.denobo.socket.connection.Packet;
 import com.sauljohnson.denobo.socket.connection.PacketCode;
 import com.sauljohnson.denobo.socket.connection.state.AuthenticatedState;
