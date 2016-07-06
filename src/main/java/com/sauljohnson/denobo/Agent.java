@@ -8,143 +8,87 @@ import java.util.regex.Pattern;
 /**
  * Represents an agent acting as part of a multi-agent system.
  *
+ * @version 1.0 06 July 2016
  * @author  Saul Johnson, Alex Mullen, Lee Oliver
  */
 public class Agent implements RoutingWorkerListener {
 
-    /**
-     * A list of Agent instances connected to this one.
-     */
+    /** The timeout interval for route calculation. */
+    private static final long ROUTE_CALCULATION_TIMEOUT = 5000;
+
+    /** The interval at which messages awaiting dispatch should be cleaned up. */
+    private static final long DISPATCH_CLEANUP_INTERVAL = 10000L;
+
+    /** The regular expression that is used to validate the names of agents. */
+    private static final Pattern VALID_NAME_REGEX = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$");
+
+    /** A list of agent instances connected to this one. */
     private final List<Agent> connectedAgents;
 
-    /**
-     * The {@link BlockingQueue} that underlies this Agent.
-     */
+    /** The blocking queue that underlies this agent. */
     private final BlockingQueue<Message> messageQueue;
 
-    /**
-     * Contains messages ready for dispatching that are awaiting routing.
-     */
+    /** Contains messages ready for dispatching that are awaiting routing. */
     private final Map<String, List<String>> dispatchMap;
     
-    /**
-     * Contains the names of Agents whose routes are currently being calculated.
-     */
+    /** Contains the names of agents whose routes are currently being calculated. */
     private final Map<String, Long> awaitingRoutingMap;
     
-    /**
-     * The message processing thread that underlies this Agent.
-     */
+    /** The message processing thread that underlies this agent. */
     private Thread underlyingThread;
 
-    /**
-     * The name of this Agent.
-     */
+    /** The name of this agent. */
     private final String name;
 
-    /**
-     * The thread pool service for handling cloneable Agent instances. 
-     * <p>
-     * This variable is only initialised if this Agent is cloneable.
-     */
+    /** The thread pool service for handling cloneable agent instances. */
     private final ExecutorService executorService;
 
-    /**
-     * Whether or not this Agent has been shut down. 
-     * <p>
-     * Signals underlyingThread to stop processing when set to true.
-     * 
-     * @see #underlyingThread
-     */
+    /** Whether or not this agent has been shut down. */
     private volatile boolean shutdown;
     
-    /**
-     * Holding this lock will hold off a potential shutdown until released. 
-     */
+    /** Holding this lock will hold off a potential shutdown until released. */
     private final Object shutdownLock;
     
-    /**
-     * Holding this lock will hold off any messages from being dispatched.
-     */
+    /** Holding this lock will hold off any messages from being dispatched. */
     private final Object messageDispatchLock;
     
-    /**
-     * The routing table for this Agent.
-     */
+    /** The routing table for this agent. */
     private final RoutingTable routingTable;
     
-    /**
-     * A list of {@link MessageListener} objects observing Messages passed to the 
-     * agent.
-     */
+    /** A list of message listeners observing messages passed to the agent. */
     private final List<MessageListener> listeners;
     
-    /**
-     * A ScheduledExecutorService instance that will execute a task on a scheduled 
-     * interval and cleanup any messages that are awaiting for a route to be 
-     * calculated where the route calculation has timed out.
-     * <p>
-     * A route calculation that has timed out should be assumed to currently not
-     * exist in the network.
-     */
+    /** A scheduled task to cleanup any messages that are awaiting route calculation. */
     private final ScheduledExecutorService dispatchCleanupExecutorService;
-    
-    
-    /* ---------- */
-    
-    
+
     /**
-     * The value in milliseconds at which point we consider that a route
-     * calculation has timed out.
-     */
-    private static final long ROUTE_CALCULATION_TIMEOUT = 5000;
-    
-    /**
-     * The interval in milliseconds at which any messages waiting for dispatch 
-     * on a route that is assumed to be inactive are cleaned up.
-     */
-    private static final long DISPATCH_CLEANUP_INTERVAL = 10000L;
-    
-    /**
-     * The regular expression that is used to validate the names of Agents.
-     * <p>
-     * Agent names cannot be null, must be alphanumeric and must start with a 
-     * letter. Underscores are allowed.
-     */
-    private static final Pattern VALID_NAME_REGEX = Pattern.compile("^[a-zA-Z]{1}[a-zA-Z0-9_]*$");
-    
-    
-    /* ---------- */
-    
-    
-    /**
-     * Abstract constructor to initialise a new instance of an Agent.
-     *
-     * @param name      the name of the Agent
-     * @param cloneable whether or not the Agent is cloneable
+     * Initializes a new instance of an agent.
+     * @param name      the name of the agent
+     * @param cloneable whether or not the agent is cloneable
      */
     public Agent(String name, boolean cloneable) {
 
-        // Check that the agent name is non-null and valid.
-        this.name = Objects.requireNonNull(name, "The name of the Agent cannot"
-                + " be null.");
+        // Agent name cannot be null.
+        this.name = Objects.requireNonNull(name, "The name of the Agent cannot be null.");
+
+        // Agent name must be valid.
         if (!isValidName(name)) {
             throw new IllegalArgumentException("Invalid agent name '" + name + "'.");
         }
         
-        // Lock objects.
+        // Initialize lock objects.
         shutdownLock = new Object();
         messageDispatchLock = new Object();
 
         // Only construct the thread pool if cloneable.
         executorService = (cloneable ? Executors.newCachedThreadPool() : null);
         
-        // Initialise lists, maps and queues.
+        // Initialize lists, maps and queues.
         messageQueue = new LinkedBlockingQueue<Message>();
         connectedAgents = new CopyOnWriteArrayList<Agent>();
         listeners = new CopyOnWriteArrayList<MessageListener>();
         
-        // Initialise routing data structures.
+        // Initialize routing data structures.
         routingTable = new RoutingTable();
         dispatchMap = new HashMap<String, List<String>>();
         awaitingRoutingMap = new HashMap<String, Long>();
@@ -159,134 +103,102 @@ public class Agent implements RoutingWorkerListener {
         
         // Start message processing.
         queueProcessThread();
-
     }
 
     /**
-     * Initialises a new instance of a non-cloneable Agent.
-     *
-     * @param name  the name of the Agent
+     * Initializes a new instance of a non-cloneable agent.
+     * @param name  the name of the agent
      */
     public Agent(String name) {
         this(name, false);
     }
-    
-    
-    /* ---------- */
-    
-    
+
     /**
      * Validates a potential agent name.
-     * 
      * @param name  the agent name to validate
      * @return      true if the agent name is valid, otherwise false
      */
     public static boolean isValidName(String name) {
-        if (name == null) { return false; }
         return VALID_NAME_REGEX.matcher(name).matches();
     }
     
     /**
-     * Adds a {@link MessageListener} to listen for messages passed to this
-     * Agent.
-     *
-     * @param listener   the {@link MessageListener} to add as an observer
+     * Adds a message listener to listen for messages passed to this agent.
+     * @param listener   the message listener to add as an observer
      */
     public void addMessageListener(MessageListener listener) {
-        listeners.add(Objects.requireNonNull(listener, "The message handler "
-                + "to add cannot be null."));
+        listeners.add(Objects.requireNonNull(listener, "The message handler to add cannot be null."));
     }
 
     /**
-     * Removes a {@link MessageListener} that is currently listening for messages
-     * passed to this agent.
-     *
-     * @param listener the {@link MessageListener} to remove as an observer
+     * Removes a message listener that is currently listening for messages passed to this agent.
+     * @param listener the message listener to remove as an observer
      */
     public void removeMessageListener(MessageListener listener) {
-        listeners.remove(Objects.requireNonNull(listener, "The message handler "
-                + "to remove cannot be null."));
+        listeners.remove(Objects.requireNonNull(listener, "The message handler to remove cannot be null."));
     }
     
     /**
-     * Gets the name of this Agent.
-     *
-     * @return  the name of this Agent
+     * Gets the name of this agent.
+     * @return  the name of this agent
      */
     public final String getName() {
         return name;
     }
 
     /**
-     * Gets this agent's routing table.
-     * 
-     * @return  this agent's routing table
+     * Gets the routing table for this agent.
+     * @return  the routing table for this agent
      */
     public RoutingTable getRoutingTable() {
         return routingTable;
     }
     
     /**
-     * Gets whether or not this Agent is cloneable.
-     *
-     * @return  true if this Agent is cloneable, otherwise false
+     * Gets whether or not this agent is cloneable.
+     * @return  true if this agent is cloneable, otherwise false
      */
     public final boolean isCloneable() {
         return executorService != null;
     }
     
     /**
-     * Gets whether or not this Agent has shut down or is currently in the 
-     * process of shutting down.
-     * 
-     * @return  true if this Agent has shut down, otherwise false
+     * Gets whether or not this agent has shut down or is currently in the process of shutting down.
+     * @return  true if this agent has shut down, otherwise false
      */
     public final boolean hasShutdown() {
         return shutdown;
     }
 
     /**
-     * Connects this Agent to another.
-     *
-     * @param agent the Agent to connect to
-     * @return      true if the specified Agent was successfully connected to 
-     *              this Agent, otherwise false
+     * Connects this agent to another.
+     * @param agent the agent to connect to
+     * @return      true if the specified agent was successfully connected to this agent, otherwise false
      */
     public boolean connectAgent(Agent agent) {
 
         // Cannot connect null agents.
         Objects.requireNonNull(agent, "Agent to connect cannot be null.");
         
-        /* 
-         * We don't want to connect any Agents if we are shutting down or are in
-         * the process of shutting down.
-         */
+        // Cannot connect if this agent is shutting down.
         synchronized (shutdownLock) {
             
-            /* 
-             * If the Agent has shut down, don't connect. Don't allow connection
-             * of an Agent to itself and don't allow an agent to be connected
-             * more than once.
-             */
+            // Don't allow shut down agent to connect, don't allow connections to self or duplicate connections.
             if (shutdown || agent == this || connectedAgents.contains(agent)) { 
                 return false; 
             }
 
-            // Bidirectional registration.
+            // Register connection in both directions.
             registerConnectedAgent(agent);
             agent.registerConnectedAgent(this);
             return true;
-
         }
-        
     }
 
     /**
-     * Disconnects this Agent from another.
-     *
-     * @param agent the Agent to disconnect from
-     * @return      true if the specified Agent was successfully disconnected
-     *              from this Agent, otherwise false
+     * Disconnects this agent from another.
+     * @param agent the agent to disconnect from
+     * @return      true if the specified agent was successfully disconnected from this agent, otherwise false
      */
     public boolean disconnectAgent(Agent agent) {
 
@@ -299,46 +211,36 @@ public class Agent implements RoutingWorkerListener {
             
             agent.unregisterConnectedAgent(this);
           
-            /* 
-             * Spawn undertaker to crawl the local network and remove any routes
-             * involving this link.
-             */
-            final List<Agent> branches = Arrays.asList(new Agent[] {this, agent});  
-            final Undertaker undertaker = new Undertaker(branches, 
-                    Arrays.asList(new String[] {Agent.this.getName(), agent.getName()}));
+            // Spawn undertaker to crawl the local network and remove any routes involving this link.
+            final List<Agent> branches = Arrays.asList(this, agent);
+            final Undertaker undertaker = new Undertaker(branches, Arrays.asList(Agent.this.getName(),
+                    agent.getName()));
             undertaker.undertakeAsync();
-        
         }
 
         return wasRemoved;
-        
     }
     
     /**
-     * Returns a read-only snapshot of the Agent instances that are connected to
-     * this one as an unmodifiable list.
-     * 
-     * @return  the unmodifiable list of connected Agent instances
+     * Returns a read-only snapshot of the agent instances that are connected to this one as an unmodifiable list.
+     * @return  the unmodifiable list of connected agent instances
      */
     public List<Agent> getConnectedAgents() {
         return Collections.unmodifiableList(connectedAgents);
     }
     
     /**
-     * Registers another Agent as connected to this one.
-     *
-     * @param agent the Agent to register
+     * Registers another agent as connected to this one.
+     * @param agent the agent to register
      * @return true if the agent was successfully registered, otherwise false
      */
     private boolean registerConnectedAgent(Agent agent) {
-        return connectedAgents.add(Objects.requireNonNull(agent, 
-                "Cannot register a connection to a null agent."));
+        return connectedAgents.add(Objects.requireNonNull(agent, "Cannot register a connection to a null agent."));
     }
 
     /**
-     * Unregisters another Agent as connected to this one.
-     *
-     * @param agent the Agent to unregister
+     * Unregisters another agent as connected to this one.
+     * @param agent the agent to unregister
      * @return true if the agent was successfully unregistered
      */
     private boolean unregisterConnectedAgent(Agent agent) {
@@ -348,11 +250,9 @@ public class Agent implements RoutingWorkerListener {
 
     
     /**
-     * Adds a Message to this Agent's message queue.
-     *
+     * Adds a message to this agent's message queue.
      * @param message   the message to add
-     * @return          true if the message was successfully submitted into the 
-     *                  message queue, otherwise false
+     * @return          true if the message was successfully added to the message queue, otherwise false
      */
     public boolean queueMessage(Message message) {
         
@@ -523,61 +423,46 @@ public class Agent implements RoutingWorkerListener {
     }
 
     /**
-     * Sends a message from this Agent to another.
-     * 
-     * @param recipientName the name of the recipient Agent
+     * Sends a message from this agent to another.
+     * @param recipientName the name of the recipient agent
      * @param data          the data to attach to the message
      */
     public void sendMessage(String recipientName, String data) {
 
+        // Can't route to a null agent name.
         Objects.requireNonNull(recipientName, "The recipient of a message cannot be null.");
         
-        /*
-         * Anyone else holding this lock will prevent any messages been dispatched
-         * or processed until it is released.
-         */
+        // Prevent any messages been dispatched or processed until message sent.
         synchronized (messageDispatchLock) {
 
-            // If we can't send the message right away because a route is missing.
+            // If message can't be sent, there is a missing route.
             if (!originate(recipientName, data)) {
 
-                /*
-                 * We need to route first, then send the message when the routing 
-                 * worker calls back.
-                 */
+                // Calculate route first, then send the message when the routing worker calls back.
                 System.out.println("Awaiting routing to Agent [" + recipientName + "]...");
                 awaitRouting(recipientName, data);
                 calculateRoute(recipientName);
-
             }
-
         }
-        
     }
     
     /**
-     * Originates a message from this Agent along the route stored in its
-     * routing table for the recipient.
-     * <p>
-     * If the routing table has no entry to the recipient, an exception will
-     * be thrown.
+     * Originates a message from this agent along the route stored in its routing table for the recipient.
      * 
-     * @param recipientName the name of the recipient Agent
+     * @param recipientName the name of the recipient agent
      * @param data          the data to attach to the message
-     * @return              true if message sending was successful, otherwise
-     *                      false
+     * @return              true if message sending was successful, otherwise false
      */
     private boolean originate(String recipientName, String data) {
         
         // Check and retrieve if there is a route to the specified recipient.
-        final Route route = routingTable.getRoute(recipientName);
+        Route route = routingTable.getRoute(recipientName);
         if (route == null) {
-            // No route.
-            return false;
+            return false; // No route.
         }
 
-        // Create message and attach route
-        final Message message = new Message(route, data);
+        // Create message and attach route.
+        Message message = new Message(route, data);
         
         // The first entry in the routing queue is this agent. Discard this entry.
         message.getRoute().next();
@@ -587,25 +472,22 @@ public class Agent implements RoutingWorkerListener {
 
         // Message sent, success.
         return true;
-
     }
     
     /**
-     * Takes a recipient name/message data pair and stores it while it awaits
-     * calculation of a route to the recipient.
-     * 
-     * @param recipientName the name of the recipient Agent
+     * Takes a recipient name/message pair and stores it while awaiting calculation of a route to the recipient.
+     * @param recipientName the name of the recipient agent
      * @param data          the data to attach to the message
      */
     private void awaitRouting(String recipientName, String data) {
-        
+
+
         List<String> messageList = dispatchMap.get(recipientName);
         if (messageList == null) {
             messageList = new ArrayList<String>();
             dispatchMap.put(recipientName, messageList);
         }
         messageList.add(data);
-
     }
 
     /**
